@@ -1,5 +1,5 @@
 from pathlib import Path
-from cleansweep.containers.stack.stack import Stack
+from cleansweep.containers.stack import Stack
 
 class FileSystemManager:
     @staticmethod

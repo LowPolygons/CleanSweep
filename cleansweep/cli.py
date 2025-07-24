@@ -1,6 +1,6 @@
 import argparse
 
-from cleansweep.systems.file_system.filesystem import FileSystemManager
+from cleansweep.systems.file_system import FileSystemManager
 from pathlib import Path
 
 def main():
