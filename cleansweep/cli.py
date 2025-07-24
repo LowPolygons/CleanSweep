@@ -1,6 +1,6 @@
 import argparse
 
-from cleansweep.file_system.filesystem import FileSystemManager
+from cleansweep.systems.file_system.filesystem import FileSystemManager
 from pathlib import Path
 
 def main():
@@ -17,7 +17,6 @@ def main():
         files = FileSystemManager.get_file_names_recursive(Path("")) 
         for file in files:
             print("File: ", file)
-
 if __name__ == "__main__":
     main()
 
