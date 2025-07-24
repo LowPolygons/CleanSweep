@@ -2,3 +2,4 @@ venv/
 dist/
 cleansweep.egg-info/
 __pycache__/
+build/
