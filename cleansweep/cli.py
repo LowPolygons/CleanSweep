@@ -17,6 +17,7 @@ def main():
         files = FileSystemManager.get_file_names_recursive(Path("")) 
         for file in files:
             print("File: ", file)
+
 if __name__ == "__main__":
     main()
 
