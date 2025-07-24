@@ -2,7 +2,6 @@ from typing import TypeVar, Generic, Optional
 
 T = TypeVar("T")
 
-
 class Stack(Generic[T]):
     def __init__(self) -> None:
         self.__items: list[T] = []
