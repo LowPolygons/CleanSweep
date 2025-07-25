@@ -1,7 +1,6 @@
 from cleansweep.commands.command import Command
 
-purge_kwargs: list[str] = []
-
 class Purge(Command):
-    def command(self, **kwargs: str) -> None:
+    @staticmethod
+    def command(*args, **kwargs: str) -> None:
         pass
