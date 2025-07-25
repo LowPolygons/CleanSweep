@@ -3,7 +3,7 @@ from pathlib import Path
 
 from cleansweep.containers.file_statistics import FileStatistics
 from cleansweep.types.json import Json
-from cleansweep.types.filter_codes import FilterCodes
+from cleansweep.globals.filter_codes import FilterCodes
 
 from . import DATE_FORMAT, SUBSTR_NOT_FOUND, STARTS_WITH_SUBSTR
 
@@ -14,13 +14,17 @@ class FileItem:
         self.__path: Path = item_path
         self.__stats: FileStatistics
 
+    # Bool value determines if the provided path is an actual file
+    def stat_calculate(self) -> bool:
+        return self.__stats.format_self(self.__path)
+
     def stats_as_json(self) -> Json:
         json_data: Json = {
             "name" : self.__stats.name,
             "path" : str(self.__path),
             "size" : self.__stats.size,
             "extension" : self.__stats.extension,
-            "date_created" : self.__stats.date_created.strftime(DATE_FORMAT),
+            "last_accessed" : self.__stats.last_accessed.strftime(DATE_FORMAT),
             "last_modified" : self.__stats.last_modified.strftime(DATE_FORMAT)
         }
         return json_data
@@ -70,7 +74,8 @@ class FileItem:
                     black_list_lower_than: int, 
                     black_list_higher_than: int) -> FilterCodes:
         # Prioritise black list 
-        if self.__stats.size < black_list_lower_than or self.__stats.size > black_list_higher_than:
+        if self.__stats.size < black_list_lower_than or \
+           self.__stats.size > black_list_higher_than:
             return FilterCodes.BlackListed
         
         if self.__stats.size > white_list:
@@ -93,4 +98,5 @@ class FileItem:
         return FilterCodes.NotSpecial
     
     def was_last_modified_before(self, date_cutoff: date):
-        return self.__stats.last_modified < date_cutoff
+        return self.__stats.last_modified < date_cutoff and \
+               self.__stats.last_accessed < date_cutoff
