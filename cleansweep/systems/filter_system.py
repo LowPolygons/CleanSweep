@@ -1,7 +1,7 @@
 from cleansweep.containers.file_item import FileItem
 from cleansweep.containers.user_settings import UserSettings
-from cleansweep.types.filter_codes import FilterCodes
-from cleansweep.types.flag_codes import FlagCodes
+from cleansweep.globals.filter_codes import FilterCodes
+from cleansweep.globals.flag_codes import FlagCodes
 
 class FilterSystem: 
     @staticmethod
