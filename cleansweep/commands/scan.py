@@ -1,6 +1,13 @@
-from cleansweep.commands.command import Command
+from cleansweep.commands.command import CommandInterface 
+from argparse import Namespace, _SubParsersAction
 
-class Scan(Command):
+class ScanCommand(CommandInterface):
     @staticmethod
-    def command(*args, **kwargs: str) -> None:
-        pass
+    def command(args: Namespace) -> None:
+        print("Scanning directories")
+
+    @classmethod
+    def register_subparser(cls, subparsers: _SubParsersAction) -> None:
+        list_parser = subparsers.add_parser('scan', help="TODO")
+        list_parser.set_defaults(func=cls.command)
+        # TODO: Add arguments if necessary
