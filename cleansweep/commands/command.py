@@ -1,7 +1,13 @@
 from abc import ABC, abstractmethod
+from argparse import Namespace, _SubParsersAction 
 
-class Command(ABC):
-    @abstractmethod 
+class CommandInterface(ABC):
     @staticmethod
-    def command(*args, **kwargs: str) -> None:
+    @abstractmethod 
+    def command(args: Namespace) -> None:
+        pass
+
+    @classmethod
+    @abstractmethod 
+    def register_subparser(cls, subparsers: _SubParsersAction) -> None:
         pass
