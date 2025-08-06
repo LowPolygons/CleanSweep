@@ -15,28 +15,29 @@ class SetupCommand(CommandInterface):
         # Create the main folder if it doesn't exist 
         if main_folder.exists():
             print("CleanSweep already exists on this machine")
-        else:
-            main_folder.mkdir()
-            # Create the filepaths needed
-            files: dict[str, Path] = {
-                "White-Listed" : main_folder / initial_storage_path.white_listed_file_name, 
-                "Black-Listed" : main_folder / initial_storage_path.black_listed_file_name,
-                "User-Settings" : main_folder / initial_storage_path.user_settings_file_name,
-                "Log-File" : main_folder / initial_storage_path.log_file_name
-            }
-            # Initialise the files with an empty json string
-            for curr_file in files.values():
-                try:
-                    with open(curr_file, "w") as file:
-                        file.write("{}")
-                except OSError as err:
-                    print(f"There was an error creating file with path {curr_file} with error {err}")
-                    return
+            return
 
-            # Print the details of what has just occured
-            print("[]===[]===[]===[]===[]\nCleanSweep has been successfully setup:\n")
-            for key, value in files.items():
-                print(f"- {key} found at {value}")
+        main_folder.mkdir()
+        # Create the filepaths needed
+        files: dict[str, Path] = {
+            "White-Listed" : main_folder / initial_storage_path.white_listed_file_name, 
+            "Black-Listed" : main_folder / initial_storage_path.black_listed_file_name,
+            "User-Settings" : main_folder / initial_storage_path.user_settings_file_name,
+            "Log-File" : main_folder / initial_storage_path.log_file_name
+        }
+        # Initialise the files with an empty json string
+        for curr_file in files.values():
+            try:
+                with open(curr_file, "w") as file:
+                    file.write("{}")
+            except OSError as err:
+                print(f"There was an error creating file with path {curr_file} with error {err}")
+                return
+
+        # Print the details of what has just occured
+        print("[]===[]===[]===[]===[]\nCleanSweep has been successfully setup:\n")
+        for key, value in files.items():
+            print(f"- {key} found at {value}")
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
