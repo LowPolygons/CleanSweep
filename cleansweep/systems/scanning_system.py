@@ -1,7 +1,8 @@
 from pathlib import Path
 from cleansweep.containers.stack import Stack
 
-class FileSystemManager:
+# TODO: Rename to clarify this is for Scanning
+class FileScanningManager:
     @staticmethod
     def get_file_names_immediate(starting_path: Path) -> list[Path]:
         file_names = [item.resolve() for item in starting_path.iterdir() if item.is_file()]
@@ -28,8 +29,8 @@ class FileSystemManager:
             if curr_dir is None:
                 continue
             
-            files_found = FileSystemManager.get_file_names_immediate(curr_dir)
-            dirs_found = FileSystemManager.get_dir_names_immediate(curr_dir)
+            files_found = FileScanningManager.get_file_names_immediate(curr_dir)
+            dirs_found = FileScanningManager.get_dir_names_immediate(curr_dir)
         
             for file in files_found:
                 found_files.append(file)
