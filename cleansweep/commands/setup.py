@@ -10,8 +10,6 @@ import json
 class SetupCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
-        print("Setting up file system for CleanSweep...")
-        
         user_home_dir: Path = Path.home()
         initial_storage_path: StoragePaths = StoragePaths(user_home_dir)
 
@@ -25,11 +23,11 @@ class SetupCommand(CommandInterface):
             main_folder.mkdir()
             # Create the filepaths needed
             files: dict[str, Path] = {
-                "whitelisted" : main_folder / initial_storage_path.white_listed_file_name, 
-                "blacklisted" : main_folder / initial_storage_path.black_listed_file_name,
-                "user_settings" : main_folder / initial_storage_path.user_settings_file_name,
-                "log_file" : main_folder / initial_storage_path.log_file_name,
-                "storage_paths" : main_folder / initial_storage_path.storage_paths_file_name
+                "White-Listed" : main_folder / initial_storage_path.white_listed_file_name, 
+                "Black-Listed" : main_folder / initial_storage_path.black_listed_file_name,
+                "User-Settings" : main_folder / initial_storage_path.user_settings_file_name,
+                "Log-File" : main_folder / initial_storage_path.log_file_name,
+                "Storage-Paths" : main_folder / initial_storage_path.storage_paths_file_name
             }
             # Initialise the files with an empty json string
             for curr_file in files.values():
@@ -43,11 +41,16 @@ class SetupCommand(CommandInterface):
             # Now write the storage paths data to its file
             jsoned_storage_paths: Json = StoragePathsCodec.encode_to_json(initial_storage_path)
             try:
-                with open(files["storage_paths"], "w") as file:
+                with open(files["Storage-Paths"], "w") as file:
                     json.dump(jsoned_storage_paths, file)
             except OSError as err:
                 print(f"There was an error writing the data from the storage path structure with error {err}")
                 return
+           
+            # Print the details of what has just occured
+            print("[]===[]===[]===[]===[]\nCleanSweep has been successfully setup:\n")
+            for key, value in files.items():
+                print(f"- {key} found at {value}")
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
