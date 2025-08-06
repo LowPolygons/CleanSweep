@@ -1,6 +1,5 @@
 import argparse
 
-from cleansweep.systems.file_system import FileSystemManager
 from pathlib import Path
 from cleansweep.systems.logger_system import Logger, LogLevel
 from cleansweep.commands import COMMANDS
