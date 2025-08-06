@@ -3,7 +3,7 @@ from .list import ListCommand
 from .purge import PurgeCommand
 from .scan import ScanCommand
 from .settings import SettingsCommand
-from .command import CommandInterface
+from cleansweep.interfaces.command import CommandInterface
 
 COMMANDS: Iterable[type[CommandInterface]] = [
     ListCommand,

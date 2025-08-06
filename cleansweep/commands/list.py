@@ -1,4 +1,4 @@
-from cleansweep.commands.command import CommandInterface
+from cleansweep.interfaces.command import CommandInterface
 from argparse import Namespace, _SubParsersAction
 
 # arg name
