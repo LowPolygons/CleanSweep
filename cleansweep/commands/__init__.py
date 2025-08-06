@@ -4,7 +4,7 @@ from .purge import PurgeCommand
 from .scan import ScanCommand
 from .settings import SettingsCommand
 from .setup import SetupCommand
-from .uninstall import UninstallCommand
+from .demolish import DemolishCommand
 from cleansweep.interfaces.command import CommandInterface
 
 COMMANDS: Iterable[type[CommandInterface]] = [
@@ -13,5 +13,5 @@ COMMANDS: Iterable[type[CommandInterface]] = [
     PurgeCommand,
     SettingsCommand,
     SetupCommand,
-    UninstallCommand
+    DemolishCommand
 ]

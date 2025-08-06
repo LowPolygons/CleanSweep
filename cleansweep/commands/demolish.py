@@ -5,7 +5,7 @@ from argparse import Namespace, _SubParsersAction
 
 import shutil
 
-class UninstallCommand(CommandInterface):
+class DemolishCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
         print("Removing the stored data from CleanSweep")
@@ -22,16 +22,16 @@ class UninstallCommand(CommandInterface):
             return
     
         # Confirm removal
-        confirmation = input("If you are certain you want to remove CleanSweep, enter 'cleansweep uninstall' again\n => ")
+        confirmation = input("If you are certain you want to remove CleanSweep, enter 'cleansweep demolish' again\n => ")
 
         # Remove the cleansweep directory
-        if confirmation == "cleansweep uninstall":
+        if confirmation == "cleansweep demolish":
             shutil.rmtree(main_folder)
             print("Uninstalled cleansweep data from your system - to rebuild, run 'cleansweep setup'")
         
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('uninstall', help="TODO")
+        list_parser = subparsers.add_parser('demolish', help="TODO")
         list_parser.set_defaults(func=cls.command)
         # TODO: Add arguments if necessary
