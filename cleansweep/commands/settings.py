@@ -6,6 +6,9 @@ class SettingsCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
         print("Settings config..")
+        # If they choose modify open the system settings env
+        # If they choose display it will print the user settings to the screen
+        # If they choose reset, reset
         settings_system = InteractiveSettingsSystem()
         settings_system.environment(0)
 

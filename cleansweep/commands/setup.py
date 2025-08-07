@@ -1,6 +1,8 @@
 from pathlib import Path
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.interfaces.command import CommandInterface 
+from cleansweep.systems.defaults_system import DefaultsWriter 
+
 from argparse import Namespace, _SubParsersAction
 
 class SetupCommand(CommandInterface):
@@ -23,7 +25,8 @@ class SetupCommand(CommandInterface):
             "White-Listed" : main_folder / initial_storage_path.white_listed_file_name, 
             "Black-Listed" : main_folder / initial_storage_path.black_listed_file_name,
             "User-Settings" : main_folder / initial_storage_path.user_settings_file_name,
-            "Log-File" : main_folder / initial_storage_path.log_file_name
+            "Log-File" : main_folder / initial_storage_path.log_file_name,
+            "User-Settings-Defaults" : main_folder / initial_storage_path.user_settings_defaults_file_name
         }
         # Initialise the files with an empty json string
         for curr_file in files.values():
@@ -33,6 +36,9 @@ class SetupCommand(CommandInterface):
             except OSError as err:
                 print(f"There was an error creating file with path {curr_file} with error {err}")
                 return
+
+        # Write the defaults if applicable
+        DefaultsWriter.write_user_settings(files["User-Settings-Defaults"])
 
         # Print the details of what has just occured
         print("[]===[]===[]===[]===[]\nCleanSweep has been successfully setup:\n")

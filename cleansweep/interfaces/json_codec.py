@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from cleansweep.types.json import Json 
-from typing import TypeVar, Generic
+from typing import Optional, TypeVar, Generic
 
 T = TypeVar("T")
 
@@ -12,5 +12,5 @@ class JsonCodecInterface(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def create_from_json(obj: Json) -> T:
+    def create_from_json(obj: Json) -> Optional[T]:
         pass
