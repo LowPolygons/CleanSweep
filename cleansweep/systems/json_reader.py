@@ -54,4 +54,6 @@ class JsonReader:
 
     @classmethod
     def extract_json_dict(cls, obj: Json) -> dict[str, Json]:
-        return cls.expected_type(obj, dict[str, Json])
+        if isinstance(obj, dict):
+            return cast(dict[str, Json], obj)
+        return cls.value_error(obj, dict)

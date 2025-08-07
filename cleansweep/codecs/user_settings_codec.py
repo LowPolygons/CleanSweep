@@ -36,7 +36,7 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             blacklisted: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["blacklist_files"])
             whitelisted: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["whitelist_files"])
 
-            unformatted_flag_date_cutoff = JsonReader.extract_str(blacklisted["flag_date_cutoff"])
+            unformatted_flag_date_cutoff = JsonReader.extract_str(validated_obj["flag_date_cutoff"])
             ignore_files_with_extension = JsonReader.extract_list_of_type(blacklisted["extension_is"], str)
             ignore_file_names_containing = JsonReader.extract_list_of_type(blacklisted["name_contains"], str)
             ignore_file_names_starting_with = JsonReader.extract_list_of_type(blacklisted["name_starts_with"], str)
@@ -51,7 +51,7 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             prioritise_files_larger_than = JsonReader.extract_int(whitelisted["larger_than"])
 
             flag_date_cutoff = datetime.strptime(unformatted_flag_date_cutoff, "%Y-%m-%d").date()
-            
+
             return UserSettings(
                 flag_date_cutoff, 
                 ignore_files_with_extension, 
@@ -68,6 +68,6 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             )
 
         except Exception as err:
-            Logger().add_line(f"Error trying to index some values in the User Settings Json: {err}", LogLevel.ERROR)
+            print(f"Error trying to index some values in the User Settings Json: {err}")
             return None
 
