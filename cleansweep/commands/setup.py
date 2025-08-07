@@ -10,7 +10,6 @@ class SetupCommand(CommandInterface):
     def command(args: Namespace) -> None:
         user_home_dir: Path = Path.home()
         initial_storage_path: StoragePaths = StoragePaths(user_home_dir)
-
         # Create the main cleansweep dir
         main_folder: Path = user_home_dir / initial_storage_path.main_dir_name
         

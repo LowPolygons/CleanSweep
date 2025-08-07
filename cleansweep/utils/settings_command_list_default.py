@@ -2,7 +2,7 @@ import json
 from typing import cast
 from cleansweep.codecs.user_settings_codec import UserSettingsCodec
 from cleansweep.globals.storage_paths import StoragePaths
-from cleansweep.single_funcs.get_main_path import get_main_path
+from cleansweep.utils.get_main_path import get_main_path
 from cleansweep.types.json import Json
 
 import os 

@@ -1,15 +1,8 @@
-from typing import cast
-from cleansweep.containers.user_settings import UserSettings
 from cleansweep.interfaces.command import CommandInterface 
 from cleansweep.systems.settings_system import InteractiveSettingsSystem
-from cleansweep.globals.storage_paths import StoragePaths
-from cleansweep.codecs.user_settings_codec import UserSettingsCodec
-from cleansweep.single_funcs.get_main_path import get_main_path
-from cleansweep.single_funcs.settings_command_list_default import SettingsCommandListDefault 
+from cleansweep.utils.settings_command_list_default import SettingsCommandListDefault 
 from argparse import Namespace, _SubParsersAction
 
-import os
-import json
 
 from cleansweep.types.json import Json
 
@@ -26,6 +19,7 @@ class SettingsCommand(CommandInterface):
             # Copy the defaults into the not defaults
             pass
         elif args.mode == 'list-defaults':
+            # Load the default settings and attempt to display
             SettingsCommandListDefault() 
         else:
             print("Unknown argument, options are: modify, display, reset, list-defaults") 
