@@ -1,6 +1,5 @@
 import json
 import os
-from pathlib import Path
 from typing import cast
 from enum import Enum
 from cleansweep.codecs.user_settings_codec import UserSettingsCodec

@@ -1,6 +1,8 @@
 from cleansweep.interfaces.command import CommandInterface 
 from cleansweep.systems.settings_system import InteractiveSettingsSystem
 from cleansweep.utils.settings_command_display import SettingsCommandDisplay, DisplayOption
+from cleansweep.utils.settings_command_reset import reset_user_settings
+
 from argparse import Namespace, _SubParsersAction
 
 
@@ -17,8 +19,7 @@ class SettingsCommand(CommandInterface):
             SettingsCommandDisplay(DisplayOption.Regular)
             pass
         elif args.mode == 'reset':
-            # Copy the defaults into the not defaults
-            pass
+            reset_user_settings()
         elif args.mode == 'list-defaults':
             # Load the default settings and attempt to display
             SettingsCommandDisplay(DisplayOption.Defaults) 
