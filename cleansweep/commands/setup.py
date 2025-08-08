@@ -1,7 +1,7 @@
 from pathlib import Path
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.interfaces.command import CommandInterface 
-from cleansweep.systems.defaults_system import DefaultsWriter 
+from cleansweep.utils.setup_command_write_settings_default import write_user_settings
 
 from argparse import Namespace, _SubParsersAction
 
@@ -37,7 +37,7 @@ class SetupCommand(CommandInterface):
                 return
 
         # Write the defaults if applicable
-        DefaultsWriter.write_user_settings(files["User-Settings-Defaults"])
+        write_user_settings(files["User-Settings-Defaults"])
 
         # Print the details of what has just occured
         print("[]===[]===[]===[]===[]\nCleanSweep has been successfully setup:\n")
