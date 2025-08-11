@@ -1,30 +1,33 @@
 from cleansweep.interfaces.command import CommandInterface 
-from cleansweep.systems.settings_system import InteractiveSettingsSystem
 from cleansweep.utils.settings_command_display import SettingsCommandDisplay, DisplayOption
 from cleansweep.utils.settings_command_reset import reset_user_settings
-
+from cleansweep.utils.settings_command_modify import interactive_environment
 from argparse import Namespace, _SubParsersAction
 
-
-from cleansweep.types.json import Json
+# TODO: Finish implementing
+ARGUMENTS = [
+    "modify",
+    "display",
+    "reset",
+    "display-defaults"
+]
 
 class SettingsCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
         if args.mode == 'modify':
-            settings_system = InteractiveSettingsSystem()
-            settings_system.environment(0)
+            interactive_environment(-1)
         elif args.mode == 'display':
             # Load file and print
             SettingsCommandDisplay(DisplayOption.Regular)
             pass
         elif args.mode == 'reset':
             reset_user_settings()
-        elif args.mode == 'list-defaults':
+        elif args.mode == 'display-defaults':
             # Load the default settings and attempt to display
             SettingsCommandDisplay(DisplayOption.Defaults) 
         else:
-            print("Unknown argument, options are: modify, display, reset, list-defaults") 
+            print("Unknown argument, options are: modify, display, reset, display-defaults") 
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
@@ -32,7 +35,7 @@ class SettingsCommand(CommandInterface):
         list_parser.add_argument(
             '--mode',
             type=str,
-            choices=['modify', 'display', 'reset', 'list-defaults'],
+            choices=['modify', 'display', 'reset', 'display-defaults'],
             required=True,
             help = "Choose whether to modify, display or reset your settings"
         )
