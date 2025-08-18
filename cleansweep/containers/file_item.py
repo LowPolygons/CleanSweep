@@ -17,7 +17,13 @@ class FileItem:
     # Bool value determines if the provided path is an actual file
     def stat_calculate(self) -> bool:
         return self.__stats.format_self(self.__path)
-
+    
+    def set_statistics(self, precalculated_stats: FileStatistics) -> None:
+        self.__stats = precalculated_stats
+        
+    def get_path(self) -> Path:
+        return self.__path
+    # ISSUE: Violation of S in OLID
     def stats_as_json(self) -> Json:
         json_data: Json = {
             "name" : self.__stats.name,
