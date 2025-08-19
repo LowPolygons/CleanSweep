@@ -1,5 +1,6 @@
+from cleansweep.globals.user_setting_variant import SettingsVariant
 from cleansweep.interfaces.command import CommandInterface 
-from cleansweep.utils.settings_command_display import SettingsCommandDisplay, DisplayOption
+from cleansweep.utils.settings_command_display import SettingsCommandDisplay
 from cleansweep.utils.settings_command_reset import reset_user_settings
 from cleansweep.utils.settings_command_modify import interactive_environment
 from argparse import Namespace, _SubParsersAction
@@ -19,13 +20,13 @@ class SettingsCommand(CommandInterface):
             interactive_environment(-1)
         elif args.mode == 'display':
             # Load file and print
-            SettingsCommandDisplay(DisplayOption.Regular)
+            SettingsCommandDisplay(SettingsVariant.Regular)
             pass
         elif args.mode == 'reset':
             reset_user_settings()
         elif args.mode == 'display-defaults':
             # Load the default settings and attempt to display
-            SettingsCommandDisplay(DisplayOption.Defaults) 
+            SettingsCommandDisplay(SettingsVariant.Defaults) 
         else:
             print("Unknown argument, options are: modify, display, reset, display-defaults") 
 
