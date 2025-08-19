@@ -11,6 +11,9 @@ class FileStatistics:
     extension: str
     last_accessed: date
     last_modified: date
+
+    def __init__(self)  -> None:
+        pass
   
     def format_self(self, file: Path) -> bool:
         # Must be a file 
@@ -21,7 +24,7 @@ class FileStatistics:
         self.name = os.path.basename(file)
         self.size = os.path.getsize(file)
         self.extension = file.suffix # Empty string if none
-        self.last_accessed = datetime.fromtimestamp(os.path.getatime(file))
-        self.last_modified = datetime.fromtimestamp(os.path.getmtime(file))
+        self.last_accessed = datetime.fromtimestamp(os.path.getatime(file)).date()
+        self.last_modified = datetime.fromtimestamp(os.path.getmtime(file)).date()
 
         return True 

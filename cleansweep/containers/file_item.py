@@ -12,7 +12,7 @@ from . import DATE_FORMAT, SUBSTR_NOT_FOUND, STARTS_WITH_SUBSTR
 class FileItem:
     def __init__(self, item_path: Path) -> None:
         self.__path: Path = item_path
-        self.__stats: FileStatistics
+        self.__stats: FileStatistics = FileStatistics()
 
     # Bool value determines if the provided path is an actual file
     def stat_calculate(self) -> bool:
