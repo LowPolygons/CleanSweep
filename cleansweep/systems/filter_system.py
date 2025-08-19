@@ -52,7 +52,7 @@ class FilterSystem:
         filtration_status = FilterSystem.determine_file_filtration_status(file, user_settings)
 
         if filtration_status == FilterCodes.BlackListed:
-            return FlagCodes.NotFlagged
+            return FlagCodes.FlaggedBlack
 
         if filtration_status == FilterCodes.WhiteListed:
             return FlagCodes.FlaggedWhite 
