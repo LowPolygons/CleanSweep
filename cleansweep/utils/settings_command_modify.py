@@ -1,7 +1,6 @@
 from cleansweep.containers.user_settings import UserSettings
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.utils.get_main_path import get_main_path
-from cleansweep.utils.settings_command_display import DisplayOption, SettingsCommandDisplay
 
 def interactive_environment(session_cutoff: int) -> None:
     # TODO: Consider an ideological refactor to make this better
