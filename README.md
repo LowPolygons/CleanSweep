@@ -6,13 +6,13 @@ A python CLI tool to help remove old and large files on a system
 
 Clone the repository
 
-```bash
+```sh
 git clone https://github.com/LowPolygons/CleanSweep
 ```
 
 Install via pip
 
-```bash
+```sh
 cd CleanSweep
 
 pip install .
