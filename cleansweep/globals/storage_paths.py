@@ -13,6 +13,7 @@ class StoragePaths:
     log_file_name: str = "log.txt"
     storage_paths_file_name: str = "storage_paths.json"    
     user_settings_defaults_file_name: str = "user_settings_defaults.json"
+    to_delete_local_temp_file_name: str = "STAGED_FOR_DELETION"
     
     @staticmethod
     def get_formatted_path_with_file(file_name: str) -> str:
