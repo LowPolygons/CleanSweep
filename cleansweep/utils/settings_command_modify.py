@@ -1,4 +1,4 @@
-from dataclasses import astuple, field, fields
+from dataclasses import astuple, fields
 from datetime import date, datetime, timedelta
 from enum import Enum
 import json
@@ -13,7 +13,7 @@ from cleansweep.utils.get_main_path import get_main_path
 from cleansweep.utils.get_user_settings import get_user_settings
 from cleansweep.utils.settings_command_display import SettingsCommandDisplay
 
-PROMPT_SESSION_END = "end cleansweep session"
+PROMPT_SESSION_END = "cleansweep finish"
 PROMPT_DISPLAY_SETTINGS = "cleansweep display"
 NUMBER_OF_USER_SETTINGS = 12
 
@@ -74,7 +74,7 @@ class InteractiveEnvironment():
 
     @classmethod
     def pick_settings_option_to_modify(cls, user_settings: UserSettings) -> Optional[int]:
-        print(f"Chosen setting to modify (1-{NUMBER_OF_USER_SETTINGS})")
+        print(f"Choose a setting to modify (1-{NUMBER_OF_USER_SETTINGS})")
         
         choice = cls.number_in_range_non_inclusive_upper(1, NUMBER_OF_USER_SETTINGS+1, user_settings)
 
@@ -103,7 +103,6 @@ class InteractiveEnvironment():
             # Should never reach here
             return None
 
-    # TODO: these methods need to emulate something more like a rust Result to identify when it is ideal behaviour
     @classmethod
     def add_to_list(cls, list_obj: list, user_settings: UserSettings) -> Optional[list]:
         addition = input(" - new value => ")
@@ -119,6 +118,10 @@ class InteractiveEnvironment():
 
     @classmethod
     def remove_from_list(cls, list_obj: list, user_settings: UserSettings) -> Optional[list]:
+        if len(list_obj) == 0:
+            print("List already empty!")
+            return list_obj
+
         print(f"- Please choose an item to remove (1-{len(list_obj)})")
         remove_index = cls.number_in_range_non_inclusive_upper(1, len(list_obj)+1, user_settings)
 
@@ -189,20 +192,17 @@ class InteractiveEnvironment():
             print("Couldn't load the user settings - has the setup command run?")
             return
 
-        print("\nEntering interactive environment:\n")        
-        # Attempt to display the user_settings initially
+        print("\nEntering interactive environment:\n")
+
         SettingsCommandDisplay(SettingsVariant.Regular, maybe_user_settings)
-        # Print exit session info
-        print("\n - At any point, enter 'end cleansweep session' to end the session")
+
+        print("[Info]\n - At any point, enter 'cleansweep finish' to end the session")
         print(" - At any point, enter 'cleansweep display' to display the current user settings")
         print(" - When prompted to choose an option, pick the number based on the order display, starting from zero")
-        print("The changes made will automatically save upon session close\n")
-
-        # This handles the highest level control - need a routine which can emulate somehting along the lines of 
-        # UserSettings.Option = routine(UserSettings.Option)
-        # The only circumstance where anything should return None is when the session ends
+        print(" - The changes made will automatically save upon session close\n")
 
         while True:
+            print("=== === === === === ===")
             # Pick user option and validate it wasnt a session end
             maybe_choice = cls.pick_settings_option_to_modify(maybe_user_settings)
             if not maybe_choice:

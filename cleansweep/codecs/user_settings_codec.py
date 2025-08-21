@@ -4,7 +4,6 @@ from cleansweep.containers.user_settings import UserSettings
 from cleansweep.types.json import Json
 from cleansweep.systems.json_reader import JsonReader
 from typing import cast, Optional
-from cleansweep.systems.logger_system import Logger, LogLevel
 
 class UserSettingsCodec(JsonCodecInterface[UserSettings]):
     @staticmethod
