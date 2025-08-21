@@ -1,6 +1,7 @@
 from pathlib import Path
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.interfaces.command import CommandInterface 
+from cleansweep.utils.settings_command_reset import reset_user_settings
 from cleansweep.utils.setup_command_write_settings_default import write_user_settings
 
 from argparse import Namespace, _SubParsersAction
@@ -43,6 +44,9 @@ class SetupCommand(CommandInterface):
         print("[]===[]===[]===[]===[]\nCleanSweep has been successfully setup:\n")
         for key, value in files.items():
             print(f"- {key} found at {value}")
+
+        # Now copy the defaults to be the standard user settings 
+        reset_user_settings()
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
