@@ -1,15 +1,10 @@
 
-from pathlib import Path
 from typing import Optional
 from cleansweep.codecs.file_item_codec import FileItemCodec
 from cleansweep.containers.file_item import FileItem
 from cleansweep.interfaces.json_codec import JsonCodecInterface
 from cleansweep.systems.json_reader import JsonReader
 from cleansweep.types.json import Json
-
-# TODO: Refactor so that the file that stores black and white listed things doesnt store the entire object data, 
-# instead just the paths - it makes this bit far less messy and removes a lot of code that isn't strictly needed 
-# and can be (re)evaluated at run time
 
 FileArray = list[FileItem]
 

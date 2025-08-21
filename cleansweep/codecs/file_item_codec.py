@@ -1,7 +1,6 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from cleansweep.containers.file_statistics import FileStatistics
 from cleansweep.interfaces.json_codec import JsonCodecInterface
 from cleansweep.containers.file_item import FileItem
 from cleansweep.systems.json_reader import JsonReader
