@@ -5,14 +5,6 @@ from cleansweep.utils.settings_command_reset import reset_user_settings
 from cleansweep.utils.settings_command_modify import InteractiveEnvironment 
 from argparse import Namespace, _SubParsersAction
 
-# TODO: Finish implementing
-ARGUMENTS = [
-    "modify",
-    "display",
-    "reset",
-    "display-defaults"
-]
-
 class SettingsCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
@@ -41,4 +33,3 @@ class SettingsCommand(CommandInterface):
             help = "Choose whether to modify, display or reset your settings"
         )
         list_parser.set_defaults(func=cls.command)
-        # TODO: Add arguments if necessary

@@ -9,8 +9,6 @@ from argparse import Namespace, _SubParsersAction
 from cleansweep.types.json import Json
 from cleansweep.utils.get_main_path import get_main_path
 
-# arg name
-
 class ListCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
@@ -57,4 +55,3 @@ class ListCommand(CommandInterface):
             help = "TODO"
         )
         list_parser.set_defaults(func=cls.command)
-        # TODO: Add arguments if necessary
