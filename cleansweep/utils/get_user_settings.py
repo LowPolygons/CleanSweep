@@ -4,8 +4,10 @@ import json
 from typing import Optional, cast
 from cleansweep.codecs.user_settings_codec import UserSettingsCodec
 from cleansweep.containers.user_settings import UserSettings
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.globals.user_setting_variant import SettingsVariant
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 from cleansweep.utils.get_main_path import get_main_path
 
@@ -34,5 +36,5 @@ def get_user_settings(option: SettingsVariant) -> Optional[UserSettings]:
         # success
         return maybe_settings
     except Exception as err:
-        print(f"There was an error trying ro retrieve user settings: {err}")
+        Logger().add_line(f"There was an error trying ro retrieve user settings: {err}", LogLevel.ERROR)
         return None

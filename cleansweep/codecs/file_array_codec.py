@@ -2,8 +2,10 @@
 from typing import Optional
 from cleansweep.codecs.file_item_codec import FileItemCodec
 from cleansweep.containers.file_item import FileItem
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.interfaces.json_codec import JsonCodecInterface
 from cleansweep.systems.json_reader import JsonReader
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 
 FileArray = list[FileItem]
@@ -35,5 +37,5 @@ class FileArrayCodec(JsonCodecInterface[FileArray]):
 
             return file_objects
         except Exception as err:
-            print(f"Error trying to create the list of files: {err}")
+            Logger().add_line(f"Error trying to create the list of files: {err}", LogLevel.ERROR)
             return None

@@ -1,12 +1,15 @@
 
 from argparse import Namespace, _SubParsersAction
 
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.interfaces.command import CommandInterface 
+from cleansweep.systems.logger_system import Logger
 from cleansweep.utils.scan_command import scan
 
 class ScanCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
+        Logger().add_line("Running scan command", LogLevel.INFO)
         scan(args)
 
     @classmethod

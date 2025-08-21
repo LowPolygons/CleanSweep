@@ -1,9 +1,11 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.interfaces.json_codec import JsonCodecInterface
 from cleansweep.containers.file_item import FileItem
 from cleansweep.systems.json_reader import JsonReader
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 
 class FileItemCodec(JsonCodecInterface[FileItem]):
@@ -28,5 +30,5 @@ class FileItemCodec(JsonCodecInterface[FileItem]):
             return item
 
         except Exception as err:
-            print(f"Error trying to parse File Item json to object: {err}")
+            Logger().add_line(f"Error trying to parse File Item json to object: {err}", LogLevel.ERROR)
             return None

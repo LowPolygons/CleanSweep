@@ -2,16 +2,20 @@ import json
 import os
 from typing import cast
 from cleansweep.codecs.file_array_codec import FileArrayCodec
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.interfaces.command import CommandInterface
 from argparse import Namespace, _SubParsersAction
 
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 from cleansweep.utils.get_main_path import get_main_path
 
 class ListCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
+        Logger().add_line("Running List Command", LogLevel.INFO)
+
         file_to_load: str 
         if args.choice == 'blacklisted':
             print("Listing blacklisted files - files which will be ignored")

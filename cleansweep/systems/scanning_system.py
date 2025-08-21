@@ -1,7 +1,6 @@
 from pathlib import Path
 from cleansweep.containers.stack import Stack
 
-# TODO: Rename to clarify this is for Scanning
 class FileScanningManager:
     @staticmethod
     def get_file_names_immediate(starting_path: Path) -> list[Path]:

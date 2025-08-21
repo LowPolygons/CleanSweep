@@ -6,9 +6,11 @@ from pathlib import Path
 from cleansweep.codecs.file_array_codec import FileArrayCodec
 from cleansweep.containers.file_item import FileItem
 from cleansweep.globals.flag_codes import FlagCodes
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.globals.user_setting_variant import SettingsVariant
 from cleansweep.systems.filter_system import FilterSystem
+from cleansweep.systems.logger_system import Logger
 from cleansweep.systems.scanning_system import FileScanningManager
 from cleansweep.utils.get_main_path import get_main_path
 from cleansweep.utils.get_user_settings import get_user_settings
@@ -69,7 +71,7 @@ def scan(args: Namespace):
         with open(get_main_path() / StoragePaths.white_listed_file_name, "w") as file:
             json.dump(jsoned_whitelisted, file)
     except OSError as err:
-        print(f"There was an error trying to save the black/white listed files: {err}")
+        Logger().add_line(f"There was an error trying to save the black/white listed files: {err}", LogLevel.ERROR)
         return
 
     print("Successfully scanned and saved the flagged files.")

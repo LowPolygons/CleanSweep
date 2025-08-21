@@ -1,7 +1,9 @@
 
 from pathlib import Path
 import time
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
+from cleansweep.systems.logger_system import Logger
 
 def purge_continue():
     # Load the to_delete file, print the files and amount of data to be deleted, run final confirmations, 10s delay and then delete
@@ -11,7 +13,7 @@ def purge_continue():
             for line in file:
                 staged_paths.append(Path(line.strip()))
     except Exception as err:
-        print(f"There was an issue trying to prep staged files for deletion: {err}")
+        Logger().add_line(f"There was an issue trying to prep staged files for deletion: {err}", LogLevel.ERROR)
 
     # Print the staged paths and data to be deleted
     size_of_data_being_deleted: int = 0
@@ -41,14 +43,14 @@ def purge_continue():
         try:
             curr_path.unlink()
         except Exception as err:
-            print(f"Failed to delete {curr_path}: {err}, skipping")
+            Logger().add_line(f"Failed to delete {curr_path}: {err}, skipping", LogLevel.WARN)
             continue
     
     # Try delete the temp file
     try:
         Path(StoragePaths.to_delete_local_temp_file_name).unlink()
     except Exception as err:
-        print(f"Failed to delete temporary {StoragePaths.to_delete_local_temp_file_name} file: {err}")
+        Logger().add_line(f"Failed to delete temporary {StoragePaths.to_delete_local_temp_file_name} file: {err}", LogLevel.WARN)
         return
     
     print("\n - Successfully deleted staged files. Enjoy the storage space!")

@@ -2,7 +2,9 @@
 import json
 from typing import cast
 from cleansweep.codecs.file_array_codec import FileArrayCodec
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 from cleansweep.utils.get_main_path import get_main_path
 
@@ -30,6 +32,6 @@ def purge_stage():
         
         # Instruction statement
         print(f"The staged files have been written to {StoragePaths.to_delete_local_temp_file_name} in your current directory.")
-        print("Please check this file for any files you don't want deleting. \n Once ready, run 'cleansweep purge --continue")
+        print("Please check this file for any files you don't want deleting. \nOnce ready, run 'cleansweep purge --continue")
     except Exception as err:
-        print(f"There was an issue trying to stage the whitelisted files: '{err}', Maybe confirm the file exists and has data and try again")
+        Logger().add_line(f"There was an issue trying to stage the whitelisted files: '{err}', Maybe confirm the file exists and has data and try again", LogLevel.WARN)

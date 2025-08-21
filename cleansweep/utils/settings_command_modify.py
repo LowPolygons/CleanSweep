@@ -5,8 +5,10 @@ import json
 from typing import Optional, Union
 from cleansweep.codecs.user_settings_codec import UserSettingsCodec
 from cleansweep.containers.user_settings import UserSettings
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.globals.user_setting_variant import SettingsVariant
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 from cleansweep.types.user_settings_union import UserSettingsUnion
 from cleansweep.utils.get_main_path import get_main_path
@@ -182,7 +184,7 @@ class InteractiveEnvironment():
             with open(get_main_path() / StoragePaths.user_settings_file_name, "w") as file:
                 json.dump(settings_json, file)
         except OSError as err:
-            print(f"There was an error trying to write the default user settings to file, err {err}")
+            Logger().add_line(f"There was an error trying to write the default user settings to file, err {err}", LogLevel.ERROR)
 
     @classmethod
     def interactive_environment(cls, session_cutoff: int) -> None:

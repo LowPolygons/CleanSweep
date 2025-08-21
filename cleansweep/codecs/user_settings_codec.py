@@ -1,6 +1,8 @@
 from datetime import datetime
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.interfaces.json_codec import JsonCodecInterface
 from cleansweep.containers.user_settings import UserSettings
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 from cleansweep.systems.json_reader import JsonReader
 from typing import cast, Optional
@@ -67,6 +69,6 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             )
 
         except Exception as err:
-            print(f"Error trying to index some values in the User Settings Json: {err}")
+            Logger().add_line(f"Error trying to index some values in the User Settings Json: {err}", LogLevel.ERROR)
             return None
 

@@ -23,17 +23,6 @@ class FileItem:
         
     def get_path(self) -> Path:
         return self.__path
-    # ISSUE: Violation of S in OLID
-    def stats_as_json(self) -> Json:
-        json_data: Json = {
-            "name" : self.__stats.name,
-            "path" : str(self.__path),
-            "size" : self.__stats.size,
-            "extension" : self.__stats.extension,
-            "last_accessed" : self.__stats.last_accessed.strftime(DATE_FORMAT),
-            "last_modified" : self.__stats.last_modified.strftime(DATE_FORMAT)
-        }
-        return json_data
   
     # If the name starts with, or contains a set of strings, it should be black/whitelisted
     def filter_name(self, 

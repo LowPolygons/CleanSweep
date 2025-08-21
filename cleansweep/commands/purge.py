@@ -1,5 +1,7 @@
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.interfaces.command import CommandInterface 
 from argparse import Namespace, _SubParsersAction
+from cleansweep.systems.logger_system import Logger
 from cleansweep.utils.purge_command_continue import purge_continue
 from cleansweep.utils.purge_command_stage import purge_stage
 
@@ -7,11 +9,14 @@ class PurgeCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
         if args.stage:
+            Logger().add_line("Running purge command with '--staged' arg", LogLevel.INFO)
             purge_stage()
         elif args.continue_deletion:
+            Logger().add_line("Running purge command with '--continue' arg", LogLevel.INFO)
             purge_continue()
         else:
-            print("TODO: better description, Please stage or continue the purge operation")
+            Logger().add_line("Running purge command with no args, nothing happens", LogLevel.INFO)
+            print("Please run this command with either the --stage or --continue arg. If you run it with both, --stage takes priority")
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:

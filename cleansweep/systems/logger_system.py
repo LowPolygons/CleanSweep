@@ -1,6 +1,8 @@
+from pathlib import Path
 from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.singleton_metaclass import Singleton
 from cleansweep.globals.storage_paths import StoragePaths
+from cleansweep.utils.get_main_path import get_main_path
 
 from datetime import date
 
@@ -21,8 +23,12 @@ class Logger(metaclass=Singleton):
     def add_line(self, line: str, log_level: LogLevel):
         self.__log_lines.append("{} {}".format(Logger.log_level_to_string(log_level), line))
 
+        # If it was an error, print it too
+        if log_level == LogLevel.ERROR:
+            print("{} {}".format(Logger.log_level_to_string(log_level), line))
+
     def write_log(self) -> bool:
-        log_file_name = StoragePaths.get_formatted_path_with_file(self.__log_name)
+        log_file_name: Path = get_main_path() / self.__log_name
 
         try:
             with open(log_file_name, "a") as log_file:

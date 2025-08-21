@@ -1,7 +1,6 @@
 import argparse
 
-from pathlib import Path
-from cleansweep.systems.logger_system import Logger, LogLevel
+from cleansweep.systems.logger_system import Logger
 from cleansweep.commands import COMMANDS
 
 def main():
@@ -13,7 +12,12 @@ def main():
         
     args = parser.parse_args()
     args.func(args)
-        
+    
+    log_write_success = Logger().write_log()
+
+    if not log_write_success:
+        print("Failed to write log file.")
+
 if __name__ == "__main__":
     main()
 

@@ -2,7 +2,9 @@ import os
 import json
 from pathlib import Path
 from typing import cast
+from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
+from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 from cleansweep.utils.get_main_path import get_main_path
 
@@ -14,7 +16,6 @@ def reset_user_settings():
     if not os.path.exists(main_path / defaults) or not os.path.exists(main_path / currents):
         print(f"One or both of the files were not found.. have you run the setup command?")
         return 
-    
     try:
         # Defaults 
         defaults_json: Json
@@ -27,4 +28,4 @@ def reset_user_settings():
        
         print("User settings have been set to the default options")
     except OSError as err:
-        print(f"Failed to override settings with defaults: {err}")
+        Logger().add_line(f"Failed to override settings with defaults: {err}", LogLevel.ERROR)
