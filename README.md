@@ -22,16 +22,19 @@ pip install .
 ## Commands
 
 ### Setup
-Usage: `cleansweep setup` 
+```sh
+cleansweep setup
+``` 
 
 Run to setup up the files needed to use CleanSweep
 
 Creates the storage diretory `.cleansweep` in your home directory
 
 
-
 ### Settings
-Usage: `cleansweep settings --mode [reset, modify, display, display-defaults]` 
+```sh
+cleansweep settings --mode [reset, modify, display, display-defaults] 
+```
 
 Run this command to:
 
@@ -46,7 +49,9 @@ Run this command to:
 
 
 ### Scan
-Usage: `cleansweep scan --path [path]`
+```sh
+cleansweep scan --path [path]
+```
 
 Run this command to scan for all files relative to your current directory, filter them based on your settings, and then save them to the corresponding file
 
@@ -55,7 +60,9 @@ Note: The --path command is optional and is relative to your current directory
 
 
 ### List
-Usage: `cleansweep list --choice [blacklisted, whitelisted]`
+```sh
+cleansweep list --choice [blacklisted, whitelisted]
+```
 
 Run this command to print the files stored in the corresponding list
 
@@ -64,7 +71,9 @@ Note: If either the black/white list is empty, it will print a custom error/warn
 
 
 ### Purge
-Usage: `cleansweep purge [--stage, --continue]`
+```sh
+cleansweep purge [--stage, --continue]
+```
 
 Run this command to:
 
@@ -75,6 +84,8 @@ Run this command to:
 
 
 ### Demolish
-Usage: `cleansweep demolish`
+```sh
+cleansweep demolish
+```
 
 Run to uninstall stored cleansweep data from your system
