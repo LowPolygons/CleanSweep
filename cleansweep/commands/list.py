@@ -23,6 +23,9 @@ class ListCommand(CommandInterface):
         elif args.choice == 'whitelisted':
             print("Listing whitelisted files - files which will be deleted upon purge")
             file_to_load = StoragePaths.white_listed_file_name
+        elif args.choice == 'non-special':
+            print("Listing minimum flagged files - files which meet the minimum requirements to be flagged, but will not be acted upon")
+            file_to_load = StoragePaths.minimum_flagged_file_name
         else:
             print("Invalid argument passed")
             return
@@ -54,7 +57,7 @@ class ListCommand(CommandInterface):
         list_parser.add_argument(
             '--choice',
             type=str,
-            choices=['blacklisted', 'whitelisted'],
+            choices=['blacklisted', 'whitelisted', 'non-special'],
             required=True,
             help = "Choice of which category of files should be listed"
         )

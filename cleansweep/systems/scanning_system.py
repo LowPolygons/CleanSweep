@@ -1,5 +1,8 @@
 from pathlib import Path
+import sys
 from cleansweep.containers.stack import Stack
+
+FILE_SCAN_UPDATE_INCREMENT = 1
 
 class FileScanningManager:
     @staticmethod
@@ -18,9 +21,9 @@ class FileScanningManager:
     def get_file_names_recursive(starting_path: Path) -> list[Path]:
         found_files: list[Path] = []
         directories_to_search: Stack[Path] = Stack()
-
         directories_to_search.push(starting_path)
-        
+       
+        num_increments_exceeded = 0
         while len(directories_to_search) != 0:
             curr_dir = directories_to_search.pop()
 
@@ -34,8 +37,14 @@ class FileScanningManager:
             for file in files_found:
                 found_files.append(file)
 
+                if len(found_files) // FILE_SCAN_UPDATE_INCREMENT > num_increments_exceeded:
+                    num_increments_exceeded = len(found_files) // FILE_SCAN_UPDATE_INCREMENT
+                    sys.stdout.write(f"\rNumber of files scanned: {len(found_files)}")
+                    sys.stdout.flush()
+
             for dir in dirs_found:
                 directories_to_search.push(dir)
-
+        
+        print()
         return found_files
 

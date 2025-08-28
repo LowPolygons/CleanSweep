@@ -51,6 +51,7 @@ def scan(args: Namespace):
     # Filter through them to get the black/white listed
     blacklisted: list[FileItem] = []
     whitelisted: list[FileItem] = []
+    other_flagged: list[FileItem] = []
 
     for curr_file in files:
         file_flag_status: FlagCodes = FilterSystem.file_is_flagged(curr_file, maybe_user_settings)
@@ -59,17 +60,21 @@ def scan(args: Namespace):
             blacklisted.append(curr_file)
         elif file_flag_status == FlagCodes.FlaggedWhite:
             whitelisted.append(curr_file)
-        # TODO: how will the two other cases be handled?
+        elif file_flag_status == FlagCodes.Flagged:
+            other_flagged.append(curr_file)
 
     # Save them
     jsoned_blacklisted = FileArrayCodec.encode_to_json(blacklisted)
-    jsoned_whitelisted= FileArrayCodec.encode_to_json(whitelisted)
+    jsoned_whitelisted = FileArrayCodec.encode_to_json(whitelisted)
+    jsoned_other_flagged = FileArrayCodec.encode_to_json(other_flagged)
 
     try:
         with open(get_main_path() / StoragePaths.black_listed_file_name, "w") as file:
             json.dump(jsoned_blacklisted, file)
         with open(get_main_path() / StoragePaths.white_listed_file_name, "w") as file:
             json.dump(jsoned_whitelisted, file)
+        with open(get_main_path() / StoragePaths.minimum_flagged_file_name, "w") as file:
+            json.dump(jsoned_other_flagged, file)
     except OSError as err:
         Logger().add_line(f"There was an error trying to save the black/white listed files: {err}", LogLevel.ERROR)
         return
