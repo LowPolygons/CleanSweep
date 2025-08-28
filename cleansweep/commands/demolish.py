@@ -32,5 +32,5 @@ class DemolishCommand(CommandInterface):
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('demolish', help="TODO")
+        list_parser = subparsers.add_parser('demolish', help="Command used to remove cleansweep files from your machine")
         list_parser.set_defaults(func=cls.command)

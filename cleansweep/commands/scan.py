@@ -14,11 +14,11 @@ class ScanCommand(CommandInterface):
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('scan', help="TODO")
+        list_parser = subparsers.add_parser('scan', help="Command used to perform a recursive scan starting from your current, or given path")
         list_parser.add_argument(
             '--path',
             type=str,
             required=False,
-            help = "Choose whether to modify, display or reset your settings"
+            help = "Optional parameter to specify the path"
         )
         list_parser.set_defaults(func=cls.command)

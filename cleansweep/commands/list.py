@@ -50,12 +50,12 @@ class ListCommand(CommandInterface):
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('list', help="TODO")
+        list_parser = subparsers.add_parser('list', help="Command used to list varying lists of files that have been scanned")
         list_parser.add_argument(
             '--choice',
             type=str,
             choices=['blacklisted', 'whitelisted'],
             required=True,
-            help = "TODO"
+            help = "Choice of which category of files should be listed"
         )
         list_parser.set_defaults(func=cls.command)

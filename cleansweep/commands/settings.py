@@ -32,7 +32,7 @@ class SettingsCommand(CommandInterface):
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('settings', help="TODO")
+        list_parser = subparsers.add_parser('settings', help="Command used to modify, display, or reset information relating to your settings")
         list_parser.add_argument(
             '--mode',
             type=str,

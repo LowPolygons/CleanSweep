@@ -14,5 +14,5 @@ class SetupCommand(CommandInterface):
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('setup', help="TODO")
+        list_parser = subparsers.add_parser('setup', help="Command used to setup cleansweep files")
         list_parser.set_defaults(func=cls.command)

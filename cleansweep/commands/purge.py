@@ -20,7 +20,7 @@ class PurgeCommand(CommandInterface):
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('purge', help="TODO")
+        list_parser = subparsers.add_parser('purge', help="Command used to stage and delete any whitelisted files")
         list_parser.add_argument(
             '--stage',
             dest="stage",
