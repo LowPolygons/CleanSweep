@@ -20,3 +20,6 @@ class UserSettings:
     prioritise_file_names_starting_with: list[str]
     prioritise_files_whos_directory_contains: list[str]
     prioritise_files_larger_than: int
+
+    # Filter options
+    consider_access_date_when_filtering: bool

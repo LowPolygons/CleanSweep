@@ -12,6 +12,7 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
     def encode_to_json(obj: UserSettings) -> Json:
         data: Json = {
             "flag_date_cutoff" : obj.flag_date_cutoff.strftime("%Y-%m-%d"),
+            "consider_access_date" : obj.consider_access_date_when_filtering,
             "blacklist_files" : {
                 "extension_is" : cast(list[Json], obj.ignore_files_with_extension),
                 "name_contains" : cast(list[Json], obj.ignore_file_names_containing),
@@ -53,6 +54,8 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
 
             flag_date_cutoff = datetime.strptime(unformatted_flag_date_cutoff, "%Y-%m-%d").date()
 
+            consider_access_date_when_filtering = JsonReader.extract_bool(validated_obj["consider_access_date"])
+
             return UserSettings(
                 flag_date_cutoff, 
                 ignore_files_with_extension, 
@@ -65,7 +68,8 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
                 prioritise_file_names_containing,
                 prioritise_file_names_starting_with,
                 prioritise_files_whos_directory_contains,
-                prioritise_files_larger_than
+                prioritise_files_larger_than,
+                consider_access_date_when_filtering
             )
 
         except Exception as err:

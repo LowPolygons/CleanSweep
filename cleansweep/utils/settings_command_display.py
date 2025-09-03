@@ -32,3 +32,4 @@ def SettingsCommandDisplay(option: SettingsVariant, maybe_settings: Optional[Use
     print(f"10 - ..name starts with: {maybe_settings.prioritise_file_names_starting_with}")
     print(f"11 - ..directory contains: {maybe_settings.prioritise_files_whos_directory_contains}")
     print(f"12 - ..larger than: {maybe_settings.prioritise_files_larger_than} bytes\n")
+    print(f"13 - Consider Access Date when Filtering: {maybe_settings.consider_access_date_when_filtering}")

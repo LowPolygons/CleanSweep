@@ -43,7 +43,7 @@ class FilterSystem:
     @staticmethod
     def file_is_flagged(file: FileItem, user_settings: UserSettings) -> FlagCodes:
         # The default condition for a file being flagged is that it is older than a certain date
-        file_meets_age_requirement = file.was_last_modified_before(user_settings.flag_date_cutoff)
+        file_meets_age_requirement = file.was_last_modified_before(user_settings.flag_date_cutoff, user_settings.consider_access_date_when_filtering)
 
         if not file_meets_age_requirement:
             return FlagCodes.NotFlagged

@@ -17,7 +17,7 @@ from cleansweep.utils.settings_command_display import SettingsCommandDisplay
 
 PROMPT_SESSION_END = "cleansweep finish"
 PROMPT_DISPLAY_SETTINGS = "cleansweep display"
-NUMBER_OF_USER_SETTINGS = 12
+NUMBER_OF_USER_SETTINGS = 13
 
 LIST_MODIFY_OPTIONS = [
     "add",
@@ -156,7 +156,26 @@ class InteractiveEnvironment():
         return (datetime.today() - timedelta(days=new_num_days)).date()
 
     @classmethod
+    def update_bool_value(cls, old_bool: bool, user_settings: UserSettings):
+        print(f"Enter 'confirm' to switch this parameter from {old_bool} to {not old_bool} (case/space sensitive)")
+        while True:
+            choice = input(" => ")
+
+            if choice == PROMPT_SESSION_END:
+                return None
+            if choice == PROMPT_DISPLAY_SETTINGS:
+                SettingsCommandDisplay(SettingsVariant.Regular, user_settings)
+                continue
+
+            if choice == "confirm":
+                return not old_bool
+            
+            return old_bool
+
+    @classmethod
     def update_parameter(cls, value: UserSettingsUnion, user_settings: UserSettings) -> Optional[UserSettingsUnion]:
+        if isinstance(value, bool):
+            return cls.update_bool_value(value, user_settings)
         if isinstance(value, int):
             return cls.update_number_value(value, user_settings)
         if isinstance(value, date):
@@ -217,9 +236,9 @@ class InteractiveEnvironment():
             parameter_value = astuple(maybe_user_settings)[maybe_choice]
 
             print(f"Target Parameter: {parameter_name} = {parameter_value}")
-
+            
             maybe_parameter = cls.update_parameter(parameter_value, maybe_user_settings)
-            if not maybe_parameter:
+            if maybe_parameter == None:
                 return cls.session_end(maybe_user_settings)
 
             setattr(maybe_user_settings, parameter_name, maybe_parameter)

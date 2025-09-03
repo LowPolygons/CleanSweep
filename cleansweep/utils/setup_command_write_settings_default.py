@@ -26,7 +26,9 @@ def write_user_settings(path: Path) -> None:
         ["OUTPUT", "HISTORY", "slurm-"],
         ["deleteme"],
         [],
-        1001
+        1001,
+        # Consider access date
+        False
     )
     
     defaults_json: Json = UserSettingsCodec.encode_to_json(container_of_defaults)

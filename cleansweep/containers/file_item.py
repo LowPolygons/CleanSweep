@@ -92,6 +92,9 @@ class FileItem:
 
         return FilterCodes.NotSpecial
     
-    def was_last_modified_before(self, date_cutoff: date):
-        return self.__stats.last_modified < date_cutoff and \
-               self.__stats.last_accessed < date_cutoff
+    def was_last_modified_before(self, date_cutoff: date, consider_last_accessed: bool):
+        if consider_last_accessed:
+            return self.__stats.last_modified <= date_cutoff and \
+                   self.__stats.last_accessed <=date_cutoff
+        else:
+            return self.__stats.last_modified <= date_cutoff
