@@ -83,11 +83,11 @@ class FileItem:
                          white_list: list[str], 
                          black_list: list[str]) -> FilterCodes:
         for extension in black_list:
-            if self.__stats.extension == extension:
+            if self.__stats.extension == f".{extension}":
                 return FilterCodes.BlackListed
         
         for extension in white_list:
-            if self.__stats.extension == extension:
+            if self.__stats.extension == f".{extension}":
                 return FilterCodes.WhiteListed
 
         return FilterCodes.NotSpecial
