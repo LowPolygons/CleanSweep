@@ -16,14 +16,16 @@ class ListCommand(CommandInterface):
     def command(args: Namespace) -> None:
         Logger().add_line("Running List Command", LogLevel.INFO)
 
+        args.choice = 'whitelisted' if not args.choice else args.choice
+
         file_to_load: str 
-        if args.choice == 'blacklisted':
+        if args.choice == 'blacklisted' or args.choice == 'b':
             print("Listing blacklisted files - files which will be ignored")
             file_to_load = StoragePaths.black_listed_file_name
-        elif args.choice == 'whitelisted':
+        elif args.choice == 'whitelisted' or args.choice == 'w':
             print("Listing whitelisted files - files which will be deleted upon purge")
             file_to_load = StoragePaths.white_listed_file_name
-        elif args.choice == 'non-special':
+        elif args.choice == 'non-special' or args.choice == 'n':
             print("Listing minimum flagged files - files which meet the minimum requirements to be flagged, but will not be acted upon")
             file_to_load = StoragePaths.minimum_flagged_file_name
         else:
@@ -53,12 +55,12 @@ class ListCommand(CommandInterface):
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('list', help="Command used to list varying lists of files that have been scanned")
+        list_parser = subparsers.add_parser('list', help="Command used to list varying lists of files that have been scanned. Optional argument '--choice' which defaults to 'whitelisted'")
         list_parser.add_argument(
             '--choice',
             type=str,
-            choices=['blacklisted', 'whitelisted', 'non-special'],
-            required=True,
+            choices=['blacklisted', 'b', 'whitelisted', 'w', 'non-special', 'n'],
+            required=False,
             help = "Choice of which category of files should be listed"
         )
         list_parser.set_defaults(func=cls.command)
