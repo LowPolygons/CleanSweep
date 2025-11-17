@@ -57,9 +57,9 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             consider_access_date_when_filtering = JsonReader.extract_bool(validated_obj["consider_access_date"])
 
             for extension in ignore_files_with_extension:
-                extension = extension[1:] if extension.starts_with(".") else extension
+                extension = extension[1:] if extension.startswith(".") else extension
             for extension in prioritise_files_with_extension:
-                extension = extension[1:] if extension.starts_with(".") else extension
+                extension = extension[1:] if extension.startswith(".") else extension
 
             return UserSettings(
                 flag_date_cutoff, 
