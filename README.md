@@ -33,7 +33,7 @@ Creates the storage diretory `.cleansweep` in your home directory
 
 ### Settings
 ```sh
-cleansweep settings --mode [reset, modify, display, display-defaults] 
+cleansweep settings [reset, modify, display] 
 ```
 
 Run this command to:
@@ -42,10 +42,7 @@ Run this command to:
 
 - RESET: This will copy the default user settings into your active ones
 
-- DISPLAY: This will print your active user settings to the screen
-
-- DISPLAY-DEFAULTS: This will print the defaults to the screen. If you wish to change this, do it by editing the JSON directory in `.cleansweep` 
-
+- DISPLAY: This is followed by one of two parameters - `["current", "defaults"]`, and displays to the screen the corresponding settings
 
 
 ### Scan
