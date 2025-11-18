@@ -217,13 +217,13 @@ class InteractiveEnvironment():
 
         SettingsCommandDisplay(SettingsVariant.Regular, maybe_user_settings)
 
-        print("[Info]\n - At any point, enter 'cleansweep finish' to end the session")
-        print(" - At any point, enter 'cleansweep display' to display the current user settings")
-        print(" - When prompted to choose an option, pick the number based on the order display, starting from zero")
+        print("[Info]\n - When prompted to choose an option, pick the number based on the order display, starting from zero")
         print(" - The changes made will automatically save upon session close\n")
 
         while True:
             print("=== === === === === ===")
+            print(" - At any point, enter 'cleansweep finish' to end the session")
+            print(" - At any point, enter 'cleansweep display' to display the current user settings")
             # Pick user option and validate it wasnt a session end
             maybe_choice = cls.pick_settings_option_to_modify(maybe_user_settings)
             if not maybe_choice:
