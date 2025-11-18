@@ -10,34 +10,52 @@ from argparse import Namespace, _SubParsersAction
 class SettingsCommand(CommandInterface):
     @staticmethod
     def command(args: Namespace) -> None:
-        if args.mode == 'modify':
+        if args.action == "modify":
             Logger().add_line("Running settings command with --modify", LogLevel.INFO)
             InteractiveEnvironment.interactive_environment(-1)
             print("\nMake sure you re-scan any files to get the most up-to-date list.")
-        elif args.mode == 'display':
-            Logger().add_line("Running settings command with --display", LogLevel.INFO)
-            # Load file and print
-            SettingsCommandDisplay(SettingsVariant.Regular)
-            pass
-        elif args.mode == 'reset':
+        elif args.action == "reset":
             Logger().add_line("Running settings command with --reset", LogLevel.INFO)
             reset_user_settings()
-        elif args.mode == 'display-defaults':
-            Logger().add_line("Running settings command with --displa", LogLevel.INFO)
-            # Load the default settings and attempt to display
-            SettingsCommandDisplay(SettingsVariant.Defaults) 
+        elif args.action == "display":
+            if args.which == 'current':
+                Logger().add_line("Running settings command with --display", LogLevel.INFO)
+                # Load file and print
+                SettingsCommandDisplay(SettingsVariant.Regular)
+                pass
+            elif args.which == 'defaults':
+                Logger().add_line("Running settings command with --displa", LogLevel.INFO)
+                # Load the default settings and attempt to display
+                SettingsCommandDisplay(SettingsVariant.Defaults)
+            else:
+                Logger().add_line("Attempted to run settings display command with invalid args", LogLevel.INFO)
+                print("Unknown argument for display command, options: current, defaults")
         else:
             Logger().add_line("Attempted to run settings command with no args", LogLevel.INFO)
-            print("Unknown argument, options are: modify, display, reset, display-defaults") 
+            print("Unknown argument, options are: modify, --display, reset") 
 
     @classmethod
     def register_subparser(cls, subparsers: _SubParsersAction) -> None:
-        list_parser = subparsers.add_parser('settings', help="Command used to modify, display, or reset information relating to your settings")
-        list_parser.add_argument(
-            '--mode',
-            type=str,
-            choices=['modify', 'display', 'reset', 'display-defaults'],
-            required=True,
-            help = "Choose whether to modify, display or reset your settings"
+        settings_parser = subparsers.add_parser('settings', help="Command used to modify, display, or reset information relating to your settings")
+        settings_sub = settings_parser.add_subparsers(dest="action", required=True)
+        # Modify
+        settings_sub.add_parser(
+            'modify',
+            help = "Choose to enter an interactive environment to edit your settings"
         )
-        list_parser.set_defaults(func=cls.command)
+        # Display
+        display_parser = settings_sub.add_parser(
+            'display',
+            help = "Choose whether to display your current settings or the system defaults"
+        )
+        display_parser.add_argument(
+            "which",
+            choices=["current","defaults"],
+            help=""
+        )
+        # Reset 
+        settings_sub.add_parser(
+            'reset',
+            help = "Choose to reset your current settings to your system defaults"
+        )
+        settings_parser.set_defaults(func=cls.command)
