@@ -33,3 +33,6 @@ def SettingsCommandDisplay(option: SettingsVariant, maybe_settings: Optional[Use
     print(f"11 - ..directory contains: {maybe_settings.prioritise_files_whos_directory_contains}")
     print(f"12 - ..larger than: {maybe_settings.prioritise_files_larger_than} bytes\n")
     print(f"13 - Consider Access Date when Filtering: {maybe_settings.consider_access_date_when_filtering}")
+    print(f"Files which may be in a set:")
+    print(f"14 - .. with extension: {maybe_settings.set_may_have_extension}")
+    print(f"15 - .. name contains: {maybe_settings.set_file_name_may_contain}")

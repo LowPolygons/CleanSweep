@@ -29,8 +29,9 @@ def write_user_settings(path: Path) -> None:
         1001,
         # Consider access date
         False,
-        ["test_"],
-        ["tris"]
+        # Set things
+        ["h5"],
+        ["test_"]
     )
     
     defaults_json: Json = UserSettingsCodec.encode_to_json(container_of_defaults)
