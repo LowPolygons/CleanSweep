@@ -21,6 +21,7 @@ class FileSetArrayCodec(JsonCodecInterface[FileSetArray]):
         try:
             file_objects: list[list[str]] = []
             for a_set in obj:
+                set_arr: list[str] = []
                 for str_path in a_set:
                     maybe_exists = Path(str_path)
 
@@ -28,7 +29,8 @@ class FileSetArrayCodec(JsonCodecInterface[FileSetArray]):
                         print(f"Failed to create file at path {str_path}")
                         continue
 
-                    file_objects.append(str_path)
+                    set_arr.append(str_path)
+                file_objects.append(set_arr)
 
             return file_objects
         except Exception as err:
