@@ -26,17 +26,17 @@ class FilterSystem:
             user_settings.ignore_files_with_extension
         )
         # Prioritise a black list first
-        if name_status == FilterCodes.BlackListed or \
-            size_status == FilterCodes.BlackListed or \
-            path_status == FilterCodes.BlackListed or \
-            extension_status == FilterCodes.BlackListed:
-            return FilterCodes.BlackListed 
+        if name_status == FilterCodes.ToKeep or \
+            size_status == FilterCodes.ToKeep or \
+            path_status == FilterCodes.ToKeep or \
+            extension_status == FilterCodes.ToKeep:
+            return FilterCodes.ToKeep 
 
-        if name_status == FilterCodes.WhiteListed or \
-            size_status == FilterCodes.WhiteListed or \
-            path_status == FilterCodes.WhiteListed or \
-            extension_status == FilterCodes.WhiteListed:
-            return FilterCodes.WhiteListed 
+        if name_status == FilterCodes.ToDelete or \
+            size_status == FilterCodes.ToDelete or \
+            path_status == FilterCodes.ToDelete or \
+            extension_status == FilterCodes.ToDelete:
+            return FilterCodes.ToDelete 
         
         return FilterCodes.NotSpecial
         
@@ -51,10 +51,10 @@ class FilterSystem:
         # From here, check that it hasn't been black listed
         filtration_status = FilterSystem.determine_file_filtration_status(file, user_settings)
 
-        if filtration_status == FilterCodes.BlackListed:
-            return FlagCodes.FlaggedBlack
+        if filtration_status == FilterCodes.ToKeep:
+            return FlagCodes.FlaggedToKeep
 
-        if filtration_status == FilterCodes.WhiteListed:
-            return FlagCodes.FlaggedWhite 
+        if filtration_status == FilterCodes.ToDelete:
+            return FlagCodes.FlaggedToDelete 
         
         return FlagCodes.Flagged

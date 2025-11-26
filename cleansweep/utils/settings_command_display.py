@@ -19,14 +19,14 @@ def SettingsCommandDisplay(option: SettingsVariant, maybe_settings: Optional[Use
             return
     # Print the user settings
     print(f"\n1 - Date-cutoff-time for flagging files: {maybe_settings.flag_date_cutoff}")
-    print(f"Blacklist Files:")
+    print(f"Files to Keep:")
     print(f"2 - ..with extension: {maybe_settings.ignore_files_with_extension}")
     print(f"3 - ..name contains: {maybe_settings.ignore_file_names_containing}")
     print(f"4 - ..directory contains: {maybe_settings.ignore_files_whos_directory_contains}")
     print(f"5 - ..name starts with: {maybe_settings.ignore_file_names_starting_with}")
     print(f"6 - ..smaller than: {maybe_settings.ignore_files_smaller_than} bytes")
     print(f"7 - ..larger than: {maybe_settings.ignore_files_larger_than} bytes")
-    print(f"Whitelist Files:")
+    print(f"Files to Delete:")
     print(f"8 - ..with extension: {maybe_settings.prioritise_files_with_extension}")
     print(f"9 - ..name contains: {maybe_settings.prioritise_file_names_containing}")
     print(f"10 - ..name starts with: {maybe_settings.prioritise_file_names_starting_with}")

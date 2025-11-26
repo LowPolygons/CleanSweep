@@ -13,7 +13,7 @@ def purge_stage():
     # Load whitelist file, print number of files being staged, write to_delete
     try:
         unsanitised_whitelist: Json
-        with open(get_main_path() / StoragePaths.white_listed_file_name, "r") as file:
+        with open(get_main_path() / StoragePaths.to_delete_file_name, "r") as file:
             unsanitised_whitelist = cast(Json, json.load(file))
 
         maybe_file_array = FileArrayCodec.create_from_json(unsanitised_whitelist)

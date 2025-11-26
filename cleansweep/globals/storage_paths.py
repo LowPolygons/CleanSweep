@@ -8,8 +8,8 @@ class StoragePaths:
     main_dir_name: str = ".cleansweep"
 
     # The file names
-    white_listed_file_name: str = "white_listed_files.json"
-    black_listed_file_name: str = "black_listed_files.json"
+    to_delete_file_name: str = "to_delete_files.json"
+    to_keep_file_name: str = "to_keep__files.json"
     minimum_flagged_file_name: str = "minimum_flagged_files.json"
 
     user_settings_file_name: str = "user_settings.json"

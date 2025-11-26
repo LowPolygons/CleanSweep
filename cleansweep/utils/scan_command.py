@@ -49,30 +49,30 @@ def scan(args: Namespace):
         files.append(curr_file)
 
     # Filter through them to get the black/white listed
-    blacklisted: list[FileItem] = []
-    whitelisted: list[FileItem] = []
+    to_keep: list[FileItem] = []
+    to_delete: list[FileItem] = []
     other_flagged: list[FileItem] = []
 
     for curr_file in files:
         file_flag_status: FlagCodes = FilterSystem.file_is_flagged(curr_file, maybe_user_settings)
 
-        if file_flag_status == FlagCodes.FlaggedBlack:
-            blacklisted.append(curr_file)
-        elif file_flag_status == FlagCodes.FlaggedWhite:
-            whitelisted.append(curr_file)
+        if file_flag_status == FlagCodes.FlaggedToKeep:
+            to_keep.append(curr_file)
+        elif file_flag_status == FlagCodes.FlaggedToDelete:
+            to_delete.append(curr_file)
         elif file_flag_status == FlagCodes.Flagged:
             other_flagged.append(curr_file)
 
     # Save them
-    jsoned_blacklisted = FileArrayCodec.encode_to_json(blacklisted)
-    jsoned_whitelisted = FileArrayCodec.encode_to_json(whitelisted)
+    jsoned_to_keep = FileArrayCodec.encode_to_json(to_keep)
+    jsoned_to_delete = FileArrayCodec.encode_to_json(to_delete)
     jsoned_other_flagged = FileArrayCodec.encode_to_json(other_flagged)
 
     try:
-        with open(get_main_path() / StoragePaths.black_listed_file_name, "w") as file:
-            json.dump(jsoned_blacklisted, file)
-        with open(get_main_path() / StoragePaths.white_listed_file_name, "w") as file:
-            json.dump(jsoned_whitelisted, file)
+        with open(get_main_path() / StoragePaths.to_keep_file_name, "w") as file:
+            json.dump(jsoned_to_keep, file)
+        with open(get_main_path() / StoragePaths.to_delete_file_name, "w") as file:
+            json.dump(jsoned_to_delete, file)
         with open(get_main_path() / StoragePaths.minimum_flagged_file_name, "w") as file:
             json.dump(jsoned_other_flagged, file)
     except OSError as err:

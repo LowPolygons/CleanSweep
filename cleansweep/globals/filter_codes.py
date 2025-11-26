@@ -2,5 +2,5 @@ from enum import Enum
 
 class FilterCodes(Enum):
     NotSpecial = 0
-    WhiteListed = 1
-    BlackListed = 2
+    ToDelete = 1
+    ToKeep = 2

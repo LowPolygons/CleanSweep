@@ -26,69 +26,69 @@ class FileItem:
   
     # If the name starts with, or contains a set of strings, it should be black/whitelisted
     def filter_name(self, 
-                    white_list_substrings: list[str], 
-                    black_list_substrings: list[str], 
-                    white_list_starts_with: list[str], 
-                    black_list_starts_with: list[str]) -> FilterCodes:
+                    to_delete_substrings: list[str], 
+                    to_keep_substrings: list[str], 
+                    to_delete_starts_with: list[str], 
+                    to_keep_starts_with: list[str]) -> FilterCodes:
         # Black list first
-        for starts_with in black_list_starts_with:
+        for starts_with in to_keep_starts_with:
             if self.__stats.name.find(starts_with) == STARTS_WITH_SUBSTR:
-                return FilterCodes.BlackListed       
-        for name_contains in black_list_substrings:
+                return FilterCodes.ToKeep       
+        for name_contains in to_keep_substrings:
             if self.__stats.name.find(name_contains) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.BlackListed
+                return FilterCodes.ToKeep
 
         # Then Whitelist
-        for starts_with in white_list_starts_with:
+        for starts_with in to_delete_starts_with:
             if self.__stats.name.find(starts_with) == STARTS_WITH_SUBSTR:
-                return FilterCodes.WhiteListed
-        for name_contains in white_list_substrings:
+                return FilterCodes.ToDelete
+        for name_contains in to_delete_substrings:
             if self.__stats.name.find(name_contains) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.WhiteListed
+                return FilterCodes.ToDelete
 
         return FilterCodes.NotSpecial
 
     # Filters the path of the item for a set of substrings to see if it should be black/whitelisted 
     def filter_path(self, 
-                    white_list: list[str], 
-                    black_list: list[str]) -> FilterCodes:
+                    to_delete: list[str], 
+                    to_keep: list[str]) -> FilterCodes:
         # Prioritise the black list 
-        for path_substr in black_list:
+        for path_substr in to_keep:
             if str(self.__path).find(path_substr) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.BlackListed
+                return FilterCodes.ToKeep
         # Then filter the white list 
-        for path_substr in white_list:
+        for path_substr in to_delete:
             if str(self.__path).find(path_substr) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.WhiteListed
+                return FilterCodes.ToDelete
         
         return FilterCodes.NotSpecial
 
     # Filters the size of the item, and seeing if it should be black/whitelisted
     def filter_size(self, 
-                    white_list: int,
-                    black_list_lower_than: int, 
-                    black_list_higher_than: int) -> FilterCodes:
+                    to_delete: int,
+                    to_keep_lower_than: int, 
+                    to_keep_higher_than: int) -> FilterCodes:
         # Prioritise black list 
-        if self.__stats.size < black_list_lower_than or \
-           self.__stats.size > black_list_higher_than:
-            return FilterCodes.BlackListed
+        if self.__stats.size < to_keep_lower_than or \
+           self.__stats.size > to_keep_higher_than:
+            return FilterCodes.ToKeep
         
-        if self.__stats.size > white_list:
-            return FilterCodes.WhiteListed
+        if self.__stats.size > to_delete:
+            return FilterCodes.ToDelete
 
         return FilterCodes.NotSpecial
 
     # Filters the extension to see if it matches any in the provided black/whitelist
     def filter_extension(self, 
-                         white_list: list[str], 
-                         black_list: list[str]) -> FilterCodes:
-        for extension in black_list:
+                         to_delete: list[str], 
+                         to_keep: list[str]) -> FilterCodes:
+        for extension in to_keep:
             if self.__stats.extension == f".{extension}":
-                return FilterCodes.BlackListed
+                return FilterCodes.ToKeep
         
-        for extension in white_list:
+        for extension in to_delete:
             if self.__stats.extension == f".{extension}":
-                return FilterCodes.WhiteListed
+                return FilterCodes.ToDelete
 
         return FilterCodes.NotSpecial
     

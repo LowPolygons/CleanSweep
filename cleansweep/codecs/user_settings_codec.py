@@ -13,7 +13,7 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
         data: Json = {
             "flag_date_cutoff" : obj.flag_date_cutoff.strftime("%Y-%m-%d"),
             "consider_access_date" : obj.consider_access_date_when_filtering,
-            "blacklist_files" : {
+            "to_keep_files" : {
                 "extension_is" : cast(list[Json], obj.ignore_files_with_extension),
                 "name_contains" : cast(list[Json], obj.ignore_file_names_containing),
                 "name_starts_with" : cast(list[Json], obj.ignore_file_names_starting_with),
@@ -21,7 +21,7 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
                 "smaller_than" : obj.ignore_files_smaller_than,
                 "larger_than" : obj.ignore_files_larger_than
             },
-            "whitelist_files" : {
+            "to_delete_files" : {
                 "extension_is" : cast(list[Json], obj.prioritise_files_with_extension),
                 "name_contains" : cast(list[Json], obj.prioritise_file_names_containing),
                 "name_starts_with" : cast(list[Json], obj.prioritise_file_names_starting_with),
@@ -35,22 +35,22 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
     def create_from_json(obj: Json) -> Optional[UserSettings]:
         try:
             validated_obj: dict[str, Json] = JsonReader.extract_json_dict(obj)
-            blacklisted: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["blacklist_files"])
-            whitelisted: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["whitelist_files"])
+            to_keep: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["to_keep_files"])
+            to_delete: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["to_delete_files"])
 
             unformatted_flag_date_cutoff = JsonReader.extract_str(validated_obj["flag_date_cutoff"])
-            ignore_files_with_extension = JsonReader.extract_list_of_type(blacklisted["extension_is"], str)
-            ignore_file_names_containing = JsonReader.extract_list_of_type(blacklisted["name_contains"], str)
-            ignore_file_names_starting_with = JsonReader.extract_list_of_type(blacklisted["name_starts_with"], str)
-            ignore_files_whos_directory_contains = JsonReader.extract_list_of_type(blacklisted["directory_contains"], str)
-            ignore_files_smaller_than = JsonReader.extract_int(blacklisted["smaller_than"])
-            ignore_files_larger_than = JsonReader.extract_int(blacklisted["larger_than"])
+            ignore_files_with_extension = JsonReader.extract_list_of_type(to_keep["extension_is"], str)
+            ignore_file_names_containing = JsonReader.extract_list_of_type(to_keep["name_contains"], str)
+            ignore_file_names_starting_with = JsonReader.extract_list_of_type(to_keep["name_starts_with"], str)
+            ignore_files_whos_directory_contains = JsonReader.extract_list_of_type(to_keep["directory_contains"], str)
+            ignore_files_smaller_than = JsonReader.extract_int(to_keep["smaller_than"])
+            ignore_files_larger_than = JsonReader.extract_int(to_keep["larger_than"])
 
-            prioritise_files_with_extension = JsonReader.extract_list_of_type(whitelisted["extension_is"], str)
-            prioritise_file_names_containing = JsonReader.extract_list_of_type(whitelisted["name_contains"], str)
-            prioritise_file_names_starting_with = JsonReader.extract_list_of_type(whitelisted["name_starts_with"], str)
-            prioritise_files_whos_directory_contains = JsonReader.extract_list_of_type(whitelisted["directory_contains"], str)
-            prioritise_files_larger_than = JsonReader.extract_int(whitelisted["larger_than"])
+            prioritise_files_with_extension = JsonReader.extract_list_of_type(to_delete["extension_is"], str)
+            prioritise_file_names_containing = JsonReader.extract_list_of_type(to_delete["name_contains"], str)
+            prioritise_file_names_starting_with = JsonReader.extract_list_of_type(to_delete["name_starts_with"], str)
+            prioritise_files_whos_directory_contains = JsonReader.extract_list_of_type(to_delete["directory_contains"], str)
+            prioritise_files_larger_than = JsonReader.extract_int(to_delete["larger_than"])
 
             flag_date_cutoff = datetime.strptime(unformatted_flag_date_cutoff, "%Y-%m-%d").date()
 

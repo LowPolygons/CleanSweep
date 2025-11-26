@@ -19,8 +19,8 @@ def setup():
     main_folder.mkdir()
     # Create the filepaths needed
     files: dict[str, Path] = {
-        "White-Listed" : main_folder / initial_storage_path.white_listed_file_name, 
-        "Black-Listed" : main_folder / initial_storage_path.black_listed_file_name,
+        "To-Delete" : main_folder / initial_storage_path.to_delete_file_name, 
+        "To-Keep" : main_folder / initial_storage_path.to_keep_file_name,
         "User-Settings" : main_folder / initial_storage_path.user_settings_file_name,
         "Log-File" : main_folder / initial_storage_path.log_file_name,
         "User-Settings-Defaults" : main_folder / initial_storage_path.user_settings_defaults_file_name

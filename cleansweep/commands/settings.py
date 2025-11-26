@@ -24,7 +24,7 @@ class SettingsCommand(CommandInterface):
                 SettingsCommandDisplay(SettingsVariant.Regular)
                 pass
             elif args.which == 'defaults':
-                Logger().add_line("Running settings command with --displa", LogLevel.INFO)
+                Logger().add_line("Running settings command with --display", LogLevel.INFO)
                 # Load the default settings and attempt to display
                 SettingsCommandDisplay(SettingsVariant.Defaults)
             else:

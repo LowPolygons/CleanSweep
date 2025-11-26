@@ -6,7 +6,7 @@ class UserSettings:
     # THE FLAGS NEEDED FOR A FILE 
     flag_date_cutoff: date 
 
-    # Black list files get ignored 
+    # To Keep files get ignored 
     ignore_files_with_extension: list[str]
     ignore_file_names_containing: list[str]
     ignore_files_whos_directory_contains: list[str]
@@ -14,7 +14,7 @@ class UserSettings:
     ignore_files_smaller_than: int
     ignore_files_larger_than: int
 
-    # White listed files get stored in a file if they aren't deleted
+    # To Delete files get stored in a file
     prioritise_files_with_extension: list[str]
     prioritise_file_names_containing: list[str]
     prioritise_file_names_starting_with: list[str]

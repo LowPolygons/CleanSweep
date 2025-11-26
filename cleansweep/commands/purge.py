@@ -26,7 +26,7 @@ class PurgeCommand(CommandInterface):
             dest="stage",
             required=False,
             action="store_true",
-            help = "Prep the whitelisted files for final checks before deletion"
+            help = "Prep the files to delete for final checks before deletion"
         )
         list_parser.add_argument(
             '--continue',
