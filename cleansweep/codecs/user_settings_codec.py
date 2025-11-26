@@ -27,7 +27,11 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
                 "name_starts_with" : cast(list[Json], obj.prioritise_file_names_starting_with),
                 "directory_contains" : cast(list[Json], obj.prioritise_files_whos_directory_contains),
                 "larger_than" : obj.prioritise_files_larger_than
-            }
+            },
+            "maybe_set_files" : {
+                "extension_is" : cast(list[Json], obj.set_may_have_extension),
+                "name_contains" : cast(list[Json], obj.set_file_name_may_contain)
+            } 
         }
         return data
 
@@ -37,6 +41,7 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             validated_obj: dict[str, Json] = JsonReader.extract_json_dict(obj)
             to_keep: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["to_keep_files"])
             to_delete: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["to_delete_files"])
+            set_files: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["maybe_set_files"])
 
             unformatted_flag_date_cutoff = JsonReader.extract_str(validated_obj["flag_date_cutoff"])
             ignore_files_with_extension = JsonReader.extract_list_of_type(to_keep["extension_is"], str)
@@ -56,6 +61,9 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
 
             consider_access_date_when_filtering = JsonReader.extract_bool(validated_obj["consider_access_date"])
 
+            set_may_have_extension = JsonReader.extract_list_of_type(set_files["extension_is"], str)
+            set_file_name_may_contain = JsonReader.extract_list_of_type(set_files["name_contains"], str)
+
             for extension in ignore_files_with_extension:
                 extension = extension[1:] if extension.startswith(".") else extension
             for extension in prioritise_files_with_extension:
@@ -74,7 +82,9 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
                 prioritise_file_names_starting_with,
                 prioritise_files_whos_directory_contains,
                 prioritise_files_larger_than,
-                consider_access_date_when_filtering
+                consider_access_date_when_filtering,
+                set_may_have_extension,
+                set_file_name_may_contain
             )
 
         except Exception as err:

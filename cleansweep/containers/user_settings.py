@@ -23,3 +23,7 @@ class UserSettings:
 
     # Filter options
     consider_access_date_when_filtering: bool
+
+    # Set rules
+    set_may_have_extension: list[str]
+    set_file_name_may_contain: list[str]

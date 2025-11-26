@@ -92,9 +92,21 @@ class FileItem:
 
         return FilterCodes.NotSpecial
     
-    def was_last_modified_before(self, date_cutoff: date, consider_last_accessed: bool):
+    def was_last_modified_before(self, date_cutoff: date, consider_last_accessed: bool) -> bool:
         if consider_last_accessed:
             return self.__stats.last_modified <= date_cutoff and \
                    self.__stats.last_accessed <=date_cutoff
         else:
             return self.__stats.last_modified <= date_cutoff
+
+    # TODO: the way this function is written is pretty poor, perhaps re-factor
+    def maybe_in_set(self, set_extensions: list[str], set_file_name_contains: list[str]) -> bool:
+        for extension in set_extensions:
+            if self.__stats.extension == f".{extension}":
+                return True
+        
+        for substring in set_file_name_contains:
+            if self.__stats.name.find(substring) is not SUBSTR_NOT_FOUND:
+                return True
+
+        return False 

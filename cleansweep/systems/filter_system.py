@@ -3,7 +3,7 @@ from cleansweep.containers.user_settings import UserSettings
 from cleansweep.globals.filter_codes import FilterCodes
 from cleansweep.globals.flag_codes import FlagCodes
 
-class FilterSystem: 
+class FilterSystem:
     @staticmethod
     def determine_file_filtration_status(file: FileItem, user_settings: UserSettings) -> FilterCodes:
         name_status = file.filter_name(
