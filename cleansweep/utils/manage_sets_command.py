@@ -119,54 +119,54 @@ def finalise_changes(sets: list[SetAndManagementPair]):
    
     to_delete_array = []
     to_keep_array = []
-    # Load the JSON version of the To Keep List
-    try:
-        unsanitised_json: Json = []
-
-        with open(get_main_path() / StoragePaths.to_keep_file_name, "r") as file:
-            unsanitised_json = cast(Json, json.load(file))
-        
-        maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
-
-        if not maybe_file_array:
-            print("To-Keep list not found, creating new one.")
-        else:
-            to_keep_array = maybe_file_array
-    except Exception as err:
-        print(f"Failed to open the to-keep files - {err}")
-        return
-    # Now the JSON version of the To Delete list
-    try:
-        unsanitised_json: Json = []
-
-        with open(get_main_path() / StoragePaths.to_delete_file_name, "r") as file:
-            unsanitised_json = cast(Json, json.load(file))
-        
-        maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
-
-        if not maybe_file_array:
-            print("To-Delete list not found, creating new one.")
-        else:
-            to_delete_array = maybe_file_array
-    except Exception as err:
-        print(f"Failed to open the to-delete files - {err}")
-        return
-    
-    # Now eliminate any instances found if there
-    if to_keep_array != []:
-        paths_to_remove = {path for set_obj in sets for path in set_obj.set}
-
-        to_keep_array = [
-            obj for obj in to_keep_array
-            if str(obj.get_path()) not in paths_to_remove
-        ]
-    if to_delete_array != []:
-        paths_to_remove = {path for set_obj in sets for path in set_obj.set}
-
-        to_delete_array = [
-            obj for obj in to_delete_array
-            if str(obj.get_path()) not in paths_to_remove
-        ]
+    # # Load the JSON version of the To Keep List
+    # try:
+    #     unsanitised_json: Json = []
+    #
+    #     with open(get_main_path() / StoragePaths.to_keep_file_name, "r") as file:
+    #         unsanitised_json = cast(Json, json.load(file))
+    #
+    #     maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
+    #
+    #     if not maybe_file_array:
+    #         print("To-Keep list not found, creating new one.")
+    #     else:
+    #         to_keep_array = maybe_file_array
+    # except Exception as err:
+    #     print(f"Failed to open the to-keep files - {err}")
+    #     return
+    # # Now the JSON version of the To Delete list
+    # try:
+    #     unsanitised_json: Json = []
+    #
+    #     with open(get_main_path() / StoragePaths.to_delete_file_name, "r") as file:
+    #         unsanitised_json = cast(Json, json.load(file))
+    #
+    #     maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
+    #
+    #     if not maybe_file_array:
+    #         print("To-Delete list not found, creating new one.")
+    #     else:
+    #         to_delete_array = maybe_file_array
+    # except Exception as err:
+    #     print(f"Failed to open the to-delete files - {err}")
+    #     return
+    #
+    # # Now eliminate any instances found if there
+    # if to_keep_array != []:
+    #     paths_to_remove = {path for set_obj in sets for path in set_obj.set}
+    #
+    #     to_keep_array = [
+    #         obj for obj in to_keep_array
+    #         if str(obj.get_path()) not in paths_to_remove
+    #     ]
+    # if to_delete_array != []:
+    #     paths_to_remove = {path for set_obj in sets for path in set_obj.set}
+    #
+    #     to_delete_array = [
+    #         obj for obj in to_delete_array
+    #         if str(obj.get_path()) not in paths_to_remove
+    #     ]
     # Then based on the rules, add the files to the existing sets
     for set_obj in sets:
         match set_obj.management:
