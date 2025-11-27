@@ -108,6 +108,10 @@ def set_scan(args: Namespace):
                 # Insert into created_Sets array
                 created_sets.append(put_together_strings)
 
+    number_of_sets = len(usps.keys())
+    print(f"\nNumber of sets found: {number_of_sets}")
+    if number_of_sets == 0:
+        print(f"\nNo sets were found - there may be no sets, or your configuration is incorrect.")
     try:
         with open(get_main_path() / StoragePaths.found_sets_file_name, "w") as file:
             json.dump(created_sets, file)

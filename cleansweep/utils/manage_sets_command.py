@@ -11,6 +11,7 @@ from cleansweep.globals.set_management_strategy import SetManagementStrategy, di
 from cleansweep.containers.set_management_pair import SetAndManagementPair
 from cleansweep.containers.file_item import FileItem
 from pathlib import Path
+import math
 
 PROMPT_SESSION_END = "cleansweep finish"
 PROMPT_DISPLAY_SETTINGS = "cleansweep display"
@@ -119,55 +120,7 @@ def finalise_changes(sets: list[SetAndManagementPair]):
    
     to_delete_array = []
     to_keep_array = []
-    # # Load the JSON version of the To Keep List
-    # try:
-    #     unsanitised_json: Json = []
-    #
-    #     with open(get_main_path() / StoragePaths.to_keep_file_name, "r") as file:
-    #         unsanitised_json = cast(Json, json.load(file))
-    #
-    #     maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
-    #
-    #     if not maybe_file_array:
-    #         print("To-Keep list not found, creating new one.")
-    #     else:
-    #         to_keep_array = maybe_file_array
-    # except Exception as err:
-    #     print(f"Failed to open the to-keep files - {err}")
-    #     return
-    # # Now the JSON version of the To Delete list
-    # try:
-    #     unsanitised_json: Json = []
-    #
-    #     with open(get_main_path() / StoragePaths.to_delete_file_name, "r") as file:
-    #         unsanitised_json = cast(Json, json.load(file))
-    #
-    #     maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
-    #
-    #     if not maybe_file_array:
-    #         print("To-Delete list not found, creating new one.")
-    #     else:
-    #         to_delete_array = maybe_file_array
-    # except Exception as err:
-    #     print(f"Failed to open the to-delete files - {err}")
-    #     return
-    #
-    # # Now eliminate any instances found if there
-    # if to_keep_array != []:
-    #     paths_to_remove = {path for set_obj in sets for path in set_obj.set}
-    #
-    #     to_keep_array = [
-    #         obj for obj in to_keep_array
-    #         if str(obj.get_path()) not in paths_to_remove
-    #     ]
-    # if to_delete_array != []:
-    #     paths_to_remove = {path for set_obj in sets for path in set_obj.set}
-    #
-    #     to_delete_array = [
-    #         obj for obj in to_delete_array
-    #         if str(obj.get_path()) not in paths_to_remove
-    #     ]
-    # Then based on the rules, add the files to the existing sets
+
     for set_obj in sets:
         match set_obj.management:
             case SetManagementStrategy.FirstAndLast:
@@ -187,23 +140,22 @@ def finalise_changes(sets: list[SetAndManagementPair]):
             case SetManagementStrategy.NEvenlySpaced:
                 if set_obj.management_N == 1:
                     to_keep_array.append(FileItem(Path(set_obj.set.pop(-1))))
-                else:
+                elif set_obj.management_N == 2:
                     to_keep_array.append(FileItem(Path(set_obj.set.pop(0))))
                     to_keep_array.append(FileItem(Path(set_obj.set.pop(-1))))
-                
-                if set_obj.management_N >= len(set_obj.set):
+                elif set_obj.management_N >= len(set_obj.set):
                     for path in set_obj.set:
                         to_keep_array.append(FileItem(Path(path)))
                     set_obj.set = []
                 else:
-                    set_obj.management_N -= 2
-                    increment: int = len(set_obj.set) // (set_obj.management_N + 1)
-                    print(f"{set_obj.management_N}, {increment}")
-                    # To not cause errors, pop after
-                    for increment_num in range(1, set_obj.management_N + 1):
-                        to_keep_array.append(FileItem(Path(set_obj.set[increment_num * increment])))
-                    for increment_num in range(1, set_obj.management_N + 1):
-                        set_obj.set.pop(increment_num * increment)
+                    round = lambda num: int(math.floor(num + 0.5))
+                    
+                    indexes: list[int] = [round(i * (len(set_obj.set) - 1)/(set_obj.management_N - 1)) for i in range(set_obj.management_N)] 
+                    indexes.reverse()
+                    
+                    for index in indexes:
+                        to_keep_array.append(FileItem(Path(set_obj.set.pop(index))))
+
             case SetManagementStrategy.Null:
                 # Keep first and last if not specified
                 to_keep_array.append(FileItem(Path(set_obj.set.pop(0))))
@@ -241,6 +193,7 @@ def manage_sets():
         maybe_sets = FileSetArrayCodec.create_from_json(unsanitised)
 
         if not maybe_sets:
+            print("No sets found, cancelling operation. If this was unexpected, make sure your settings are correct.")
             return
 
         for _set in maybe_sets:
