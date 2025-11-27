@@ -190,14 +190,19 @@ def finalise_changes(sets: list[SetAndManagementPair]):
                 else:
                     to_keep_array.append(FileItem(Path(set_obj.set.pop(0))))
                     to_keep_array.append(FileItem(Path(set_obj.set.pop(-1))))
-                if set_obj.management_N > 2:
+                
+                if set_obj.management_N >= len(set_obj.set):
+                    for path in set_obj.set:
+                        to_keep_array.append(FileItem(Path(path)))
+                    set_obj.set = []
+                else:
                     set_obj.management_N -= 2
                     increment: int = len(set_obj.set) // (set_obj.management_N + 1)
-
+                    print(f"{set_obj.management_N}, {increment}")
                     # To not cause errors, pop after
-                    for increment_num in range(0, set_obj.management_N):
+                    for increment_num in range(1, set_obj.management_N + 1):
                         to_keep_array.append(FileItem(Path(set_obj.set[increment_num * increment])))
-                    for increment_num in range(0, set_obj.management_N):
+                    for increment_num in range(1, set_obj.management_N + 1):
                         set_obj.set.pop(increment_num * increment)
             case SetManagementStrategy.Null:
                 # Keep first and last if not specified
