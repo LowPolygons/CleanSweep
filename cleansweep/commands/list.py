@@ -45,7 +45,7 @@ class ListCommand(CommandInterface):
             maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
 
             if not maybe_file_array:
-                print("Issue trying to create the items from the file array")
+                print("Issue trying to create the items from the file array, it may be empty")
                 return
             
             for curr_file in maybe_file_array:
