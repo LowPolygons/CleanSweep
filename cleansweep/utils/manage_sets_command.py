@@ -192,7 +192,7 @@ def finalise_changes(sets: list[SetAndManagementPair]):
                     to_keep_array.append(FileItem(Path(set_obj.set.pop(-1))))
                 if set_obj.management_N > 2:
                     set_obj.management_N -= 2
-                    increment: int = len(set_obj.set) // set_obj.management_N
+                    increment: int = len(set_obj.set) // (set_obj.management_N + 1)
 
                     # To not cause errors, pop after
                     for increment_num in range(0, set_obj.management_N):
