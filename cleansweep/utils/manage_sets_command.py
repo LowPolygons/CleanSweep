@@ -113,14 +113,15 @@ def finalise_changes(sets: list[SetAndManagementPair]):
     # First, filter any of the files out of the original ToKeep/ToDelete list. If they fail to open, create new 
     # Does the file exist?
     if not os.path.exists(get_main_path() / StoragePaths.to_keep_file_name):
-        print("The file containing files to keep doesn't exist - have you run the setup command?")
+        print("The file containing files to keep doesn't exist - have you run the setup command? Cancelling")
         return
     if not os.path.exists(get_main_path() / StoragePaths.to_delete_file_name):
-        print("The file containing files to delete doesn't exist - have you run the setup command?")
-   
+        print("The file containing files to delete doesn't exist - have you run the setup command? Cancelling")
+        return
+
     to_delete_array = []
     to_keep_array = []
-
+    
     for set_obj in sets:
         match set_obj.management:
             case SetManagementStrategy.FirstAndLast:
@@ -149,7 +150,7 @@ def finalise_changes(sets: list[SetAndManagementPair]):
                     set_obj.set = []
                 else:
                     round = lambda num: int(math.floor(num + 0.5))
-                    
+                    # Essentially just linspace 
                     indexes: list[int] = [round(i * (len(set_obj.set) - 1)/(set_obj.management_N - 1)) for i in range(set_obj.management_N)] 
                     indexes.reverse()
                     
@@ -164,6 +165,7 @@ def finalise_changes(sets: list[SetAndManagementPair]):
         for file in set_obj.set:
             to_delete_array.append(FileItem(Path(file)))
 
+    print("Saving files..")
     # Save them
     jsoned_to_keep = FileArrayCodec.encode_to_json(to_keep_array)
     jsoned_to_delete = FileArrayCodec.encode_to_json(to_delete_array)
