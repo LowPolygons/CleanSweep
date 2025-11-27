@@ -6,6 +6,7 @@ from .settings import SettingsCommand
 from .setup import SetupCommand
 from .demolish import DemolishCommand
 from .set_scan import SetScanCommand
+from .manage_sets import ManageSetsCommand
 from cleansweep.interfaces.command import CommandInterface
 
 COMMANDS: Iterable[type[CommandInterface]] = [
@@ -15,5 +16,6 @@ COMMANDS: Iterable[type[CommandInterface]] = [
     SettingsCommand,
     SetupCommand,
     DemolishCommand,
-    SetScanCommand
+    SetScanCommand,
+    ManageSetsCommand
 ]

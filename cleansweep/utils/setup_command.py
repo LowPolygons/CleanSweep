@@ -32,7 +32,7 @@ def setup():
                 if not str(curr_file).find(initial_storage_path.log_file_name):
                     file.write("{}")
                 else:
-                    file.write("")
+                    file.write("[]")
         except OSError as err:
             print(f"There was an error creating file with path {curr_file} with error {err}")
             return

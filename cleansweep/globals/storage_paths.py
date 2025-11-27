@@ -9,7 +9,7 @@ class StoragePaths:
 
     # The file names
     to_delete_file_name: str = "to_delete_files.json"
-    to_keep_file_name: str = "to_keep__files.json"
+    to_keep_file_name: str = "to_keep_files.json"
     minimum_flagged_file_name: str = "minimum_flagged_files.json"
 
     user_settings_file_name: str = "user_settings.json"

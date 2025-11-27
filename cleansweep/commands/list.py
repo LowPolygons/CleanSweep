@@ -10,6 +10,7 @@ from argparse import Namespace, _SubParsersAction
 from cleansweep.systems.logger_system import Logger
 from cleansweep.types.json import Json
 from cleansweep.utils.get_main_path import get_main_path
+from cleansweep.containers.file_item import FileItem
 
 class ListCommand(CommandInterface):
     @staticmethod
