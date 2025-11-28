@@ -335,7 +335,7 @@ Each list is numbered, and represented by the first file in the set.
 
 You can manually go through them and specify how they should be managed, or set a global setting.
 
-### The different management methods
+### The Different Management Methods
 
 #### FirstAndLast - Default
 Only the first and last file will be added to the keep list. The rest will be added to the delete list.
