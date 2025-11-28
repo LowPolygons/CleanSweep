@@ -21,7 +21,7 @@ pip install .
 
 ## Commands
 
-[More information on how they work](.FUNCTIONALITY.md)
+[More information on how they work](FUNCTIONALITY.md)
 
 ### Setup
 ```sh
