@@ -1,6 +1,7 @@
 import json
 import os
 from typing import cast
+from cleansweep.codecs.file_set_array_codec import FileSetArrayCodec
 from cleansweep.codecs.file_array_codec import FileArrayCodec
 from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
@@ -18,8 +19,9 @@ class ListCommand(CommandInterface):
         Logger().add_line("Running List Command", LogLevel.INFO)
 
         args.choice = 'to_delete' if not args.choice else args.choice
-
         file_to_load: str 
+        sets_chosen: bool = False
+
         if args.choice == 'to_keep' or args.choice == 'k':
             print("Listing files which will be ignored")
             file_to_load = StoragePaths.to_keep_file_name
@@ -29,6 +31,10 @@ class ListCommand(CommandInterface):
         elif args.choice == 'non-special' or args.choice == 'n':
             print("Listing files which meet the minimum requirements to be flagged, but will not be acted upon")
             file_to_load = StoragePaths.minimum_flagged_file_name
+        elif args.choice == 'sets' or args.choice == 's':
+            print("Listing all sets found through the dedicated set-scan")
+            file_to_load = StoragePaths.found_sets_file_name
+            sets_chosen = True
         else:
             print("Invalid argument passed")
             return
@@ -42,14 +48,20 @@ class ListCommand(CommandInterface):
             with open(get_main_path() / file_to_load, "r") as file:
                 unsanitised_json = cast(Json, json.load(file))
             
-            maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json)
+            maybe_file_array = FileArrayCodec.create_from_json(unsanitised_json) if not sets_chosen else FileSetArrayCodec.create_from_json(unsanitised_json)
 
             if not maybe_file_array:
                 print("Issue trying to create the items from the file array, it may be empty")
                 return
-            
-            for curr_file in maybe_file_array:
-                print(f"- {curr_file.get_path()}")
+           
+            if not sets_chosen:
+                for curr_file in maybe_file_array:
+                    print(f"- {curr_file.get_path()}")
+            else:
+                for _set in maybe_file_array:
+                    print(f"- {_set[0]}")
+                    for path in _set:
+                        print(f"    -{path}")
 
         except Exception as err:
             print(f"There was an error trying to list files: {err}")
@@ -60,7 +72,7 @@ class ListCommand(CommandInterface):
         list_parser.add_argument(
             '--choice',
             type=str,
-            choices=['to_keep', 'k', 'to_delete', 'd', 'non-special', 'n'],
+            choices=['to_keep', 'k', 'to_delete', 'd', 'non-special', 'n', 'sets', 's'],
             required=False,
             help = "Choice of which category of files should be listed"
         )
