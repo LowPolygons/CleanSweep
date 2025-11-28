@@ -81,6 +81,13 @@ Run this command to enter an interactive environment where you can choose how Cl
 
 Note: when finalising this command, it will override your existing ToKeep/ToDelete list
 
+### Reset
+```sh
+cleansweep reset --choice [to_keep, k, to_delete, d, sets, s]
+```
+
+Run this command to reset the chosen list-file, or all of them if non specified
+
 ### Purge
 ```sh
 cleansweep purge [--stage, --continue]
