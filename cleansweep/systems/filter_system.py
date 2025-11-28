@@ -25,7 +25,7 @@ class FilterSystem:
             user_settings.prioritise_files_with_extension,
             user_settings.ignore_files_with_extension
         )
-        # Prioritise a black list first
+
         if name_status == FilterCodes.ToKeep or \
             size_status == FilterCodes.ToKeep or \
             path_status == FilterCodes.ToKeep or \
