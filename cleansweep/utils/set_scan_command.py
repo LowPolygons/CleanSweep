@@ -108,7 +108,7 @@ def set_scan(args: Namespace):
                 # Insert into created_Sets array
                 created_sets.append(put_together_strings)
 
-    number_of_sets = len(usps.keys())
+    number_of_sets = len(created_sets)
     print(f"\nNumber of sets found: {number_of_sets}")
     if number_of_sets == 0:
         print(f"\nNo sets were found - there may be no sets, or your configuration is incorrect.")
