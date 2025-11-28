@@ -29,7 +29,7 @@ def set_scan(args: Namespace):
     starting_dir: str = os.getcwd()
     
     if args.path:
-        starting_dir = args.path
+        starting_dir = str(Path(starting_dir) / args.path)
         
         if not os.path.exists(Path(starting_dir)):
             print("The provided path doesn't exist..")
