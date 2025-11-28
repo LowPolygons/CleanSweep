@@ -2,9 +2,7 @@
 
 There are some systems in CleanSweep that are not necessarily intuitive to understand. Read this guide to gain a better understanding of what happens when you run each command.
 
-## Commands
-
-### Setup
+## Setup
 ```sh
 cleansweep setup
 ```
@@ -41,7 +39,7 @@ Those files are:
 - User-Settings-Defaults => initialised to hard-coded settings:
 
 ```md
-1 - Date-cutoff-time for flagging files: 2025-08-19
+1 - Date-cutoff-time for flagging files: [100 days before current date] 
 Files to Keep:
 2 - ..with extension: ['z', 'exe', 'd']
 3 - ..name contains: ['EXAMPLE_NAME_CONTAINS:', 'cleansweep']
@@ -67,17 +65,17 @@ The defaults can be seen at any point using
 cleansweep settings display defaults
 ```
 
-### Settings
+## Settings
 
 The settings define the various categories needed for filtering files in the various scans.
 
-#### Display
+### Display
 
 The display command will attempt to load the chosen setting list from the `.cleansweep` directory and print it to the screen.
 
 If it cannot find the file, it will warn that the setup command may not have run.
 
-#### Reset
+### Reset
 
 The Reset command will open both the defaults and current user settings files from the `.cleansweep` directory. 
 
@@ -87,9 +85,9 @@ It will then copy the defaults stored in the json file into your current setting
 
 This means that if you want to customise your default settings, you need to manually edit the defaults json file.
 
-##### Note: if you demolish and re-setup your cleansweep, your modified defaults will *not* save
+#### Note: if you demolish and re-setup your cleansweep, your modified defaults will *not* save
 
-#### Modify
+### Modify
 
 The modify command will fail to run if it fails to open your settings.
 
@@ -111,7 +109,7 @@ If you fail to exit the session through the finish command, none of your changes
 
 Running the settings command will *not* adjust your existing Keep/Delete list to match the new settings. It is up to the user to do this.
 
-### Scan
+## Scan
 
 From the current or provided filepath, it will run a recursive scan for every single file. This can take some time.
 
@@ -134,7 +132,7 @@ class FileStatistics:
 
 The program will load the user settings and then begin the filtering process
 
-#### Filtering
+### Filtering
 
 In CleanSweep, there are two main categories: `ToKeep` and `ToDelete`. There is a third `NonSpecial` category.
 
@@ -144,7 +142,7 @@ The filtering process follows a hierarchical process, in the order of:
 - `ToDelete`
 - `NonSpecial` Least Importance
 
-##### For a file to be labelled as any single category, it must:
+#### For a file to be labelled as any single category, it must:
 
 - Match *at least* one sub-category in the target category
 
@@ -167,13 +165,13 @@ ToDelete {
 
 Consider the following files and their final flag status
 
-##### `/home/test/cleany-debug.txt`  | `ToKeep`
+#### `/home/test/cleany-debug.txt`  | `ToKeep`
 Whilst the file has a `ToDelete` file extension and name-contains sub-category, it meets a `ToKeep` sub-category, therefore making it `ToKeep`
 
-##### `/home/deletemelater/file.out` | `ToDelete`
+#### `/home/deletemelater/file.out` | `ToDelete`
 The file may not contain `debug` or be a text file, but it contains the keyword `delete` in its path, whilst meeting no `ToKeep` sub-categories.
 
-##### `/home/program/metadata.data`  | `NonSpecial`
+#### `/home/program/metadata.data`  | `NonSpecial`
 NonSpecial outlines no sub-categories to match; however, it meets no sub-categories from a higher importance category, thus making it NonSpecial
 
 ```py
@@ -197,12 +195,12 @@ if name_status == FilterCodes.ToDelete or \
 return FilterCodes.NotSpecial
 ```
 
-#### Saving
+### Saving
 
 Following the filtering process, the program will override any pre-existing ToKeep/ToDelete list and store the new ones.
 
 
-### Set-Scan
+## Set-Scan
 
 Unlike the regular scan, the Set-Scan does not perform any filtering into a `ToKeep` or `ToDelete` list.
 
@@ -321,7 +319,7 @@ created_sets = [
 
 This structure is saved in `~/.cleansweep/sets_that_were_found.json`
 
-### List
+## List
 
 The list command will attempt to load the specified file - or the `ToDelete` list by default - and print each path on a separate line.
 
@@ -329,7 +327,7 @@ If the sets list is chosen, it will print the first item in the list of each set
 
 If it cannot open the file, it will prompt you that the file may be empty.
 
-### Manage-Sets
+## Manage-Sets
 
 Running this command will open an interactive environment where a list of all sets will print to the screen.
 
@@ -337,18 +335,18 @@ Each list is numbered, and represented by the first file in the set.
 
 You can manually go through them and specify how they should be managed, or set a global setting.
 
-#### The different management methods
+### The different management methods
 
-##### FirstAndLast - Default
+#### FirstAndLast - Default
 Only the first and last file will be added to the keep list. The rest will be added to the delete list.
 
-##### First 
+#### First 
 Only the first file is added to the keep list.
 
-##### Last
+#### Last
 Only the last file is added to the keep list.
 
-##### EveryN
+#### EveryN
 Every 'N' files, starting from the **last** file in the sequence will be kept.
 
 For example, the set:
@@ -373,12 +371,12 @@ test3.txt
 test1.txt
 ```
 
-##### NEvenlySpaced
+#### NEvenlySpaced
 `N` files, evenly distributed across the set, including the first and last file will be added to the keep list.
 
 If `N` is 1, it will only add the **last** file to the keep list.
 
-#### Finalisation
+### Finalisation
 
 The session is gracefully terminated by running 
 ```sh
@@ -387,24 +385,24 @@ cleansweep finish
 
 In this stage, the `ToKeep` and `ToDelete` list are overriden with the processed files from the sets and saved.
 
-### Purge
+## Purge
 
-#### --stage
+### --stage
 
 In the stage section, all files loaded in the `ToDelete` file will be added to a new text file called `STAGED_FOR_DELETION`
 
 The user should then look through this file and perform a final sanity check on the files to be deleted. They can add/subtract files as they wish.
 
-#### --continue
+### --continue
 
 Final confirmations are made before the termination begins. There is a 10 second delay after the final confirmation before any deletion begins.
 
-##### Note: CleanSweep does not delete the list of files stored in the `ToDelete` json. It deletes the list in `STAGED_FOR_DELETION`
+#### Note: CleanSweep does not delete the list of files stored in the `ToDelete` json. It deletes the list in `STAGED_FOR_DELETION`
 
 After the purge, the `ToDelete` list is reset.
 
 
-### Demolish
+## Demolish
 
 After the user confirms their choice, the `~/.cleansweep` directory is deleted from the system. No backups are made automatically.
 
