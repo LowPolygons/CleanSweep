@@ -28,9 +28,6 @@ class ListCommand(CommandInterface):
         elif args.choice == 'to_delete' or args.choice == 'd':
             print("Listing files which will be deleted upon purge")
             file_to_load = StoragePaths.to_delete_file_name
-        elif args.choice == 'non-special' or args.choice == 'n':
-            print("Listing files which meet the minimum requirements to be flagged, but will not be acted upon")
-            file_to_load = StoragePaths.minimum_flagged_file_name
         elif args.choice == 'sets' or args.choice == 's':
             print("Listing all sets found through the dedicated set-scan")
             file_to_load = StoragePaths.found_sets_file_name
@@ -72,7 +69,7 @@ class ListCommand(CommandInterface):
         list_parser.add_argument(
             '--choice',
             type=str,
-            choices=['to_keep', 'k', 'to_delete', 'd', 'non-special', 'n', 'sets', 's'],
+            choices=['to_keep', 'k', 'to_delete', 'd', 'sets', 's'],
             required=False,
             help = "Choice of which category of files should be listed"
         )

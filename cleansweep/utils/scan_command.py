@@ -65,30 +65,32 @@ def scan(args: Namespace):
     
     keep_bytes: int = 0
     delete_bytes: int = 0
+    other_bytes: int = 0
     for file in to_keep:
         keep_bytes += file.get_path().stat().st_size  
     for file in to_delete:
         delete_bytes += file.get_path().stat().st_size
+    for file in other_flagged:
+        other_bytes += file.get_path().stat().st_size 
     nice_keep = convert_size_to_reasonable_unit(keep_bytes)
     nice_delete = convert_size_to_reasonable_unit(delete_bytes)
-    
+    nice_other = convert_size_to_reasonable_unit(other_bytes)
+
     print(f"The Keep list has a size of {nice_keep[0]} {match_datasize_to_string(nice_keep[1])} across {len(to_keep)} files")
     print(f"The Delete list has a size of {nice_delete[0]} {match_datasize_to_string(nice_delete[1])} across {len(to_delete)} files")
-
+    print(f"{len(other_flagged)} files, amounting to {nice_other[0]} {match_datasize_to_string(nice_other[1])} met the date requirement, but no other flags.")
+    
     # Save them
     jsoned_to_keep = FileArrayCodec.encode_to_json(to_keep)
     jsoned_to_delete = FileArrayCodec.encode_to_json(to_delete)
-    jsoned_other_flagged = FileArrayCodec.encode_to_json(other_flagged)
 
     try:
         with open(get_main_path() / StoragePaths.to_keep_file_name, "w") as file:
             json.dump(jsoned_to_keep, file)
         with open(get_main_path() / StoragePaths.to_delete_file_name, "w") as file:
             json.dump(jsoned_to_delete, file)
-        with open(get_main_path() / StoragePaths.minimum_flagged_file_name, "w") as file:
-            json.dump(jsoned_other_flagged, file)
     except OSError as err:
-        Logger().add_line(f"There was an error trying to save the black/white listed files: {err}", LogLevel.ERROR)
+        Logger().add_line(f"There was an error trying to save the Keep/Delete listed files: {err}", LogLevel.ERROR)
         return
 
     print("Successfully scanned and saved the flagged files.")
