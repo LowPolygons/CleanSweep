@@ -54,18 +54,32 @@ Run this command to scan for all files relative to your current directory, filte
 
 Note: The --path command is optional and is relative to your current directory 
 
+### Set-Scan
+```sh
+cleansweep set-scan --path [path]
+```
+
+Run this command to scan from the current or provided directory for any sets (files with the same name, differing only by a number) and store for later filtering.
+
+Note: The --path command is optional and is relative to your current directory 
 
 
 ### List
 ```sh
-cleansweep list --choice [blacklisted, whitelisted]
+cleansweep list --choice [to_keep, k, to_delete, d, sets, s]
 ```
 
 Run this command to print the files stored in the corresponding list
 
-Note: If either the black/white list is empty, it will print a custom error/warning message implying you haven't run the setup command - this is not an installation issue, it just flagged no relevant files in the previous scan
 
+### Manage-Sets
+```sh
+cleansweep manage-sets 
+```
 
+Run this command to enter an interactive environment where you can choose how CleanSweep will filter each sets.
+
+Note: when finalising this command, it will override your existing ToKeep/ToDelete list
 
 ### Purge
 ```sh
