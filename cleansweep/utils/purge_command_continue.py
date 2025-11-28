@@ -4,6 +4,7 @@ import time
 from cleansweep.globals.log_levels import LogLevel
 from cleansweep.globals.storage_paths import StoragePaths
 from cleansweep.systems.logger_system import Logger
+from cleansweep.utils.convert_size_to_reasonable_unit import convert_size_to_reasonable_unit, DataSizes, match_datasize_to_string
 
 def purge_continue():
     # Load the to_delete file, print the files and amount of data to be deleted, run final confirmations, 10s delay and then delete
@@ -20,7 +21,8 @@ def purge_continue():
     for curr_path in staged_paths:
         print(f"- {curr_path}")
         size_of_data_being_deleted += curr_path.stat().st_size
-    print(f"\nAmount of data being deleted: {size_of_data_being_deleted} bytes")
+    nice_data_size = convert_size_to_reasonable_unit(size_of_data_being_deleted)
+    print(f"\nAmount of data being deleted: {nice_data_size[0]} {match_datasize_to_string(nice_data_size[1])}")
 
     # Confirmation Stage
     print("Please enter 'confirm' for the following statements to confirm deletion (space/case sensitive):")

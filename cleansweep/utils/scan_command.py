@@ -14,7 +14,7 @@ from cleansweep.systems.logger_system import Logger
 from cleansweep.systems.scanning_system import FileScanningManager
 from cleansweep.utils.get_main_path import get_main_path
 from cleansweep.utils.get_user_settings import get_user_settings
-
+from cleansweep.utils.convert_size_to_reasonable_unit import convert_size_to_reasonable_unit, DataSizes, match_datasize_to_string
 
 def scan(args: Namespace):
     # Load user settings
@@ -62,6 +62,18 @@ def scan(args: Namespace):
             to_delete.append(curr_file)
         elif file_flag_status == FlagCodes.Flagged:
             other_flagged.append(curr_file)
+    
+    keep_bytes: int = 0
+    delete_bytes: int = 0
+    for file in to_keep:
+        keep_bytes += file.get_path().stat().st_size  
+    for file in to_delete:
+        delete_bytes += file.get_path().stat().st_size
+    nice_keep = convert_size_to_reasonable_unit(keep_bytes)
+    nice_delete = convert_size_to_reasonable_unit(delete_bytes)
+    
+    print(f"The Keep list has a size of {nice_keep[0]} {match_datasize_to_string(nice_keep[1])} across {len(to_keep)} files")
+    print(f"The Delete list has a size of {nice_delete[0]} {match_datasize_to_string(nice_delete[1])} across {len(to_delete)} files")
 
     # Save them
     jsoned_to_keep = FileArrayCodec.encode_to_json(to_keep)

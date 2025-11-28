@@ -11,6 +11,7 @@ from cleansweep.globals.set_management_strategy import SetManagementStrategy, di
 from cleansweep.containers.set_management_pair import SetAndManagementPair
 from cleansweep.containers.file_item import FileItem
 from pathlib import Path
+from cleansweep.utils.convert_size_to_reasonable_unit import convert_size_to_reasonable_unit, DataSizes, match_datasize_to_string
 import math
 
 PROMPT_SESSION_END = "cleansweep finish"
@@ -19,12 +20,18 @@ PROMPT_DISPLAY_SETTINGS = "cleansweep display"
 def print_sets(sets):
     # Due to rules of sets a set will never be empty
     for i in range(0, len(sets)):
-        chosen_method = sets[i].management.value[0] if sets[i].management != SetManagementStrategy.Null else "None"
-        print(f"{i} - {chosen_method} - {sets[i].set[0]}..")
+        chosen_method = sets[i].management.value if sets[i].management != SetManagementStrategy.Null else "None"
+        
+        size_of_data: int = 0
+        for path in sets[i].set:
+            curr_path = Path(path)
+            size_of_data += curr_path.stat().st_size
+        nice_data_size = convert_size_to_reasonable_unit(size_of_data) 
+        print(f"{i} - {chosen_method} - {nice_data_size[0]} {match_datasize_to_string(nice_data_size[1])} across {len(sets[i].set)} files - {sets[i].set[0]}..")
 
 
 def print_single_set(single_set: SetAndManagementPair):
-    chosen_method = single_set.management.value[0] if single_set.management != SetManagementStrategy.Null else "None"
+    chosen_method = single_set.management.value if single_set.management != SetManagementStrategy.Null else "None"
     print(f"\n- Current strategy: {chosen_method}\n")
     if len(single_set.set) <= 20:
         for item in single_set.set:
