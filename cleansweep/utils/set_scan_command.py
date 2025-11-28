@@ -13,7 +13,7 @@ from cleansweep.systems.logger_system import Logger
 from cleansweep.systems.scanning_system import FileScanningManager
 from cleansweep.utils.get_main_path import get_main_path
 from cleansweep.utils.get_user_settings import get_user_settings
-
+from cleansweep.codecs.file_set_array_codec import FileSetArrayCodec
 from cleansweep.utils.split_string_into_str_and_number import extract_number_from_end_of_string
 
 
@@ -26,7 +26,7 @@ def set_scan(args: Namespace):
         print("There was an error trying to load user settings.. have you run the setup command?")
         return
     # Get the users additional path if included
-    starting_dir: str = ""
+    starting_dir: str = os.getcwd()
     
     if args.path:
         starting_dir = args.path
@@ -113,8 +113,9 @@ def set_scan(args: Namespace):
     if number_of_sets == 0:
         print(f"\nNo sets were found - there may be no sets, or your configuration is incorrect.")
     try:
+        jsoned_created_sets = FileSetArrayCodec.encode_to_json((starting_dir,created_sets))
         with open(get_main_path() / StoragePaths.found_sets_file_name, "w") as file:
-            json.dump(created_sets, file)
+            json.dump(jsoned_created_sets, file)
     except OSError as err:
         Logger().add_line(f"There was an error trying to save the sets file: {err}", LogLevel.ERROR)
         return

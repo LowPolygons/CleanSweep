@@ -17,8 +17,9 @@ import math
 PROMPT_SESSION_END = "cleansweep finish"
 PROMPT_DISPLAY_SETTINGS = "cleansweep display"
 
-def print_sets(sets):
+def print_sets(sets, local_path):
     # Due to rules of sets a set will never be empty
+    local_path = local_path.rstrip("/")
     for i in range(0, len(sets)):
         chosen_method = sets[i].management.value if sets[i].management != SetManagementStrategy.Null else "None"
         
@@ -27,21 +28,21 @@ def print_sets(sets):
             curr_path = Path(path)
             size_of_data += curr_path.stat().st_size
         nice_data_size = convert_size_to_reasonable_unit(size_of_data) 
-        print(f"{i} - {chosen_method} - {nice_data_size[0]} {match_datasize_to_string(nice_data_size[1])} across {len(sets[i].set)} files - {sets[i].set[0]}..")
+        print(f"{i} - {chosen_method} - {nice_data_size[0]} {match_datasize_to_string(nice_data_size[1])} across {len(sets[i].set)} files - $PATH{sets[i].set[0][len(local_path):]}..")
 
 
-def print_single_set(single_set: SetAndManagementPair):
+def print_single_set(single_set: SetAndManagementPair, path: str):
     chosen_method = single_set.management.value if single_set.management != SetManagementStrategy.Null else "None"
     print(f"\n- Current strategy: {chosen_method}\n")
     if len(single_set.set) <= 20:
         for item in single_set.set:
-            print(f"- {item}")
+            print(f"- $PATH{item[len(path):]}")
     else:
         for i in range(3):
-            print(f"- {single_set.set[i]}")
+            print(f"- $PATH{single_set.set[i][len(path):]}")
         print(f"- ... ({len(single_set.set)-6} items hidden)")
         for item in single_set.set[-3:]:
-            print(f"- {item}")
+            print(f"- $PATH{item[len(path):]}")
     print("\n")
 
 def get_number(positive_only: bool = False) -> Optional[int]:
@@ -192,7 +193,7 @@ def manage_sets():
         return
 
     sets: list[SetAndManagementPair] = []
-    
+    path_var: str 
     try:
         unsanitised: Json
 
@@ -205,7 +206,8 @@ def manage_sets():
             print("No sets found, cancelling operation. If this was unexpected, make sure your settings are correct.")
             return
 
-        for _set in maybe_sets:
+        path_var = maybe_sets[0]
+        for _set in maybe_sets[1]:
             sets.append(SetAndManagementPair(_set, SetManagementStrategy.Null, None))
     
     except Exception as err:
@@ -219,9 +221,9 @@ def manage_sets():
     while True:
         print("=== === === === === ===")
         print(" - At any point, enter 'cleansweep finish' to end the session")
-        print(" - At any point, enter 'cleansweep display' to display the management options\n")
-        
-        print_sets(sets)
+        print(" - At any point, enter 'cleansweep display' to display the management options")
+        print(f" - $PATH represents the directory {path_var}\n")
+        print_sets(sets, path_var)
 
         print("\n Please choose which set to manage. Optionally, to set a value for all, enter -1")
         choice = number_in_range_non_inclusive_upper(-1, len(sets))
@@ -230,7 +232,7 @@ def manage_sets():
             # TODO: consider adding 'cleansweep cancel'
             return finalise_changes(sets)
         if choice != -1:
-            print_single_set(sets[choice])
+            print_single_set(sets[choice], path_var)
         else:
             print("Setting management style for all sets..")
         management_choice = choose_management_strategy()
