@@ -23,75 +23,16 @@ class FileItem:
         
     def get_path(self) -> Path:
         return self.__path
-  
-    # If the name starts with, or contains a set of strings, it should be black/whitelisted
-    def filter_name(self, 
-                    to_delete_substrings: list[str], 
-                    to_keep_substrings: list[str], 
-                    to_delete_starts_with: list[str], 
-                    to_keep_starts_with: list[str]) -> FilterCodes:
-        # Black list first
-        for starts_with in to_keep_starts_with:
-            if self.__stats.name.find(starts_with) == STARTS_WITH_SUBSTR:
-                return FilterCodes.ToKeep       
-        for name_contains in to_keep_substrings:
-            if self.__stats.name.find(name_contains) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.ToKeep
+ 
+    def get_name(self) -> str:
+        return self.__stats.name
 
-        # Then Whitelist
-        for starts_with in to_delete_starts_with:
-            if self.__stats.name.find(starts_with) == STARTS_WITH_SUBSTR:
-                return FilterCodes.ToDelete
-        for name_contains in to_delete_substrings:
-            if self.__stats.name.find(name_contains) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.ToDelete
+    def get_size(self) -> int:
+        return self.__stats.size
 
-        return FilterCodes.NotSpecial
+    def get_extension(self) -> str:
+        return self.__stats.extension
 
-    # Filters the path of the item for a set of substrings to see if it should be black/whitelisted 
-    def filter_path(self, 
-                    to_delete: list[str], 
-                    to_keep: list[str]) -> FilterCodes:
-        # Prioritise the black list 
-        for path_substr in to_keep:
-            if str(self.__path).find(path_substr) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.ToKeep
-        # Then filter the white list 
-        for path_substr in to_delete:
-            if str(self.__path).find(path_substr) is not SUBSTR_NOT_FOUND:
-                return FilterCodes.ToDelete
-        
-        return FilterCodes.NotSpecial
-
-    # Filters the size of the item, and seeing if it should be black/whitelisted
-    def filter_size(self, 
-                    to_delete: int,
-                    to_keep_lower_than: int, 
-                    to_keep_higher_than: int) -> FilterCodes:
-        # Prioritise black list 
-        if self.__stats.size < to_keep_lower_than or \
-           self.__stats.size > to_keep_higher_than:
-            return FilterCodes.ToKeep
-        
-        if self.__stats.size > to_delete:
-            return FilterCodes.ToDelete
-
-        return FilterCodes.NotSpecial
-
-    # Filters the extension to see if it matches any in the provided black/whitelist
-    def filter_extension(self, 
-                         to_delete: list[str], 
-                         to_keep: list[str]) -> FilterCodes:
-        for extension in to_keep:
-            if self.__stats.extension == f".{extension}":
-                return FilterCodes.ToKeep
-        
-        for extension in to_delete:
-            if self.__stats.extension == f".{extension}":
-                return FilterCodes.ToDelete
-
-        return FilterCodes.NotSpecial
-    
     def was_last_modified_before(self, date_cutoff: date, consider_last_accessed: bool) -> bool:
         if consider_last_accessed:
             return self.__stats.last_modified <= date_cutoff and \
@@ -99,14 +40,3 @@ class FileItem:
         else:
             return self.__stats.last_modified <= date_cutoff
 
-    # TODO: the way this function is written is pretty poor, perhaps re-factor
-    def maybe_in_set(self, set_extensions: list[str], set_file_name_contains: list[str]) -> bool:
-        for extension in set_extensions:
-            if self.__stats.extension == f".{extension}":
-                return True
-        
-        for substring in set_file_name_contains:
-            if self.__stats.name.find(substring) is not SUBSTR_NOT_FOUND:
-                return True
-
-        return False 

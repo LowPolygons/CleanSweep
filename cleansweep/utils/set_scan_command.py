@@ -15,7 +15,7 @@ from cleansweep.utils.get_main_path import get_main_path
 from cleansweep.utils.get_user_settings import get_user_settings
 from cleansweep.codecs.file_set_array_codec import FileSetArrayCodec
 from cleansweep.utils.split_string_into_str_and_number import extract_number_from_end_of_string
-
+from cleansweep.systems.file_accessor_and_filter import FileAccessorAndFilter
 
 # TODO: Perhaps implement the file date stuff too
 def set_scan(args: Namespace):
@@ -53,7 +53,7 @@ def set_scan(args: Namespace):
     # Filter through them to get the potential sets
     potential_set_item: list[FileItem] = []
     for curr_file in files:
-        file_flag_status: bool = curr_file.maybe_in_set(maybe_user_settings.set_may_have_extension, \
+        file_flag_status: bool = FileAccessorAndFilter.maybe_in_set(curr_file, maybe_user_settings.set_may_have_extension, \
                                                         maybe_user_settings.set_file_name_may_contain)
         if file_flag_status:
             potential_set_item.append(curr_file)

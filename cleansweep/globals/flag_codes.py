@@ -5,3 +5,4 @@ class FlagCodes(Enum):
     Flagged = 1
     FlaggedToKeep = 2
     FlaggedToDelete = 3
+    Override = 4

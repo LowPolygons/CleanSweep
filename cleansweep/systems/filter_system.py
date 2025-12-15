@@ -2,41 +2,64 @@ from cleansweep.containers.file_item import FileItem
 from cleansweep.containers.user_settings import UserSettings
 from cleansweep.globals.filter_codes import FilterCodes
 from cleansweep.globals.flag_codes import FlagCodes
+from cleansweep.systems.file_accessor_and_filter import FileAccessorAndFilter
 
 class FilterSystem:
-    @staticmethod
-    def determine_file_filtration_status(file: FileItem, user_settings: UserSettings) -> FilterCodes:
-        name_status = file.filter_name(
-            user_settings.prioritise_file_names_containing,
-            user_settings.ignore_file_names_containing, 
-            user_settings.prioritise_file_names_starting_with,
-            user_settings.ignore_file_names_starting_with
-        )
-        size_status = file.filter_size(
-            user_settings.prioritise_files_larger_than,
-            user_settings.ignore_files_smaller_than,
-            user_settings.ignore_files_larger_than
-        )
-        path_status = file.filter_path(
-            user_settings.prioritise_files_whos_directory_contains,
-            user_settings.ignore_files_whos_directory_contains 
-        )
-        extension_status = file.filter_extension(
-            user_settings.prioritise_files_with_extension,
-            user_settings.ignore_files_with_extension
-        )
+    @classmethod
+    def file_meets_flag_requirements(cls, file: FileItem, user_settings: UserSettings, flag_code: FlagCodes):
+        temp_file_name_substrings: list[str]
+        temp_file_name_starts_with: list[str]
+        temp_file_extensions: list[str]
+        temp_file_path_substrings: list[str]
+        temp_file_min_size: Optional[int] = None
+        temp_file_max_size: int
 
-        if name_status == FilterCodes.ToKeep or \
-            size_status == FilterCodes.ToKeep or \
-            path_status == FilterCodes.ToKeep or \
-            extension_status == FilterCodes.ToKeep:
-            return FilterCodes.ToKeep 
+        match flag_code:
+            case FlagCodes.FlaggedToKeep:
+                temp_file_name_substrings = user_settings.ignore_file_names_containing
+                temp_file_name_starts_with = user_settings.ignore_file_names_starting_with
+                temp_file_extensions = user_settings.ignore_files_with_extension
+                temp_file_path_substrings = user_settings.ignore_files_whos_directory_contains
+                temp_file_min_size = user_settings.ignore_files_smaller_than
+                temp_file_max_size = user_settings.ignore_files_larger_than
+            case FlagCodes.FlaggedToDelete:
+                temp_file_name_substrings = user_settings.prioritise_file_names_containing
+                temp_file_name_starts_with = user_settings.prioritise_file_names_starting_with
+                temp_file_extensions = user_settings.prioritise_files_with_extension
+                temp_file_path_substrings = user_settings.prioritise_files_whos_directory_contains
+                temp_file_max_size = user_settings.prioritise_files_larger_than
+            case _:
+                # TODO: add Override
+                return
+        
+        name_status = FileAccessorAndFilter.is_file_name_in_list(file, temp_file_name_substrings)
+        name_begins_status = FileAccessorAndFilter.is_file_name_in_list(file, temp_file_name_starts_with, True)
+        size_status = FileAccessorAndFilter.is_file_size_greater_than(file, temp_file_max_size)
+        smaller_than_size_status: Optional[bool] = \
+            not FileAccessorAndFilter.is_file_size_greater_than(file, temp_file_min_size) \
+            if temp_file_min_size is not None else None
+        path_status = FileAccessorAndFilter.is_file_path_in_list(file, temp_file_path_substrings)
+        extension_status = FileAccessorAndFilter.is_file_extension_in_list(file, temp_file_extensions)
 
-        if name_status == FilterCodes.ToDelete or \
-            size_status == FilterCodes.ToDelete or \
-            path_status == FilterCodes.ToDelete or \
-            extension_status == FilterCodes.ToDelete:
-            return FilterCodes.ToDelete 
+        return (name_status or 
+                name_begins_status or
+                size_status or
+                smaller_than_size_status or
+                path_status or
+                extension_status)
+        
+
+    @classmethod
+    def determine_file_filtration_status(cls, file: FileItem, user_settings: UserSettings) -> FilterCodes:
+        to_keep_status = cls.file_meets_flag_requirements(file, user_settings, FlagCodes.FlaggedToKeep)
+        
+        if to_keep_status:
+            return FilterCodes.ToKeep
+        
+        to_delete_status = cls.file_meets_flag_requirements(file, user_settings, FlagCodes.FlaggedToDelete)
+
+        if to_delete_status:
+            return FilterCodes.ToDelete
         
         return FilterCodes.NotSpecial
         
@@ -50,7 +73,7 @@ class FilterSystem:
  
         # From here, check that it hasn't been black listed
         filtration_status = FilterSystem.determine_file_filtration_status(file, user_settings)
-
+        
         if filtration_status == FilterCodes.ToKeep:
             return FlagCodes.FlaggedToKeep
 
