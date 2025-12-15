@@ -31,9 +31,14 @@ def write_user_settings(path: Path) -> None:
         False,
         # Set things
         ["h5"],
-        ["test_"]
+        ["test_"],
+        [],
+        [],
+        [],
+        [],
+        0
     )
-    
+
     defaults_json: Json = UserSettingsCodec.encode_to_json(container_of_defaults)
     try:
         with open(path, "w") as file:

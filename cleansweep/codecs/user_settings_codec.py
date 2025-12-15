@@ -7,6 +7,39 @@ from cleansweep.types.json import Json
 from cleansweep.systems.json_reader import JsonReader
 from typing import cast, Optional
 
+# class UserSettings:
+#     # THE FLAGS NEEDED FOR A FILE 
+#     flag_date_cutoff: date 
+#
+#     # To Keep files get ignored 
+#     ignore_files_with_extension: list[str]
+#     ignore_file_names_containing: list[str]
+#     ignore_files_whos_directory_contains: list[str]
+#     ignore_file_names_starting_with: list[str]
+#     ignore_files_smaller_than: int
+#     ignore_files_larger_than: int
+#
+#     # To Delete files get stored in a file
+#     prioritise_files_with_extension: list[str]
+#     prioritise_file_names_containing: list[str]
+#     prioritise_file_names_starting_with: list[str]
+#     prioritise_files_whos_directory_contains: list[str]
+#     prioritise_files_larger_than: int
+#
+#     # Filter options
+#     consider_access_date_when_filtering: bool
+#
+#     # Set rules
+#     set_may_have_extension: list[str]
+#     set_file_name_may_contain: list[str]
+#
+#     # Override Categories
+#     override_files_with_extension: list[str]
+#     override_file_names_containing: list[str]
+#     override_file_names_starting_with: list[str]
+#     override_files_whos_directory_contains: list[str]
+#     override_files_larger_than: int
+
 class UserSettingsCodec(JsonCodecInterface[UserSettings]):
     @staticmethod
     def encode_to_json(obj: UserSettings) -> Json:
@@ -28,6 +61,13 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
                 "directory_contains" : cast(list[Json], obj.prioritise_files_whos_directory_contains),
                 "larger_than" : obj.prioritise_files_larger_than
             },
+            "override_files" : {
+                "extension_is" : cast(list[Json], obj.override_files_with_extension),
+                "name_contains" : cast(list[Json], obj.override_file_names_containing),
+                "name_starts_with" : cast(list[Json], obj.override_file_names_starting_with),
+                "directory_contains" : cast(list[Json], obj.override_files_whos_directory_contains),
+                "larger_than" : obj.override_files_larger_than
+            },
             "maybe_set_files" : {
                 "extension_is" : cast(list[Json], obj.set_may_have_extension),
                 "name_contains" : cast(list[Json], obj.set_file_name_may_contain)
@@ -42,6 +82,7 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             to_keep: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["to_keep_files"])
             to_delete: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["to_delete_files"])
             set_files: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["maybe_set_files"])
+            override_files: dict[str, Json] = JsonReader.extract_json_dict(validated_obj["override_files"])
 
             unformatted_flag_date_cutoff = JsonReader.extract_str(validated_obj["flag_date_cutoff"])
             ignore_files_with_extension = JsonReader.extract_list_of_type(to_keep["extension_is"], str)
@@ -56,6 +97,12 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
             prioritise_file_names_starting_with = JsonReader.extract_list_of_type(to_delete["name_starts_with"], str)
             prioritise_files_whos_directory_contains = JsonReader.extract_list_of_type(to_delete["directory_contains"], str)
             prioritise_files_larger_than = JsonReader.extract_int(to_delete["larger_than"])
+
+            override_files_with_extension = JsonReader.extract_list_of_type(override_files["extension_is"], str)
+            override_file_names_containing = JsonReader.extract_list_of_type(override_files["name_contains"], str)
+            override_file_names_starting_with = JsonReader.extract_list_of_type(override_files["name_starts_with"], str)
+            override_files_whos_directory_contains = JsonReader.extract_list_of_type(override_files["directory_contains"], str)
+            override_files_larger_than = JsonReader.extract_int(override_files["larger_than"])            
 
             flag_date_cutoff = datetime.strptime(unformatted_flag_date_cutoff, "%Y-%m-%d").date()
 
@@ -84,9 +131,13 @@ class UserSettingsCodec(JsonCodecInterface[UserSettings]):
                 prioritise_files_larger_than,
                 consider_access_date_when_filtering,
                 set_may_have_extension,
-                set_file_name_may_contain
+                set_file_name_may_contain,
+                override_files_with_extension,
+                override_file_names_containing,
+                override_file_names_starting_with,
+                override_files_whos_directory_contains,
+                override_files_larger_than
             )
-
         except Exception as err:
             Logger().add_line(f"Error trying to index some values in the User Settings Json: {err}", LogLevel.ERROR)
             return None

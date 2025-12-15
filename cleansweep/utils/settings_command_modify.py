@@ -17,7 +17,7 @@ from cleansweep.utils.settings_command_display import SettingsCommandDisplay
 
 PROMPT_SESSION_END = "cleansweep finish"
 PROMPT_DISPLAY_SETTINGS = "cleansweep display"
-NUMBER_OF_USER_SETTINGS = 15
+NUMBER_OF_USER_SETTINGS = 21
 
 LIST_MODIFY_OPTIONS = [
     "add",

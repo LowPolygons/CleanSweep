@@ -28,8 +28,13 @@ class FilterSystem:
                 temp_file_extensions = user_settings.prioritise_files_with_extension
                 temp_file_path_substrings = user_settings.prioritise_files_whos_directory_contains
                 temp_file_max_size = user_settings.prioritise_files_larger_than
+            case FlagCodes.Override:
+                temp_file_name_substrings = user_settings.override_file_names_containing
+                temp_file_name_starts_with = user_settings.override_file_names_starting_with
+                temp_file_extensions = user_settings.override_files_with_extension
+                temp_file_path_substrings = user_settings.override_files_whos_directory_contains
+                temp_file_max_size = user_settings.override_files_larger_than
             case _:
-                # TODO: add Override
                 return
         
         name_status = FileAccessorAndFilter.is_file_name_in_list(file, temp_file_name_substrings)

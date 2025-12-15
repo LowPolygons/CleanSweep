@@ -27,3 +27,10 @@ class UserSettings:
     # Set rules
     set_may_have_extension: list[str]
     set_file_name_may_contain: list[str]
+
+    # Override Categories
+    override_files_with_extension: list[str]
+    override_file_names_containing: list[str]
+    override_file_names_starting_with: list[str]
+    override_files_whos_directory_contains: list[str]
+    override_files_larger_than: int
