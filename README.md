@@ -101,6 +101,16 @@ Run this command to:
 
 - CONTINUE: Load the temporary list created from the stage command, make final confirmations, delete the files
 
+### Activate-Override 
+```sh
+cleansweep activate-override 
+```
+
+Run this command to move any files in your 'ToKeep' list to the 'ToDelete' list based on your override settings.
+
+Note: if you make any mistakes, just re-run the scan command. Check 'FUNCTIONALITY' for some usage advice
+
+
 
 
 ### Demolish

@@ -406,4 +406,16 @@ After the purge, the `ToDelete` list is reset.
 
 After the user confirms their choice, the `~/.cleansweep` directory is deleted from the system. No backups are made automatically.
 
+## Activate-Override
 
+The session attempts to load the `ToKeep` and `ToDelete` arrays.
+
+Based on your override parameters, any parameters listed in `ToKeep` will be prompty moved to the `ToDelete` list.
+
+#### Note: If you make a mistake, rerunning the 'scan' command will override anything in the two lists
+
+#### Advice: This should be used to move very select few files. 
+
+#### -  It is recommended that when moving a precise list of files, set the override size limit to something absurd - One million/billion bytes
+
+#### -  This will prevent any files which only meet the size requirement from being included
