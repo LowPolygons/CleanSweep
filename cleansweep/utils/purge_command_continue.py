@@ -48,9 +48,10 @@ def purge_continue():
             Logger().add_line(f"Failed to delete {curr_path}: {err}, skipping", LogLevel.WARN)
             continue
     
-    # Try delete the temp file
+    # Try delete the temp files
     try:
         Path(StoragePaths.to_delete_local_temp_file_name).unlink()
+        Path(StoragePaths.to_keep_local_temp_file_name).unlink()
     except Exception as err:
         Logger().add_line(f"Failed to delete temporary {StoragePaths.to_delete_local_temp_file_name} file: {err}", LogLevel.WARN)
         return

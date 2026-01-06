@@ -16,5 +16,6 @@ class StoragePaths:
     storage_paths_file_name: str = "storage_paths.json"    
     user_settings_defaults_file_name: str = "user_settings_defaults.json"
     to_delete_local_temp_file_name: str = "STAGED_FOR_DELETION"
+    to_keep_local_temp_file_name: str = "TO_KEEP_SANITY_CHECK"
 
     found_sets_file_name: str = "sets_that_were_found.json"
