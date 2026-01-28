@@ -2,6 +2,7 @@
 mod cli;
 mod commands;
 mod containers;
+mod systems;
 
 use clap::Parser;
 use cli::{Cli, Commands};

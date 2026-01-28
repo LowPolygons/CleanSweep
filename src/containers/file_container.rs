@@ -6,32 +6,37 @@ use std::ffi::OsStr;
 use crate::containers::file_date_data::FileDateData;
 use crate::containers::file_statistics::FileStatistics;
 
+#[derive(Debug)]
+pub enum FileContainerInitError {
+    MetadataNotFound,
+    ModifyDateNotAvailable,
+    AccessDateNotAvailable,
+    FileStemNotAvailable,
+}
+
+#[derive(Debug)]
 pub struct FileContainer {
     path: PathBuf,
     statistics: FileStatistics,
 }
 
 impl FileContainer {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, FileContainerInitError> {
         let path = path.as_ref().to_path_buf();
 
-        let path_metadata: Metadata = std::fs::metadata(&path).map_err(|err| {
-            format!(
-                "Failed to get the metadata on path {:?}, likely doesn't exist; Err {}",
-                &path, err
-            )
-        })?;
+        let path_metadata: Metadata =
+            std::fs::metadata(&path).map_err(|_| FileContainerInitError::MetadataNotFound)?;
 
         let modifed_date: SystemTime = path_metadata
             .modified()
-            .map_err(|err| format!("Failed to get modify date on path {:?}; Err {}", &path, err))?;
+            .map_err(|_| FileContainerInitError::ModifyDateNotAvailable)?;
         let access_date: SystemTime = path_metadata
             .accessed()
-            .map_err(|err| format!("Failed to get access date on path {:?}; Err {}", &path, err))?;
+            .map_err(|_| FileContainerInitError::AccessDateNotAvailable)?;
 
         let file_stem: String = path
             .file_stem()
-            .ok_or_else(|| format!("Path has no file stem: {:?}", path))?
+            .ok_or_else(|| FileContainerInitError::FileStemNotAvailable)?
             .to_string_lossy()
             .to_string();
 

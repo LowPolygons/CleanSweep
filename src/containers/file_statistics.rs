@@ -1,5 +1,6 @@
 use crate::containers::file_date_data::FileDateData;
 
+#[derive(Debug)]
 pub struct FileStatistics {
     name: String,
     size: u64,
