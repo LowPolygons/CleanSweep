@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{fs::Metadata, time::SystemTime};
 
 use std::ffi::OsStr;
@@ -12,33 +12,30 @@ pub struct FileContainer {
 }
 
 impl FileContainer {
-    pub fn new(path: String) -> Result<Self, String> {
-        // Just a syntaxic guard against non-existant paths
-        let path_metadata: Metadata = std::fs::metadata(&path).map_err(|_| {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, String> {
+        let path = path.as_ref().to_path_buf();
+
+        let path_metadata: Metadata = std::fs::metadata(&path).map_err(|err| {
             format!(
-                "Failed to get the metadata on path {}, likely doesn't exist",
-                &path
+                "Failed to get the metadata on path {:?}, likely doesn't exist; Err {}",
+                &path, err
             )
         })?;
 
         let modifed_date: SystemTime = path_metadata
             .modified()
-            .map_err(|err| format!("Failed to get modify date on path {}; Err {}", &path, err))?;
+            .map_err(|err| format!("Failed to get modify date on path {:?}; Err {}", &path, err))?;
         let access_date: SystemTime = path_metadata
             .accessed()
-            .map_err(|err| format!("Failed to get access date on path {}; Err {}", &path, err))?;
+            .map_err(|err| format!("Failed to get access date on path {:?}; Err {}", &path, err))?;
 
-        let pathy_path: PathBuf = path.into();
-
-        let full_file_name: PathBuf = pathy_path.file_name().unwrap().into();
-
-        let file_stem: String = full_file_name
+        let file_stem: String = path
             .file_stem()
-            .ok_or_else(|| format!("Path has no file stem: {:?}", pathy_path))?
+            .ok_or_else(|| format!("Path has no file stem: {:?}", path))?
             .to_string_lossy()
             .to_string();
 
-        let file_extension: String = full_file_name
+        let file_extension: String = path
             .extension()
             .unwrap_or(OsStr::new(""))
             .to_string_lossy()
@@ -53,7 +50,7 @@ impl FileContainer {
         );
 
         Ok(Self {
-            path: pathy_path,
+            path: path,
             statistics: file_statistics,
         })
     }
