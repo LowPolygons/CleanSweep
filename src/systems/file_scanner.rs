@@ -2,19 +2,22 @@ use std::path::{Path, PathBuf};
 
 use crate::containers::file_container::{FileContainer, FileContainerInitError};
 
+#[derive(Debug)]
+pub enum FileScannerError {
+    ReadingDirectoryFail(String),
+    FormingFileContainerError(FileContainerInitError),
+    PathIsNotDirectory(PathBuf),
+    CantReadEntryAfterReadDir,
+}
+
 pub struct FileScanner {}
-
 impl FileScanner {
-    pub fn new() -> Self {
-        return Self {};
-    }
-
     // Utilise a stack to safely perform a breadth first search
-    pub fn scan<P: AsRef<Path>>(path: P) -> Result<Vec<FileContainer>, String> {
+    pub fn scan<P: AsRef<Path>>(path: P) -> Result<Vec<FileContainer>, FileScannerError> {
         let path: PathBuf = path.as_ref().into();
 
         if !path.is_dir() {
-            return Err("Passed path is not a directory".to_string());
+            return Err(FileScannerError::PathIsNotDirectory(path));
         }
 
         let mut file_containers: Vec<FileContainer> = Vec::new();
@@ -24,11 +27,11 @@ impl FileScanner {
 
         while let Some(path) = directories_to_search.pop() {
             if !path.is_dir() {
-                return Err(format!("Target path {:?} is not a directory", path));
+                return Err(FileScannerError::PathIsNotDirectory(path));
             }
             let elements_in_dir = path
                 .read_dir()
-                .map_err(|err| format!("Failed to read directory {}", err))?;
+                .map_err(|err| FileScannerError::ReadingDirectoryFail(format!("{}", err)))?;
 
             for entry in elements_in_dir {
                 if let Ok(entry) = entry {
@@ -38,11 +41,11 @@ impl FileScanner {
                     if entry.path().is_file() {
                         file_containers.push(
                             FileContainer::new(entry.path())
-                                .map_err(|err| format!("Error initing FileContainer: {:?}", err))?,
+                                .map_err(|err| FileScannerError::FormingFileContainerError(err))?,
                         )
                     }
                 } else {
-                    return Err(format!("Failed to read entry {:?}", entry));
+                    return Err(FileScannerError::CantReadEntryAfterReadDir);
                 }
             }
         }
