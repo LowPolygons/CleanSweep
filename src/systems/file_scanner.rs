@@ -1,12 +1,21 @@
 use std::path::{Path, PathBuf};
 
+use thiserror::Error;
+
 use crate::containers::file_container::{FileContainer, FileContainerInitError};
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum FileScannerError {
+    #[error("Failed when attempting to read direction {0}")]
     ReadingDirectoryFail(String),
+
+    #[error("Failed when attempting to turn a provided path into a FileContainer {0}")]
     FormingFileContainerError(FileContainerInitError),
+
+    #[error("Error attempting to reead initial provided path {0}")]
     PathIsNotDirectory(PathBuf),
+
+    #[error("Error when attempting to read entries after reading a directory")]
     CantReadEntryAfterReadDir,
 }
 

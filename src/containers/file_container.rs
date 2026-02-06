@@ -3,14 +3,23 @@ use std::{fs::Metadata, time::SystemTime};
 
 use std::ffi::OsStr;
 
+use thiserror::Error;
+
 use crate::containers::file_date_data::FileDateData;
 use crate::containers::file_statistics::FileStatistics;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum FileContainerInitError {
+    #[error("Error when attempting to read the metadata of a file")]
     MetadataNotFound,
+
+    #[error("Error when attempting to access modify date from file metadata")]
     ModifyDateNotAvailable,
+
+    #[error("Error when attempting to access the access date from the file metadata")]
     AccessDateNotAvailable,
+
+    #[error("Error when attempting to read the stem of the provided file")]
     FileStemNotAvailable,
 }
 
@@ -58,5 +67,8 @@ impl FileContainer {
             path: path,
             statistics: file_statistics,
         })
+    }
+    pub fn get_statistics(&self) -> &FileStatistics {
+        &self.statistics
     }
 }
