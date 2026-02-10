@@ -12,7 +12,7 @@ pub enum CleansweepFilePaths {
 }
 
 impl CleansweepFilePaths {
-    pub fn name(self) -> &'static str {
+    pub fn name(&self) -> &'static str {
         match self {
             CleansweepFilePaths::MainDirectoryName => ".cleansweep",
             CleansweepFilePaths::ToDelete => "to_delete_files.json",
