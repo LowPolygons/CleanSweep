@@ -1,8 +1,16 @@
 use std::path::{Path, PathBuf};
 
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::fs::File;
 use thiserror::Error;
+
+#[derive(Serialize, Deserialize)]
+pub struct Empty {}
+impl Empty {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 #[derive(Debug, Error)]
 pub enum JsonIOError {
