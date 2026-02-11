@@ -71,4 +71,7 @@ impl FileContainer {
     pub fn get_statistics(&self) -> &FileStatistics {
         &self.statistics
     }
+    pub fn get_path(&self) -> &PathBuf {
+        &self.path
+    }
 }

@@ -28,14 +28,14 @@ impl FilterForCategory for LastModifiedFilter {
         upper_last_modified: FilterCategory,
     ) -> Result<(), FilterCategoryError> {
         self.lower_last_modified = match lower_last_modified {
-            FilterCategory::LastAccessed(value) => value,
+            FilterCategory::LastModified(value) => value,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to LastModifiedFilter lower bound",
                 lower_last_modified
             )))?,
         };
         self.upper_last_modified = match upper_last_modified {
-            FilterCategory::LastAccessed(value) => value,
+            FilterCategory::LastModified(value) => value,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to LastModifiedFilter upper bound",
                 upper_last_modified

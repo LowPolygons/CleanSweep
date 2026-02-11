@@ -17,18 +17,23 @@ pub enum FilterCategory {
 
 pub struct FilterCategoryInputInterpretation {
     filter_choice: FilterCategory,
+    choice_as_string: String,
     reasoning: String,
 }
 
 impl FilterCategoryInputInterpretation {
-    pub fn new(filter_choice: FilterCategory, reasoning: String) -> Self {
+    pub fn new(filter_choice: FilterCategory, choice_as_string: String, reasoning: String) -> Self {
         Self {
             filter_choice,
+            choice_as_string,
             reasoning,
         }
     }
     pub fn get_filter(&self) -> FilterCategory {
         self.filter_choice.clone()
+    }
+    pub fn get_choice(&self) -> &String {
+        &self.choice_as_string
     }
     pub fn get_reasoning(&self) -> &String {
         &self.reasoning
@@ -43,6 +48,7 @@ impl FilterCategory {
         if input.contains("name") {
             return Some(FilterCategoryInputInterpretation::new(
                 FilterCategory::Name(Vec::new()),
+                "Name Filter".to_string(),
                 format!(
                     "The provided string {} contains the substring 'name'",
                     input
@@ -52,6 +58,7 @@ impl FilterCategory {
         if input.contains("size") {
             return Some(FilterCategoryInputInterpretation::new(
                 FilterCategory::Size(0),
+                "Size Filter".to_string(),
                 format!(
                     "The provided string {} contains the substring 'size'",
                     input
@@ -61,6 +68,7 @@ impl FilterCategory {
         if input.contains("extension") {
             return Some(FilterCategoryInputInterpretation::new(
                 FilterCategory::Extension(Vec::new()),
+                "Extension Filter".to_string(),
                 format!(
                     "The provided string {} contains the substring 'extension'",
                     input
@@ -70,6 +78,7 @@ impl FilterCategory {
         if input.contains("access") {
             return Some(FilterCategoryInputInterpretation::new(
                 FilterCategory::LastAccessed(FileDateData::new(secs_since_epoch_to_time(0))),
+                "Last Access Filter".to_string(),
                 format!(
                     "The provided string {} contains the substring 'access'",
                     input
@@ -79,7 +88,8 @@ impl FilterCategory {
         if input.contains("modif") {
             // supports modify or modified
             return Some(FilterCategoryInputInterpretation::new(
-                FilterCategory::LastAccessed(FileDateData::new(secs_since_epoch_to_time(0))),
+                FilterCategory::LastModified(FileDateData::new(secs_since_epoch_to_time(0))),
+                "Last Modified Filter".to_string(),
                 format!(
                     "The provided string {} contains the substring 'modif'",
                     input

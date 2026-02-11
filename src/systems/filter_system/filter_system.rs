@@ -17,14 +17,8 @@ pub struct FilterSystem {
 }
 
 impl FilterSystem {
-    pub fn new() -> Self {
-        Self {
-            filterers: Vec::new(),
-        }
-    }
-
-    pub fn new_filter_category(&mut self, new_category: impl FilterForCategory + 'static) {
-        self.filterers.push(Box::new(new_category));
+    pub fn new(filterers: Vec<Box<dyn FilterForCategory>>) -> Self {
+        Self { filterers }
     }
 
     pub fn filter_file(&self, file: &FileContainer) -> Result<FilterCodes, FilterSystemError> {

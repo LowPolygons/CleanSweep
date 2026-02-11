@@ -1,18 +1,16 @@
 use std::fs::File;
 use std::path::PathBuf;
 
+use crate::containers::cleansweep_file_paths::CleansweepFilePaths;
 use crate::containers::user_settings::UserSettings;
-use crate::utils::create_default_user_settings::create_default_user_settings;
-use crate::{
-    containers::cleansweep_file_paths::CleansweepFilePaths, utils::get_home_dir::get_home_directory,
-};
+use crate::utils::create_defaults::create_default_user_settings;
+use crate::utils::get_home_dir::get_cleansweep_dir;
 
 use crate::systems::json_io::*;
 
 pub fn setup() -> Result<(), String> {
-    let cleansweep_dir: PathBuf = get_home_directory()
-        .map_err(|e| format!("Failed to get home directory in setup: {:?}", e))?
-        .join(CleansweepFilePaths::MainDirectoryName.name());
+    let cleansweep_dir: PathBuf = get_cleansweep_dir()
+        .map_err(|e| format!("Failed to get cleansweep directory in setup: {:?}", e))?;
 
     if std::fs::exists(&cleansweep_dir)
         .map_err(|_| format!("Failed to confirm whether .cleansweep directory exists"))?
