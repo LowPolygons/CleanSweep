@@ -14,9 +14,15 @@ pub fn setup() -> Result<(), String> {
         .map_err(|e| format!("Failed to get home directory in setup: {:?}", e))?
         .join(CleansweepFilePaths::MainDirectoryName.name());
 
-    if !cleansweep_dir.is_dir() {
-        return Err(format!("Folder '$HOME/.cleansweep' not found"));
+    if std::fs::exists(&cleansweep_dir)
+        .map_err(|_| format!("Failed to confirm whether .cleansweep directory exists"))?
+    {
+        println!("The .cleansweep directory already exists ");
+        return Ok(());
     }
+
+    std::fs::create_dir(&cleansweep_dir)
+        .map_err(|_| format!("Failed to create directory at path {:?}", &cleansweep_dir))?;
 
     let txt_files_to_write_with_nothing: Vec<CleansweepFilePaths> = vec![
         CleansweepFilePaths::LogFile,
@@ -32,12 +38,12 @@ pub fn setup() -> Result<(), String> {
         CleansweepFilePaths::UserSettingsDefault,
     ];
 
-    for file in txt_files_to_write_with_nothing {
+    for file in &txt_files_to_write_with_nothing {
         let _ = File::create(cleansweep_dir.join(file.name()))
             .map_err(|_| "Failed to create a file".to_string())?;
     }
 
-    for file in json_files_to_write_with_nothing {
+    for file in &json_files_to_write_with_nothing {
         write_json_file_from_struct(&Empty::new(), cleansweep_dir.join(&file.name())).map_err(
             |err| match &err {
                 JsonWriteError::FileCreateFromPathError => {
@@ -58,7 +64,7 @@ pub fn setup() -> Result<(), String> {
 
     let default_user_settings: UserSettings = create_default_user_settings();
 
-    for file in user_settings_files {
+    for file in &user_settings_files {
         write_json_file_from_struct(&default_user_settings, cleansweep_dir.join(&file.name()))
             .map_err(|err| match &err {
                 JsonWriteError::FileCreateFromPathError => {
@@ -74,6 +80,19 @@ pub fn setup() -> Result<(), String> {
                     )
                 }
             })?;
+    }
+
+    println!("Setup completed - initialised the following at $HOME/.cleansweep");
+
+    for path in [
+        txt_files_to_write_with_nothing,
+        json_files_to_write_with_nothing,
+        user_settings_files,
+    ]
+    .into_iter()
+    .flatten()
+    {
+        println!("- ..{}", path.name());
     }
 
     Ok(())

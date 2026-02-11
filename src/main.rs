@@ -13,8 +13,6 @@ use crate::commands::{
     activate_override, demolish, list, manage_sets, purge, reset, scan, set_scan, settings, setup,
 };
 
-// use crate::macros::str;
-
 fn main() -> Result<(), String> {
     let cli = Cli::parse();
 
