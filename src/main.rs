@@ -23,7 +23,10 @@ fn main() -> Result<(), String> {
         Commands::ManageSets => manage_sets::manage_sets(),
         Commands::Purge { choice } => purge::purge(&choice),
         Commands::Reset { choice } => reset::reset(&choice),
-        Commands::Scan { path } => scan::scan(&path),
+        Commands::Scan {
+            path,
+            use_custom_filters,
+        } => scan::scan(&path, use_custom_filters),
         Commands::SetScan { path } => set_scan::set_scan(&path),
         Commands::Settings { choice } => settings::settings(&choice),
         Commands::Setup => setup::setup(),

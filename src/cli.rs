@@ -54,6 +54,9 @@ pub enum Commands {
     Scan {
         #[arg(long, default_value_t = String::from(""))]
         path: String,
+
+        #[arg(long, short)]
+        use_custom_filters: bool,
     },
 
     #[command(about = "SetScan")]
