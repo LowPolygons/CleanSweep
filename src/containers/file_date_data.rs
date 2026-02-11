@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use std::time::{Duration, SystemTime};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileDateData {
     time: SystemTime,
 }

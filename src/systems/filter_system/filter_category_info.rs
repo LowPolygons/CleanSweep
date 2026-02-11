@@ -1,10 +1,10 @@
 use thiserror::Error;
 
 use crate::containers::file_container::FileContainer;
-use crate::containers::file_date_data::FileDateData;
+use crate::containers::file_date_data::{FileDateData, secs_since_epoch_to_time};
 use crate::filter_codes::filter_codes::FilterCodes;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FilterCategory {
     Name(Vec<String>),
     // TODO: Name Contains
@@ -13,6 +13,81 @@ pub enum FilterCategory {
     LastAccessed(FileDateData),
     LastModified(FileDateData),
     // TODO: Directory Contains
+}
+
+pub struct FilterCategoryInputInterpretation {
+    filter_choice: FilterCategory,
+    reasoning: String,
+}
+
+impl FilterCategoryInputInterpretation {
+    pub fn new(filter_choice: FilterCategory, reasoning: String) -> Self {
+        Self {
+            filter_choice,
+            reasoning,
+        }
+    }
+    pub fn get_filter(&self) -> FilterCategory {
+        self.filter_choice.clone()
+    }
+    pub fn get_reasoning(&self) -> &String {
+        &self.reasoning
+    }
+}
+
+impl FilterCategory {
+    pub fn match_string_to_category(input: &String) -> Option<FilterCategoryInputInterpretation> {
+        // TODO: This will initially be quite a crude implementation, consider a refactor
+        let input: String = input.to_lowercase();
+
+        if input.contains("name") {
+            return Some(FilterCategoryInputInterpretation::new(
+                FilterCategory::Name(Vec::new()),
+                format!(
+                    "The provided string {} contains the substring 'name'",
+                    input
+                ),
+            ));
+        }
+        if input.contains("size") {
+            return Some(FilterCategoryInputInterpretation::new(
+                FilterCategory::Size(0),
+                format!(
+                    "The provided string {} contains the substring 'size'",
+                    input
+                ),
+            ));
+        }
+        if input.contains("extension") {
+            return Some(FilterCategoryInputInterpretation::new(
+                FilterCategory::Extension(Vec::new()),
+                format!(
+                    "The provided string {} contains the substring 'extension'",
+                    input
+                ),
+            ));
+        }
+        if input.contains("access") {
+            return Some(FilterCategoryInputInterpretation::new(
+                FilterCategory::LastAccessed(FileDateData::new(secs_since_epoch_to_time(0))),
+                format!(
+                    "The provided string {} contains the substring 'access'",
+                    input
+                ),
+            ));
+        }
+        if input.contains("modif") {
+            // supports modify or modified
+            return Some(FilterCategoryInputInterpretation::new(
+                FilterCategory::LastAccessed(FileDateData::new(secs_since_epoch_to_time(0))),
+                format!(
+                    "The provided string {} contains the substring 'modif'",
+                    input
+                ),
+            ));
+        }
+        None
+    }
 }
 
 #[derive(Debug, Error)]
