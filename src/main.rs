@@ -26,7 +26,8 @@ fn main() -> Result<(), String> {
         Commands::Scan {
             path,
             use_custom_filters,
-        } => scan::scan(&path, use_custom_filters),
+            append_mode,
+        } => scan::scan(&path, use_custom_filters, append_mode),
         Commands::SetScan { path } => set_scan::set_scan(&path),
         Commands::Settings { choice } => settings::settings(&choice),
         Commands::Setup => setup::setup(),

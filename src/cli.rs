@@ -57,6 +57,9 @@ pub enum Commands {
 
         #[arg(long, short)]
         use_custom_filters: bool,
+
+        #[arg(long, short)]
+        append_mode: bool,
     },
 
     #[command(about = "SetScan")]
