@@ -5,16 +5,16 @@ use crate::systems::filter_system::filter_category_info::{
 };
 
 pub struct ExtensionFilter {
-    keep_extension: Vec<String>,
-    delete_extension: Vec<String>,
+    keep_extension: FilterCategory,   //Vec<String>,
+    delete_extension: FilterCategory, //Vec<String>,
     init: bool,
 }
 
 impl ExtensionFilter {
     pub fn new() -> Self {
         Self {
-            keep_extension: Vec::new(),
-            delete_extension: Vec::new(),
+            keep_extension: FilterCategory::Extension(Vec::new()),
+            delete_extension: FilterCategory::Extension(Vec::new()),
             init: false,
         }
     }
@@ -26,16 +26,16 @@ impl FilterForCategory for ExtensionFilter {
         to_keep_category: FilterCategory,
         to_delete_category: FilterCategory,
     ) -> Result<(), FilterCategoryError> {
-        self.keep_extension = match to_keep_category {
-            FilterCategory::Extension(value) => value,
+        self.keep_extension = match &to_keep_category {
+            FilterCategory::Extension(_) => to_keep_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to ExtensionFilter Keep list",
                 to_keep_category
             )))?,
         };
 
-        self.delete_extension = match to_delete_category {
-            FilterCategory::Extension(value) => value,
+        self.delete_extension = match &to_delete_category {
+            FilterCategory::Extension(_) => to_delete_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to ExtensionFilter Delete list",
                 to_delete_category
@@ -51,13 +51,10 @@ impl FilterForCategory for ExtensionFilter {
             Err(FilterCategoryError::DidntInitBeforeUse)?
         }
 
-        let file_extension: &String = file.get_statistics().get_extension();
-
-        if self.keep_extension.contains(&file_extension) {
+        if self.keep_extension.is_file_flagged(file) {
             return Ok(FilterCodes::ToKeep);
         }
-
-        if self.delete_extension.contains(&file_extension) {
+        if self.delete_extension.is_file_flagged(file) {
             return Ok(FilterCodes::ToDelete);
         }
 

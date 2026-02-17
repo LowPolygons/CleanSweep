@@ -6,16 +6,20 @@ use crate::systems::filter_system::filter_category_info::{
 };
 
 pub struct LastModifiedFilter {
-    lower_last_modified: FileDateData,
-    upper_last_modified: FileDateData,
+    lower_last_modified: FilterCategory,
+    upper_last_modified: FilterCategory,
     init: bool,
 }
 
 impl LastModifiedFilter {
     pub fn new() -> Self {
         Self {
-            lower_last_modified: FileDateData::new(std::time::UNIX_EPOCH),
-            upper_last_modified: FileDateData::new(std::time::UNIX_EPOCH),
+            lower_last_modified: FilterCategory::LastModified(FileDateData::new(
+                std::time::UNIX_EPOCH,
+            )),
+            upper_last_modified: FilterCategory::LastModified(FileDateData::new(
+                std::time::UNIX_EPOCH,
+            )),
             init: false,
         }
     }
@@ -27,15 +31,15 @@ impl FilterForCategory for LastModifiedFilter {
         lower_last_modified: FilterCategory,
         upper_last_modified: FilterCategory,
     ) -> Result<(), FilterCategoryError> {
-        self.lower_last_modified = match lower_last_modified {
-            FilterCategory::LastModified(value) => value,
+        self.lower_last_modified = match &lower_last_modified {
+            FilterCategory::LastModified(_) => lower_last_modified,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to LastModifiedFilter lower bound",
                 lower_last_modified
             )))?,
         };
-        self.upper_last_modified = match upper_last_modified {
-            FilterCategory::LastModified(value) => value,
+        self.upper_last_modified = match &upper_last_modified {
+            FilterCategory::LastModified(_) => upper_last_modified,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to LastModifiedFilter upper bound",
                 upper_last_modified
@@ -50,21 +54,16 @@ impl FilterForCategory for LastModifiedFilter {
             Err(FilterCategoryError::DidntInitBeforeUse)?
         }
 
-        let file_modified_date = file.get_statistics().get_last_accessed().time_since_zero();
-        let lower_last_modified_secs = self.lower_last_modified.time_since_zero();
-        let upper_last_modified_secs = self.upper_last_modified.time_since_zero();
+        let is_greater_than_lower_flagged = self.lower_last_modified.is_file_flagged(file);
+        let is_greater_than_upper_flagged = self.lower_last_modified.is_file_flagged(file);
 
-        if file_modified_date < lower_last_modified_secs
-            || file_modified_date > upper_last_modified_secs
-        {
+        if !is_greater_than_lower_flagged || is_greater_than_upper_flagged {
             return Ok(FilterCodes::ToKeep);
         }
-
-        if file_modified_date >= lower_last_modified_secs
-            || file_modified_date >= upper_last_modified_secs
-        {
+        if is_greater_than_lower_flagged || !is_greater_than_upper_flagged {
             return Ok(FilterCodes::ToDelete);
         }
+
         Ok(FilterCodes::NonSpecial)
     }
 }

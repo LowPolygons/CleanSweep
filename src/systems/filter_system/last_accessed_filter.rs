@@ -6,16 +6,20 @@ use crate::systems::filter_system::filter_category_info::{
 };
 
 pub struct LastAccessedFilter {
-    lower_last_accessed: FileDateData,
-    upper_last_accessed: FileDateData,
+    lower_last_accessed: FilterCategory,
+    upper_last_accessed: FilterCategory,
     init: bool,
 }
 
 impl LastAccessedFilter {
     pub fn new() -> Self {
         Self {
-            lower_last_accessed: FileDateData::new(std::time::UNIX_EPOCH),
-            upper_last_accessed: FileDateData::new(std::time::UNIX_EPOCH),
+            lower_last_accessed: FilterCategory::LastAccessed(FileDateData::new(
+                std::time::UNIX_EPOCH,
+            )),
+            upper_last_accessed: FilterCategory::LastAccessed(FileDateData::new(
+                std::time::UNIX_EPOCH,
+            )),
             init: false,
         }
     }
@@ -27,15 +31,15 @@ impl FilterForCategory for LastAccessedFilter {
         lower_last_accessed: FilterCategory,
         upper_last_accessed: FilterCategory,
     ) -> Result<(), FilterCategoryError> {
-        self.lower_last_accessed = match lower_last_accessed {
-            FilterCategory::LastAccessed(value) => value,
+        self.lower_last_accessed = match &lower_last_accessed {
+            FilterCategory::LastAccessed(_) => lower_last_accessed,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to LastAccessedFilter lower bound",
                 lower_last_accessed
             )))?,
         };
-        self.upper_last_accessed = match upper_last_accessed {
-            FilterCategory::LastAccessed(value) => value,
+        self.upper_last_accessed = match &upper_last_accessed {
+            FilterCategory::LastAccessed(_) => upper_last_accessed,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to LastAccessedFilter upper bound",
                 upper_last_accessed
@@ -50,21 +54,16 @@ impl FilterForCategory for LastAccessedFilter {
             Err(FilterCategoryError::DidntInitBeforeUse)?
         }
 
-        let file_access_date = file.get_statistics().get_last_accessed().time_since_zero();
-        let lower_last_accessed_secs = self.lower_last_accessed.time_since_zero();
-        let upper_last_accessed_secs = self.upper_last_accessed.time_since_zero();
+        let is_greater_than_lower_flagged = self.lower_last_accessed.is_file_flagged(file);
+        let is_greater_than_upper_flagged = self.lower_last_accessed.is_file_flagged(file);
 
-        if file_access_date < lower_last_accessed_secs
-            || file_access_date > upper_last_accessed_secs
-        {
+        if !is_greater_than_lower_flagged || is_greater_than_upper_flagged {
             return Ok(FilterCodes::ToKeep);
         }
-
-        if file_access_date >= lower_last_accessed_secs
-            || file_access_date >= upper_last_accessed_secs
-        {
+        if is_greater_than_lower_flagged || !is_greater_than_upper_flagged {
             return Ok(FilterCodes::ToDelete);
         }
+
         // Should never reach
         Ok(FilterCodes::NonSpecial)
     }

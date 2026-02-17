@@ -15,32 +15,55 @@ pub enum FilterCategory {
     // TODO: Directory Contains
 }
 
+#[derive(Debug, Error)]
+pub enum FilterCategoryError {
+    #[error("Failed to initialise FilterCategory: {0}")]
+    InititialisationError(String),
+
+    #[error("Attempted to utilise FilterCategory before initialising it")]
+    DidntInitBeforeUse,
+}
+
 pub struct FilterCategoryInputInterpretation {
     filter_choice: FilterCategory,
     choice_as_string: String,
     reasoning: String,
 }
 
-impl FilterCategoryInputInterpretation {
-    pub fn new(filter_choice: FilterCategory, choice_as_string: String, reasoning: String) -> Self {
-        Self {
-            filter_choice,
-            choice_as_string,
-            reasoning,
-        }
-    }
-    pub fn get_filter(&self) -> FilterCategory {
-        self.filter_choice.clone()
-    }
-    pub fn get_choice(&self) -> &String {
-        &self.choice_as_string
-    }
-    pub fn get_reasoning(&self) -> &String {
-        &self.reasoning
-    }
+pub trait FilterForCategory {
+    fn init(
+        &mut self,
+        filter_keep: FilterCategory,
+        filter_delete: FilterCategory,
+    ) -> Result<(), FilterCategoryError>;
+    fn categorise_file(&self, file: &FileContainer) -> Result<FilterCodes, FilterCategoryError>;
 }
 
 impl FilterCategory {
+    pub fn is_file_flagged(&self, target: &FileContainer) -> bool {
+        match &self {
+            FilterCategory::Name(list) => list.contains(target.get_statistics().get_name()),
+            FilterCategory::Size(size) => target.get_statistics().get_size() > size,
+            FilterCategory::Extension(list) => {
+                list.contains(target.get_statistics().get_extension())
+            }
+            FilterCategory::LastAccessed(date) => {
+                target
+                    .get_statistics()
+                    .get_last_accessed()
+                    .time_since_zero()
+                    > date.time_since_zero()
+            }
+            FilterCategory::LastModified(date) => {
+                target
+                    .get_statistics()
+                    .get_last_modified()
+                    .time_since_zero()
+                    > date.time_since_zero()
+            }
+        }
+    }
+
     pub fn match_string_to_category(input: &String) -> Option<FilterCategoryInputInterpretation> {
         // TODO: This will initially be quite a crude implementation, consider a refactor
         let input: String = input.to_lowercase();
@@ -100,20 +123,21 @@ impl FilterCategory {
     }
 }
 
-#[derive(Debug, Error)]
-pub enum FilterCategoryError {
-    #[error("Failed to initialise FilterCategory: {0}")]
-    InititialisationError(String),
-
-    #[error("Attempted to utilise FilterCategory before initialising it")]
-    DidntInitBeforeUse,
-}
-
-pub trait FilterForCategory {
-    fn init(
-        &mut self,
-        filter_keep: FilterCategory,
-        filter_delete: FilterCategory,
-    ) -> Result<(), FilterCategoryError>;
-    fn categorise_file(&self, file: &FileContainer) -> Result<FilterCodes, FilterCategoryError>;
+impl FilterCategoryInputInterpretation {
+    pub fn new(filter_choice: FilterCategory, choice_as_string: String, reasoning: String) -> Self {
+        Self {
+            filter_choice,
+            choice_as_string,
+            reasoning,
+        }
+    }
+    pub fn get_filter(&self) -> FilterCategory {
+        self.filter_choice.clone()
+    }
+    pub fn get_choice(&self) -> &String {
+        &self.choice_as_string
+    }
+    pub fn get_reasoning(&self) -> &String {
+        &self.reasoning
+    }
 }

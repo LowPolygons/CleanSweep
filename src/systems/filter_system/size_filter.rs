@@ -1,3 +1,5 @@
+use std::path::is_separator;
+
 use crate::containers::file_container::FileContainer;
 use crate::filter_codes::filter_codes::FilterCodes;
 use crate::systems::filter_system::filter_category_info::{
@@ -5,16 +7,16 @@ use crate::systems::filter_system::filter_category_info::{
 };
 
 pub struct SizeFilter {
-    lower_size: u64,
-    upper_size: u64,
+    lower_size: FilterCategory,
+    upper_size: FilterCategory,
     init: bool,
 }
 
 impl SizeFilter {
     pub fn new() -> Self {
         Self {
-            lower_size: 0,
-            upper_size: 0,
+            lower_size: FilterCategory::Size(0),
+            upper_size: FilterCategory::Size(0),
             init: false,
         }
     }
@@ -26,15 +28,15 @@ impl FilterForCategory for SizeFilter {
         lower_category: FilterCategory,
         upper_category: FilterCategory,
     ) -> Result<(), FilterCategoryError> {
-        self.lower_size = match lower_category {
-            FilterCategory::Size(value) => value,
+        self.lower_size = match &lower_category {
+            FilterCategory::Size(_) => lower_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to SizeFilter Lower end",
                 lower_category
             )))?,
         };
-        self.upper_size = match upper_category {
-            FilterCategory::Size(value) => value,
+        self.upper_size = match &upper_category {
+            FilterCategory::Size(_) => upper_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to SizeFilter Upper end",
                 upper_category
@@ -49,12 +51,13 @@ impl FilterForCategory for SizeFilter {
             Err(FilterCategoryError::DidntInitBeforeUse)?
         }
 
-        let file_size: &u64 = file.get_statistics().get_size();
+        let is_greater_than_lower = self.lower_size.is_file_flagged(file);
+        let is_greater_than_upper = self.upper_size.is_file_flagged(file);
 
-        if file_size < &self.lower_size || file_size > &self.upper_size {
+        if !is_greater_than_lower || is_greater_than_upper {
             return Ok(FilterCodes::ToKeep);
         }
-        if file_size >= &self.lower_size || file_size <= &self.upper_size {
+        if is_greater_than_lower || !is_greater_than_upper {
             return Ok(FilterCodes::ToDelete);
         }
         // Should never be reached

@@ -5,16 +5,16 @@ use crate::systems::filter_system::filter_category_info::{
 };
 
 pub struct NameFilter {
-    keep_name: Vec<String>,
-    delete_name: Vec<String>,
+    keep_name: FilterCategory,
+    delete_name: FilterCategory,
     init: bool,
 }
 
 impl NameFilter {
     pub fn new() -> Self {
         Self {
-            keep_name: Vec::new(),
-            delete_name: Vec::new(),
+            keep_name: FilterCategory::Extension(Vec::new()),
+            delete_name: FilterCategory::Extension(Vec::new()),
             init: false,
         }
     }
@@ -26,15 +26,15 @@ impl FilterForCategory for NameFilter {
         to_keep_category: FilterCategory,
         to_delete_category: FilterCategory,
     ) -> Result<(), FilterCategoryError> {
-        self.keep_name = match to_keep_category {
-            FilterCategory::Name(value) => value,
+        self.keep_name = match &to_keep_category {
+            FilterCategory::Name(_) => to_keep_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to NameFilter Keep list",
                 to_keep_category
             )))?,
         };
-        self.delete_name = match to_delete_category {
-            FilterCategory::Name(value) => value,
+        self.delete_name = match &to_delete_category {
+            FilterCategory::Name(_) => to_delete_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to NameFilter delete list",
                 to_delete_category
@@ -49,13 +49,11 @@ impl FilterForCategory for NameFilter {
             Err(FilterCategoryError::DidntInitBeforeUse)?
         }
 
-        let file_name: &String = file.get_statistics().get_name();
-
-        if self.keep_name.contains(&file_name) {
+        if self.keep_name.is_file_flagged(file) {
             return Ok(FilterCodes::ToKeep);
         }
 
-        if self.delete_name.contains(&file_name) {
+        if self.delete_name.is_file_flagged(file) {
             return Ok(FilterCodes::ToDelete);
         }
 
