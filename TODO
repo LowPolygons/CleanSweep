@@ -1,0 +1,12 @@
+scan --no-filter
+  -> This dumps all of the scanned files into the Keep list by default for further run-time user control
+
+override/filter command
+  -> This command takes in a required arg [keep, delete], and a --filter [array of values]
+  -> These args will represent which list will have the filter acted upon - anything flagged by the list will be moved to the opposing list
+  EG: `override keep --filter extension {py, txt, md}`
+      -> Any files in the keep list with extensions py/txt/md will be moved into the delete list
+
+To do this, the current FilterCategory need an additional layer of abstraction where the inner logic of keep/delete scanning is not concrete
+the filter category itslef could contain a (eg) 'FlaggingObject' which contains one list and will just return if the file is flagged by it
+the filter category can then perform the logic of returning true or false
