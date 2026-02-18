@@ -4,37 +4,37 @@ use crate::systems::filter_system::filter_category_info::{
     FilterCategory, FilterCategoryError, FilterForCategory,
 };
 
-pub struct NameFilter {
+pub struct NameContainsFilter {
     keep_name: FilterCategory,
     delete_name: FilterCategory,
     init: bool,
 }
 
-impl NameFilter {
+impl NameContainsFilter {
     pub fn new() -> Self {
         Self {
-            keep_name: FilterCategory::Name(Vec::new()),
-            delete_name: FilterCategory::Name(Vec::new()),
+            keep_name: FilterCategory::NameContains(Vec::new()),
+            delete_name: FilterCategory::NameContains(Vec::new()),
             init: false,
         }
     }
 }
 
-impl FilterForCategory for NameFilter {
+impl FilterForCategory for NameContainsFilter {
     fn init(
         &mut self,
         to_keep_category: FilterCategory,
         to_delete_category: FilterCategory,
     ) -> Result<(), FilterCategoryError> {
         self.keep_name = match &to_keep_category {
-            FilterCategory::Name(_) => to_keep_category,
+            FilterCategory::NameContains(_) => to_keep_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to NameFilter Keep list",
                 to_keep_category
             )))?,
         };
         self.delete_name = match &to_delete_category {
-            FilterCategory::Name(_) => to_delete_category,
+            FilterCategory::NameContains(_) => to_delete_category,
             _ => Err(FilterCategoryError::InititialisationError(format!(
                 "Passed in wrong FilterCategory type of value {:?} to NameFilter delete list",
                 to_delete_category

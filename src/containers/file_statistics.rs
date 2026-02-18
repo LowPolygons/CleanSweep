@@ -7,6 +7,7 @@ pub struct FileStatistics {
     extension: String,
     last_accessed: FileDateData,
     last_modified: FileDateData,
+    directory: String,
 }
 
 impl FileStatistics {
@@ -16,6 +17,7 @@ impl FileStatistics {
         extension: String,
         last_accessed: FileDateData,
         last_modified: FileDateData,
+        directory: String,
     ) -> Self {
         FileStatistics {
             name,
@@ -23,11 +25,15 @@ impl FileStatistics {
             extension,
             last_accessed,
             last_modified,
+            directory,
         }
     }
 
     pub fn get_name(&self) -> &String {
         &self.name
+    }
+    pub fn get_directory(&self) -> &String {
+        &self.directory
     }
     pub fn get_size(&self) -> &u64 {
         &self.size

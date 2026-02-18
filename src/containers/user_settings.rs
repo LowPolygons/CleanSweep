@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct PerFilterOptions {
     with_extension: Vec<String>,
     name_contains: Vec<String>,
-    path_contains: Vec<String>,
+    directory_contains: Vec<String>,
     name_starts_with: Vec<String>,
     larger_than: u64,
     modified_after: u64,
@@ -69,7 +69,7 @@ impl PerFilterOptions {
     pub fn new(
         with_extension: Vec<String>,
         name_contains: Vec<String>,
-        path_contains: Vec<String>,
+        directory_contains: Vec<String>,
         name_starts_with: Vec<String>,
         larger_than: u64,
         modified_after: u64,
@@ -78,7 +78,7 @@ impl PerFilterOptions {
         Self {
             with_extension,
             name_contains,
-            path_contains,
+            directory_contains,
             name_starts_with,
             larger_than,
             modified_after,
@@ -91,8 +91,8 @@ impl PerFilterOptions {
     pub fn get_name(&self) -> &Vec<String> {
         &self.name_contains
     }
-    pub fn get_path(&self) -> &Vec<String> {
-        &self.path_contains
+    pub fn get_directory(&self) -> &Vec<String> {
+        &self.directory_contains
     }
     pub fn get_name_starts_with(&self) -> &Vec<String> {
         &self.name_starts_with

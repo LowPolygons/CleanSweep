@@ -9,11 +9,13 @@ use crate::{
     systems::{
         file_scanner::FileScanner,
         filter_system::{
+            directory_contains_filter::DirectoryContainsFilter,
             extension_filter::ExtensionFilter,
             filter_category_info::{FilterCategory, FilterForCategory},
             filter_system::FilterSystem,
             last_accessed_filter::LastAccessedFilter,
             last_modified_filter::LastModifiedFilter,
+            name_contains_filter::NameContainsFilter,
             name_filter::NameFilter,
             size_filter::SizeFilter,
         },
@@ -117,6 +119,24 @@ fn stringy_filters_to_filter_objects(
                         FilterCategory::Name(user_settings.get_to_keep_list().get_name().clone());
                     delete_filter_item =
                         FilterCategory::Name(user_settings.get_to_delete_list().get_name().clone());
+                }
+                FilterCategory::NameContains(_) => {
+                    filter = Box::new(NameContainsFilter::new());
+                    keep_filter_item = FilterCategory::NameContains(
+                        user_settings.get_to_keep_list().get_name().clone(),
+                    );
+                    delete_filter_item = FilterCategory::NameContains(
+                        user_settings.get_to_delete_list().get_name().clone(),
+                    );
+                }
+                FilterCategory::DirectoryContains(_) => {
+                    filter = Box::new(DirectoryContainsFilter::new());
+                    keep_filter_item = FilterCategory::DirectoryContains(
+                        user_settings.get_to_keep_list().get_directory().clone(),
+                    );
+                    delete_filter_item = FilterCategory::DirectoryContains(
+                        user_settings.get_to_delete_list().get_directory().clone(),
+                    );
                 }
                 FilterCategory::Size(_) => {
                     filter = Box::new(SizeFilter::new());

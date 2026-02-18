@@ -7,12 +7,13 @@ use crate::filter_codes::filter_codes::FilterCodes;
 #[derive(Debug, Clone)]
 pub enum FilterCategory {
     Name(Vec<String>),
+    NameContains(Vec<String>),
     // TODO: Name Contains
     Size(u64),
     Extension(Vec<String>),
     LastAccessed(FileDateData),
     LastModified(FileDateData),
-    // TODO: Directory Contains
+    DirectoryContains(Vec<String>),
 }
 
 #[derive(Debug, Error)]
@@ -41,7 +42,7 @@ pub trait FilterForCategory {
 
 impl FilterCategory {
     pub fn is_file_flagged(&self, target: &FileContainer) -> bool {
-        match &self {
+        match self {
             FilterCategory::Name(list) => list.contains(target.get_statistics().get_name()),
             FilterCategory::Size(size) => target.get_statistics().get_size() > size,
             FilterCategory::Extension(list) => {
@@ -60,6 +61,22 @@ impl FilterCategory {
                     .get_last_modified()
                     .time_since_zero()
                     > date.time_since_zero()
+            }
+            FilterCategory::DirectoryContains(list) => {
+                for item in list {
+                    if target.get_statistics().get_directory().contains(item) {
+                        return true;
+                    }
+                }
+                false
+            }
+            FilterCategory::NameContains(list) => {
+                for item in list {
+                    if target.get_statistics().get_name().contains(item) {
+                        return true;
+                    }
+                }
+                false
             }
         }
     }
