@@ -86,15 +86,39 @@ impl FilterCategory {
         let input: String = input.to_lowercase();
 
         if input.contains("name") {
-            return Some(FilterCategoryInputInterpretation::new(
-                FilterCategory::Name(Vec::new()),
-                "Name Filter".to_string(),
-                format!(
-                    "The provided string {} contains the substring 'name'",
-                    input
-                ),
-            ));
+            if input.contains("contains") {
+                return Some(FilterCategoryInputInterpretation::new(
+                    FilterCategory::NameContains(Vec::new()),
+                    "Name Contains Filter".to_string(),
+                    format!(
+                        "The provided string {} contains the substring 'name' and the substring 'contains'",
+                        input
+                    ),
+                ));
+            } else {
+                return Some(FilterCategoryInputInterpretation::new(
+                    FilterCategory::Name(Vec::new()),
+                    "Name Filter".to_string(),
+                    format!(
+                        "The provided string {} contains the substring 'name'",
+                        input
+                    ),
+                ));
+            }
         }
+        if input.contains("directory") || input.contains("path") {
+            if input.contains("contains") {
+                return Some(FilterCategoryInputInterpretation::new(
+                    FilterCategory::DirectoryContains(Vec::new()),
+                    "Directory Contains Filter".to_string(),
+                    format!(
+                        "The provided string {} contains some combination of 'path' or'directory', and 'contains'",
+                        input
+                    ),
+                ));
+            }
+        }
+
         if input.contains("size") {
             return Some(FilterCategoryInputInterpretation::new(
                 FilterCategory::Size(0),

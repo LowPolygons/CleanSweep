@@ -18,7 +18,7 @@ pub fn create_default_user_settings() -> UserSettings {
                 "HISTORY".to_string(),
                 "slurm-".to_string(),
             ], //name_contains,
-            vec!["deleteme".to_string()], //path_contains,
+            vec!["deleteme".to_string()], //dir_contains,
             Vec::new(),              //name_starts_with,
             1001,                    //larger_than,
             0,                       // modify_date_cutoff,
@@ -33,9 +33,10 @@ pub fn create_default_user_settings() -> UserSettings {
 
 pub fn get_default_filter_category_list() -> Vec<String> {
     return vec![
-        "name".to_string(),
+        "name_contains".to_string(),
         "extension".to_string(),
         "size".to_string(),
         "modify".to_string(),
+        "directory_contains".to_string(),
     ];
 }
