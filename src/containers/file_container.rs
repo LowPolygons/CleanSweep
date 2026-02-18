@@ -36,7 +36,7 @@ pub enum PathToStringError {
     ToStrError,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileContainer {
     path: PathBuf,
     statistics: FileStatistics,
