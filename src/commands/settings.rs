@@ -1,13 +1,10 @@
-use std::{
-    env::{VarError, temp_dir},
-    fs::File,
-};
+use std::env::VarError;
 
 use crate::{
     cli::SettingsArgs,
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
-        user_settings::{self, UserSettings, get_user_setting_lines},
+        user_settings::{UserSettings, get_user_setting_lines},
     },
     systems::json_io::{read_file_to_struct, write_json_file_from_struct},
     utils::{create_defaults::create_default_user_settings, get_home_dir::get_cleansweep_dir},
