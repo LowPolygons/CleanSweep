@@ -40,86 +40,118 @@ impl SetScannerSystem {
     ) -> Result<Vec<FoundSet>, SetScannerError> {
         // The final datastructure
         let mut found_sets: Vec<FoundSet> = Vec::new();
-        let mut path_maybe_in_set: Vec<FileContainer> = Vec::new();
 
-        // Filter files that meet the minimum requirements to be in a set
-        for file in scanned_files {
-            if SetScannerSystem::maybe_in_set(file, filters) {
-                path_maybe_in_set.push(file.clone());
-            }
-        }
-        // Split files into a path to stem suffix
-        let mut path_to_stem_suffix_map: HashMap<String, Vec<(String, String)>> = HashMap::new();
-
-        for file in path_maybe_in_set {
-            let dir = file.get_statistics().get_directory();
-            let stem = file.get_statistics().get_name();
-            let extension = file.get_statistics().get_extension();
-
-            path_to_stem_suffix_map
-                .entry(dir.clone())
-                .and_modify(|vec| vec.push((stem.clone(), extension.clone())))
-                .or_insert(Vec::new());
-        }
-
-        // Begin iterating over each directory and create the USPs
-        for (path, stem_suffix) in &path_to_stem_suffix_map {
-            // Attempt to split any number from the end of the string
-            // Suffix is not modified so it can just be a slice
-            let mut split_file_names: Vec<(String, &str, f64)> = Vec::new();
-
-            // \d is a shorthand for [0-9]
-            // \d+ => Any number of any digits, (\.\d+)? followed by an option decimal number with any number of any
-            // digits, $ end of line
-            let string_num_separator =
-                Regex::new(r"\d+(\.\d+)?$").map_err(|_| SetScannerError::CreatingRegexError)?;
-
-            for (stem, suffix) in stem_suffix {
-                if string_num_separator.is_match(stem) {
-                    let captures = string_num_separator.captures(stem).ok_or_else(|| {
-                        SetScannerError::CaptureNumberAfterExistanceConfirmationError
-                    })?;
-                    let number_portion = captures
-                        .get(0)
-                        .ok_or_else(|| {
-                            SetScannerError::ExtractNumberAfterExistanceConfirmationError
-                        })?
-                        .as_str();
-                    split_file_names.push((
-                        string_num_separator.replace_all(stem, "").to_string(),
-                        suffix,
-                        number_portion
-                            .parse::<f64>()
-                            .map_err(|_| SetScannerError::ConvertStringToError)?,
-                    ));
+        // For all FileContains, this will create a tuple mapping its directory
+        // to a vector of tuple of the separated 'stem' and 'suffix'
+        // EG: /home/user/hello.txt, hello2.txt
+        //  -> "/home/user" : {
+        //      ("hello", "txt"),
+        //      ("hello2", "txt")
+        //  }
+        let path_to_stem_suffix_map = scanned_files.into_iter().fold(
+            HashMap::<String, Vec<(String, String)>>::new(),
+            |mut path_stem_suffix_map, file| {
+                if !SetScannerSystem::maybe_in_set(file, filters) {
+                    return path_stem_suffix_map;
                 }
-            }
-            // unique string portion
-            let mut usps: HashMap<String, Vec<(&str, &str, &f64)>> = HashMap::new();
 
-            // Split into USP and sort
-            for (stem, suffix, number) in &split_file_names {
-                usps.entry(stem.clone())
-                    .and_modify(|vec| {
-                        vec.push((stem, suffix, number));
-                        vec.sort_by(|tup_a, tup_b| tup_a.2.total_cmp(tup_b.2));
-                    })
+                let stats = file.get_statistics();
+                let dir = stats.get_directory();
+                let stem = stats.get_name();
+                let extension = stats.get_extension();
+
+                path_stem_suffix_map
+                    .entry(dir.clone())
+                    .and_modify(|vec| vec.push((stem.clone(), extension.clone())))
                     .or_insert(Vec::new());
-            }
 
-            for (_, usp_tup) in &usps {
-                let mut files_in_usp: Vec<String> = Vec::new();
+                path_stem_suffix_map
+            },
+        );
 
-                // Can consume
-                for (stem, suffix, number) in usp_tup {
-                    files_in_usp.push(format!("{}/{}{}.{}", path, stem, number, suffix));
-                }
+        let string_num_separator =
+            Regex::new(r"\d+(\.\d+)?$").map_err(|_| SetScannerError::CreatingRegexError)?;
 
-                found_sets.push(FoundSet {
-                    files: files_in_usp,
-                });
-            }
-        }
+        found_sets = path_to_stem_suffix_map
+            .into_iter()
+            .try_fold(found_sets, |mut found_sets, (path, stem_suffix)| {
+                // Step 1:
+                //  // - Iterate over the tuples and attempt to extract the number portion off the end of the
+                //  // - stem
+                //  // - If it cannot find one, it is not in a map
+                //  // - This is then stored in a Vec::<(String, String, f64)>
+                //  // - Eg: ("hello2", "txt") -> ("hello", "txt", 2)
+                let split_file_names = stem_suffix
+                    .into_iter()
+                    .try_fold(
+                        Vec::<(String, String, f64)>::new(),
+                        |mut split_file_names, (stem, suffix)| {
+                            if !string_num_separator.is_match(&stem) {
+                                return Ok(split_file_names);
+                            }
+                            let captures =
+                                string_num_separator.captures(&stem).ok_or_else(|| {
+                                    SetScannerError::CaptureNumberAfterExistanceConfirmationError
+                                })?;
+                            let number_portion = captures
+                                .get(0)
+                                .ok_or_else(|| {
+                                    SetScannerError::ExtractNumberAfterExistanceConfirmationError
+                                })?
+                                .as_str();
+                            split_file_names.push((
+                                string_num_separator.replace_all(&stem, "").to_string(),
+                                suffix.to_string(),
+                                number_portion
+                                    .parse::<f64>()
+                                    .map_err(|_| SetScannerError::ConvertStringToError)?,
+                            ));
+                            Ok(split_file_names)
+                        },
+                    )
+                    .map_err(|e| e)?;
+                // Step 2:
+                //  // - Some directories can contain multiple sets
+                //  // - This will separate them out based on the 'stem' portion
+                //  // - This string portion is referred to as the Unique Stem Portion
+                //  // - Creates a new map for this directory which maps usps to the list of files
+                let usps = split_file_names.into_iter().fold(
+                    HashMap::<String, Vec<(String, String, f64)>>::new(),
+                    |mut usps, (stem, suffix, number)| {
+                        usps.entry(stem.clone())
+                            .and_modify(|vec| {
+                                vec.push((stem, suffix, number));
+                                vec.sort_by(|tup_a, tup_b| tup_a.2.total_cmp(&tup_b.2));
+                            })
+                            .or_insert(Vec::new());
+                        usps
+                    },
+                );
+                // Step 3:
+                //  // - For each USP, it turns its Vec<(Tuple)> into a Vec<String>
+                //  // - The new string is the formatted path again for each File
+                //  // - This vector is converted into the FoundSet object and added to found_sets
+                found_sets = usps
+                    .into_iter()
+                    .fold(found_sets, |mut found_sets, (_, usp_tup)| {
+                        let files_in_usp = usp_tup
+                            .into_iter()
+                            .map(|(stem, suffix, number)| {
+                                format!("{}/{}{}.{}", path, stem, number, suffix)
+                            })
+                            .collect();
+
+                        found_sets.push(FoundSet {
+                            files: files_in_usp,
+                        });
+
+                        found_sets
+                    });
+
+                Ok(found_sets)
+            })
+            .map_err(|e| e)?;
+
         Ok(found_sets)
     }
 
