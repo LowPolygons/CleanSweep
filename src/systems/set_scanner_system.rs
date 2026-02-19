@@ -1,5 +1,5 @@
 use crate::{
-    containers::file_container::FileContainer,
+    containers::{file_container::FileContainer, sets_read_write_type::SetsReadWriteType},
     systems::filter_system::filter_category_info::{FilterCategory, FilterForCategory},
 };
 use regex::Regex;
@@ -26,20 +26,15 @@ pub enum SetScannerError {
     ConvertStringToError,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct FoundSet {
-    pub files: Vec<String>,
-}
-
 pub struct SetScannerSystem {}
 
 impl SetScannerSystem {
     pub fn get_found_sets(
         scanned_files: &Vec<FileContainer>,
         filters: &Vec<FilterCategory>,
-    ) -> Result<Vec<FoundSet>, SetScannerError> {
+    ) -> Result<Vec<SetsReadWriteType>, SetScannerError> {
         // The final datastructure
-        let mut found_sets: Vec<FoundSet> = Vec::new();
+        let mut found_sets: Vec<SetsReadWriteType> = Vec::new();
 
         // For all FileContains, this will create a tuple mapping its directory
         // to a vector of tuple of the separated 'stem' and 'suffix'
@@ -130,7 +125,7 @@ impl SetScannerSystem {
                 // Step 3:
                 //  // - For each USP, it turns its Vec<(Tuple)> into a Vec<String>
                 //  // - The new string is the formatted path again for each File
-                //  // - This vector is converted into the FoundSet object and added to found_sets
+                //  // - This vector is converted into the SetsReadWriteType object and added to found_sets
                 found_sets = usps
                     .into_iter()
                     .fold(found_sets, |mut found_sets, (_, usp_tup)| {
@@ -141,7 +136,7 @@ impl SetScannerSystem {
                             })
                             .collect();
 
-                        found_sets.push(FoundSet {
+                        found_sets.push(SetsReadWriteType {
                             files: files_in_usp,
                         });
 

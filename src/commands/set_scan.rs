@@ -6,13 +6,14 @@ use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
         file_container::FileContainer,
+        sets_read_write_type::SetsReadWriteType,
         user_settings::{SetScanOptions, UserSettings},
     },
     systems::{
         file_scanner::FileScanner,
         filter_system::filter_category_info::FilterCategory,
         json_io::{self, write_json_file_from_struct},
-        set_scanner_system::{FoundSet, SetScannerSystem},
+        set_scanner_system::SetScannerSystem,
     },
     utils::get_home_dir::get_cleansweep_dir,
 };
@@ -47,7 +48,7 @@ pub fn set_scan(optional_subpath: &String) -> Result<(), String> {
         FileScanner::scan(path).map_err(|err| format!("Failed to perform scan - {:?}", err))?;
 
     // Load the SetDetector object
-    let found_sets: Vec<FoundSet> =
+    let found_sets: Vec<SetsReadWriteType> =
         SetScannerSystem::get_found_sets(&scanned_files, &filters).map_err(|e| format!("{e}"))?;
 
     for set in &found_sets {

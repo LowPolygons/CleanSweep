@@ -36,9 +36,8 @@ pub fn list(args: &ListAndResetArgs) -> Result<(), String> {
 
         println!("{}:", label);
         for set in &list_of_files {
-            println!("- {}:", set.get_prefix());
-
-            for file in set.get_list() {
+            println!("Set:");
+            for file in &set.files {
                 println!("- - {}", file);
             }
         }
