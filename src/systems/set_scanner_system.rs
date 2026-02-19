@@ -43,14 +43,20 @@ impl SetScannerSystem {
         //      ("hello", "txt"),
         //      ("hello2", "txt")
         //  }
+        // for file in scanned_files {
+        //     println!("{:?}", *file.get_path());
+        // }
+
         let path_to_stem_suffix_map = scanned_files.into_iter().fold(
             HashMap::<String, Vec<(String, String)>>::new(),
-            |mut path_stem_suffix_map, file| {
-                if !SetScannerSystem::maybe_in_set(file, filters) {
+            |mut path_stem_suffix_map, curr_file| {
+                if !SetScannerSystem::maybe_in_set(curr_file, filters) {
+                    println!("FAILED {:?}", curr_file.get_path());
                     return path_stem_suffix_map;
                 }
 
-                let stats = file.get_statistics();
+                println!("MAYBE IN SET {:?}", curr_file.get_path());
+                let stats = curr_file.get_statistics();
                 let dir = stats.get_directory();
                 let stem = stats.get_name();
                 let extension = stats.get_extension();
@@ -58,12 +64,15 @@ impl SetScannerSystem {
                 path_stem_suffix_map
                     .entry(dir.clone())
                     .and_modify(|vec| vec.push((stem.clone(), extension.clone())))
-                    .or_insert(Vec::new());
+                    .or_insert(vec![(stem.clone(), extension.clone())]);
 
                 path_stem_suffix_map
             },
         );
 
+        // for (k, v) in &path_to_stem_suffix_map {
+        //     println!("{}{:?}", k, v)
+        // }
         let string_num_separator =
             Regex::new(r"\d+(\.\d+)?$").map_err(|_| SetScannerError::CreatingRegexError)?;
 
@@ -71,7 +80,7 @@ impl SetScannerSystem {
             .into_iter()
             .try_fold(found_sets, |mut found_sets, (path, stem_suffix)| {
                 // Step 1:
-                //  // - Iterate over the tuples and attempt to extract the number portion off the end of the
+                //  // -:iunmap <Tab> Iterate over the tuples and attempt to extract the number portion off the end of the
                 //  // - stem
                 //  // - If it cannot find one, it is not in a map
                 //  // - This is then stored in a Vec::<(String, String, f64)>
@@ -82,8 +91,10 @@ impl SetScannerSystem {
                         Vec::<(String, String, f64)>::new(),
                         |mut split_file_names, (stem, suffix)| {
                             if !string_num_separator.is_match(&stem) {
+                                // println!("NOT IN SET {}.{}", stem, suffix);
                                 return Ok(split_file_names);
                             }
+                            // println!("{}.{}", stem, suffix);
                             let captures =
                                 string_num_separator.captures(&stem).ok_or_else(|| {
                                     SetScannerError::CaptureNumberAfterExistanceConfirmationError
@@ -105,6 +116,7 @@ impl SetScannerSystem {
                         },
                     )
                     .map_err(|e| e)?;
+
                 // Step 2:
                 //  // - Some directories can contain multiple sets
                 //  // - This will separate them out based on the 'stem' portion
@@ -113,12 +125,13 @@ impl SetScannerSystem {
                 let usps = split_file_names.into_iter().fold(
                     HashMap::<String, Vec<(String, String, f64)>>::new(),
                     |mut usps, (stem, suffix, number)| {
+                        // println!("{} {} {}", stem, suffix, number);
                         usps.entry(stem.clone())
                             .and_modify(|vec| {
-                                vec.push((stem, suffix, number));
+                                vec.push((stem.clone(), suffix.clone(), number));
                                 vec.sort_by(|tup_a, tup_b| tup_a.2.total_cmp(&tup_b.2));
                             })
-                            .or_insert(Vec::new());
+                            .or_insert(vec![(stem.clone(), suffix.clone(), number)]);
                         usps
                     },
                 );
