@@ -10,7 +10,7 @@ use clap::Parser;
 use cli::{Cli, Commands};
 
 use crate::commands::{
-    activate_override, demolish, list, manage_sets, purge, reset, scan, set_scan, settings, setup,
+    demolish, list, manage_sets, override_command, purge, reset, scan, set_scan, settings, setup,
 };
 
 fn main() -> Result<(), String> {
@@ -18,7 +18,10 @@ fn main() -> Result<(), String> {
 
     match &cli.command {
         Commands::List { choice } => list::list(&choice),
-        Commands::ActivateOverride => activate_override::activate_override(),
+        Commands::Override {
+            list_to_filter,
+            filter,
+        } => override_command::override_command(list_to_filter, filter),
         Commands::Demolish => demolish::demolish(),
         Commands::ManageSets => manage_sets::command::manage_sets(),
         Commands::Purge { choice } => purge::purge(&choice),

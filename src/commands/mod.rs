@@ -1,6 +1,6 @@
-pub mod activate_override;
 pub mod demolish;
 pub mod list;
+pub mod override_command;
 pub mod purge;
 pub mod reset;
 pub mod scan;

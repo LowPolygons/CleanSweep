@@ -8,7 +8,12 @@ pub enum ListAndResetArgs {
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
+pub enum KeepAndDelete {
+    ToKeep,
+    ToDelete,
+}
 
+#[derive(clap::ValueEnum, Clone, Debug)]
 pub enum SettingsArgs {
     Reset,
     Modify,
@@ -29,8 +34,14 @@ pub enum Commands {
         choice: ListAndResetArgs,
     },
 
-    #[command(about = "Activate Override")]
-    ActivateOverride,
+    #[command(about = "Override")]
+    Override {
+        #[arg(long, value_enum)]
+        list_to_filter: KeepAndDelete,
+
+        #[arg(long)]
+        filter: String,
+    },
 
     #[command(about = "Demolish")]
     Demolish,
