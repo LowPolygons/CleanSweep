@@ -1,18 +1,17 @@
 use core::fmt;
 
-use chrono::round;
+use chrono::naive;
 use dialoguer::{Input, Select, theme::ColorfulTheme};
-use thiserror::Error;
 
 use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths, sets_read_write_type::SetsReadWriteType,
     },
-    systems::json_io::read_file_to_struct,
+    systems::json_io::{read_file_to_struct, write_json_file_from_struct},
     utils::get_home_dir::get_cleansweep_dir,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum SetStyle {
     First,
     Last,
@@ -56,7 +55,6 @@ pub fn manage_sets() -> Result<(), String> {
         read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::FoundSets.name()))
             .map_err(|e| format!("{e}"))?;
 
-    // TODO: this logic needs to be moved inside of the loop {}
     let mut managed_sets: Vec<ManageSetsType> = scanned_sets.iter().try_fold(
         Vec::<ManageSetsType>::new(),
         |mut acc, set| -> Result<Vec<ManageSetsType>, String> {
@@ -77,13 +75,7 @@ pub fn manage_sets() -> Result<(), String> {
         },
     )?;
 
-    let mut files_for_keep: Vec<String> = Vec::new();
-    let mut files_for_delete: Vec<String> = Vec::new();
-
     let mut first_in_sets: Vec<String>;
-    // TODO: add a flag to indicate if its set mode has been chosen
-    // Indicate how many files in it
-    // Indicate roughly how big it is
 
     loop {
         first_in_sets = vec![
@@ -109,17 +101,23 @@ pub fn manage_sets() -> Result<(), String> {
         if selection == 0 {
             break;
         } else if selection == 1 {
-            println!("Setting default..");
-            break;
+            println!(
+                "Any sets where a provided 'N-Value' exceeds its length will not have a default applied"
+            );
+            select_default_style(&mut managed_sets).map_err(|e| format!("{e}"))?;
+        } else {
+            select_management_style_for_set(
+                managed_sets
+                    .get_mut(selection - length_initial_first_in_sets)
+                    .ok_or_else(|| ())
+                    .map_err(|_| format!("Bad index to managed_sets!"))?,
+            )
+            .map_err(|e| format!("{e}"))?;
         }
-        select_management_style_for_set(
-            managed_sets
-                .get_mut(selection - length_initial_first_in_sets)
-                .ok_or_else(|| ())
-                .map_err(|_| format!("Bad index to managed_sets!"))?,
-        )
-        .map_err(|e| format!("{e}"))?;
     }
+
+    let mut files_for_keep: Vec<String> = Vec::new();
+    let mut files_for_delete: Vec<String> = Vec::new();
 
     for set in &mut managed_sets {
         match separate_files_based_on_style(set, &mut files_for_keep, &mut files_for_delete) {
@@ -128,20 +126,80 @@ pub fn manage_sets() -> Result<(), String> {
         }
     }
 
-    println!("Keep these:");
-    for file in files_for_keep {
-        println!("- {}", file);
-    }
-    println!("Delete these:");
-    for file in files_for_delete {
-        println!("- {}", file);
-    }
-    Ok(())
+    println!("Overriding Keep list with:");
+    files_for_keep.iter().for_each(|item| println!("- {item}"));
 
-    // TODO: please god clean up this file lol
+    println!("Overriding Delete list with:");
+    files_for_delete
+        .iter()
+        .for_each(|item| println!("- {item}"));
+
+    write_json_file_from_struct(
+        &files_for_keep,
+        cleansweep_dir.join(CleansweepFilePaths::ToKeep.name()),
+    )
+    .map_err(|e| format!("{e}"))?;
+
+    write_json_file_from_struct(
+        &files_for_delete,
+        cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()),
+    )
+    .map_err(|e| format!("{e}"))?;
+
+    Ok(())
 }
 
-fn select_management_style_for_set(chosen_set: &mut ManageSetsType) -> Result<(), String> {
+fn select_default_style(managed_sets: &mut Vec<ManageSetsType>) -> Result<(), String> {
+    let selection = select_management_style().map_err(|e| format!("{e}"))?;
+
+    let value = match selection {
+        SetStyle::First => SetStyle::First,
+        SetStyle::Last => SetStyle::Last,
+        SetStyle::FirstAndLast => SetStyle::FirstAndLast,
+        SetStyle::EveryN(_) => {
+            let n_value: usize = get_number_input(
+                "Enter the number of how often to save a file when interating over the set: ",
+            )
+            .map_err(|e| format!("{}", e))?;
+
+            SetStyle::EveryN(n_value)
+        }
+        SetStyle::EvenlySpacedN(_) => {
+            println!(
+                "This will, on average save exactly N files. There will be a margin of error if N > len / 2"
+            );
+            let n_value: usize = get_number_input("Enter how many files do you want to save: ")
+                .map_err(|e| format!("{}", e))?;
+            SetStyle::EvenlySpacedN(n_value)
+        }
+    };
+
+    for set in managed_sets.iter_mut() {
+        set.chosen_style = match &value {
+            SetStyle::First => Some(SetStyle::First),
+            SetStyle::Last => Some(SetStyle::Last),
+            SetStyle::FirstAndLast => Some(SetStyle::FirstAndLast),
+            SetStyle::EveryN(n_value) => {
+                if *n_value > set.full_set.len() {
+                    None
+                } else {
+                    Some(SetStyle::EveryN(*n_value))
+                }
+            }
+            SetStyle::EvenlySpacedN(n_value) => {
+                if *n_value > set.full_set.len() {
+                    None
+                } else {
+                    Some(SetStyle::EvenlySpacedN(*n_value))
+                }
+            }
+        };
+    }
+
+    Ok(())
+}
+
+fn select_management_style() -> Result<SetStyle, String> {
     let sub_options: Vec<SetStyle> = vec![
         SetStyle::First,
         SetStyle::Last,
@@ -156,19 +214,27 @@ fn select_management_style_for_set(chosen_set: &mut ManageSetsType) -> Result<()
         .interact()
         .map_err(|e| format!("Failed to create select instance, {:?}", e))?;
 
+    match sub_options.get(selection).ok_or(|| ()) {
+        Ok(val) => return Ok(val.clone()),
+        Err(_) => return Err("Failed to choose set style due to bad indexing".to_string()),
+    }
+}
+fn select_management_style_for_set(chosen_set: &mut ManageSetsType) -> Result<(), String> {
+    chosen_set
+        .full_set
+        .iter()
+        .for_each(|elem| println!("- {}", elem));
+
+    let selection = select_management_style().map_err(|e| format!("{e}"))?;
     let len_of_set_sub_one = chosen_set.full_set.len() - 1;
 
-    chosen_set.chosen_style = match sub_options
-        .get(selection)
-        .ok_or(|| ())
-        .map_err(|_| format!("Index somehow out of range despite being restricted"))?
-    {
+    chosen_set.chosen_style = match selection {
         SetStyle::First => Some(SetStyle::First),
         SetStyle::Last => Some(SetStyle::Last),
         SetStyle::FirstAndLast => Some(SetStyle::FirstAndLast),
         SetStyle::EveryN(_) => {
             let n_value: usize = get_number_input_in_range(
-                "Enter how many files do you want to save: ",
+                "Enter the number of how often to save a file when interating over the set: ",
                 1,
                 len_of_set_sub_one + 1,
             )
@@ -177,8 +243,12 @@ fn select_management_style_for_set(chosen_set: &mut ManageSetsType) -> Result<()
             Some(SetStyle::EveryN(n_value))
         }
         SetStyle::EvenlySpacedN(_) => {
+            println!(
+                "This will, on average save exactly N files. There will be a margin of error if N > len / 2"
+            );
+
             let n_value: usize = get_number_input_in_range(
-                "Enter the number of how often to save a file when interating over the set: ",
+                "Enter how many files do you want to save: ",
                 1,
                 len_of_set_sub_one + 1,
             )
@@ -229,6 +299,7 @@ fn separate_files_based_on_style(
                     }
                 }
             }
+            // TODO FOR N Set Styles - add a flag that clamps it so that it cannot be greater than its size
             SetStyle::EveryN(n_value) => {
                 for (index, value) in chosen_set.full_set.iter().enumerate() {
                     if index == len_of_set_sub_one || (len_of_set_sub_one - index) % n_value == 0 {
