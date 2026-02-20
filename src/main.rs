@@ -20,7 +20,7 @@ fn main() -> Result<(), String> {
         Commands::List { choice } => list::list(&choice),
         Commands::ActivateOverride => activate_override::activate_override(),
         Commands::Demolish => demolish::demolish(),
-        Commands::ManageSets => manage_sets::manage_sets(),
+        Commands::ManageSets => manage_sets::command::manage_sets(),
         Commands::Purge { choice } => purge::purge(&choice),
         Commands::Reset { choice } => reset::reset(&choice),
         Commands::Scan {
