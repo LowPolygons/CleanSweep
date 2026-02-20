@@ -2,6 +2,7 @@ use core::fmt;
 
 use chrono::round;
 use dialoguer::{Input, Select, theme::ColorfulTheme};
+use thiserror::Error;
 
 use crate::{
     containers::{
@@ -16,8 +17,8 @@ enum SetStyle {
     First,
     Last,
     FirstAndLast,
-    EveryN,
-    EvenlySpacedN,
+    EveryN(usize),
+    EvenlySpacedN(usize),
 }
 
 struct ManageSetsType {
@@ -32,10 +33,19 @@ impl fmt::Display for SetStyle {
             SetStyle::First => "First",
             SetStyle::Last => "Last",
             SetStyle::FirstAndLast => "First And Last",
-            SetStyle::EveryN => "Every N",
-            SetStyle::EvenlySpacedN => "N Evenly Spaced",
+            SetStyle::EveryN(_) => "Every N",
+            SetStyle::EvenlySpacedN(_) => "N Evenly Spaced",
         };
         write!(f, "{s}")
+    }
+}
+
+impl ManageSetsType {
+    fn style_to_string(&self) -> String {
+        return match &self.chosen_style {
+            Some(v) => format!("{}", v),
+            None => format!("None Chosen"),
+        };
     }
 }
 
@@ -47,7 +57,7 @@ pub fn manage_sets() -> Result<(), String> {
             .map_err(|e| format!("{e}"))?;
 
     // TODO: this logic needs to be moved inside of the loop {}
-    let managed_sets: Vec<ManageSetsType> = scanned_sets.iter().try_fold(
+    let mut managed_sets: Vec<ManageSetsType> = scanned_sets.iter().try_fold(
         Vec::<ManageSetsType>::new(),
         |mut acc, set| -> Result<Vec<ManageSetsType>, String> {
             let new_set = ManageSetsType {
@@ -70,17 +80,25 @@ pub fn manage_sets() -> Result<(), String> {
     let mut files_for_keep: Vec<String> = Vec::new();
     let mut files_for_delete: Vec<String> = Vec::new();
 
-    let mut first_in_sets: Vec<String> = vec![
-        "Exit Manage Sets".to_string(),
-        "Select a default management style".to_string(),
-    ];
-    let length_initial_first_in_sets = first_in_sets.len();
+    let mut first_in_sets: Vec<String>;
     // TODO: add a flag to indicate if its set mode has been chosen
     // Indicate how many files in it
     // Indicate roughly how big it is
-    first_in_sets.append(&mut managed_sets.iter().map(|item| item.label.clone()).collect());
 
     loop {
+        first_in_sets = vec![
+            "Exit Manage Sets".to_string(),
+            "Select a default management style".to_string(),
+        ];
+        let length_initial_first_in_sets = first_in_sets.len();
+
+        first_in_sets.append(
+            &mut managed_sets
+                .iter()
+                .map(|item| format!("{} : {}", item.style_to_string(), item.label.clone()))
+                .collect(),
+        );
+
         let selection = Select::with_theme(&ColorfulTheme::default())
             .with_prompt("Choose an option")
             .items(&first_in_sets)
@@ -94,15 +112,20 @@ pub fn manage_sets() -> Result<(), String> {
             println!("Setting default..");
             break;
         }
-        select_filter_for_chosen_set(
+        select_management_style_for_set(
             managed_sets
-                .get(selection - length_initial_first_in_sets)
-                .ok_or(|| ())
+                .get_mut(selection - length_initial_first_in_sets)
+                .ok_or_else(|| ())
                 .map_err(|_| format!("Bad index to managed_sets!"))?,
-            &mut files_for_keep,
-            &mut files_for_delete,
         )
         .map_err(|e| format!("{e}"))?;
+    }
+
+    for set in &mut managed_sets {
+        match separate_files_based_on_style(set, &mut files_for_keep, &mut files_for_delete) {
+            Ok(_) => {}
+            Err(_) => println!("A set didn't have a method specified, skipping.."),
+        }
     }
 
     println!("Keep these:");
@@ -118,17 +141,13 @@ pub fn manage_sets() -> Result<(), String> {
     // TODO: please god clean up this file lol
 }
 
-fn select_filter_for_chosen_set(
-    chosen_set: &ManageSetsType,
-    keep_list: &mut Vec<String>,
-    delete_list: &mut Vec<String>,
-) -> Result<(), String> {
+fn select_management_style_for_set(chosen_set: &mut ManageSetsType) -> Result<(), String> {
     let sub_options: Vec<SetStyle> = vec![
         SetStyle::First,
         SetStyle::Last,
         SetStyle::FirstAndLast,
-        SetStyle::EveryN,
-        SetStyle::EvenlySpacedN,
+        SetStyle::EveryN(0),
+        SetStyle::EvenlySpacedN(0),
     ];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -139,56 +158,15 @@ fn select_filter_for_chosen_set(
 
     let len_of_set_sub_one = chosen_set.full_set.len() - 1;
 
-    match sub_options
+    chosen_set.chosen_style = match sub_options
         .get(selection)
         .ok_or(|| ())
         .map_err(|_| format!("Index somehow out of range despite being restricted"))?
     {
-        SetStyle::First => {
-            for (index, value) in chosen_set.full_set.iter().enumerate() {
-                match index {
-                    0 => keep_list.push(value.clone()),
-                    _ => delete_list.push(value.clone()),
-                }
-            }
-        }
-        SetStyle::Last => {
-            for (index, value) in chosen_set.full_set.iter().enumerate() {
-                if index == len_of_set_sub_one {
-                    keep_list.push(value.clone());
-                } else {
-                    delete_list.push(value.clone());
-                }
-            }
-        }
-        SetStyle::FirstAndLast => {
-            for (index, value) in chosen_set.full_set.iter().enumerate() {
-                if index == len_of_set_sub_one {
-                    keep_list.push(value.clone());
-                } else {
-                    match index {
-                        0 => keep_list.push(value.clone()),
-                        _ => delete_list.push(value.clone()),
-                    }
-                }
-            }
-        }
-        SetStyle::EveryN => {
-            // TODO: implement number input
-            let n_value: usize = get_number_input(
-                "Enter the number of how often to save a file when interating over the set: ",
-            )
-            .map_err(|e| format!("{}", e))?;
-
-            for (index, value) in chosen_set.full_set.iter().enumerate() {
-                if index == len_of_set_sub_one || (len_of_set_sub_one - index) % n_value == 0 {
-                    keep_list.push(value.clone());
-                } else {
-                    delete_list.push(value.clone());
-                }
-            }
-        }
-        SetStyle::EvenlySpacedN => {
+        SetStyle::First => Some(SetStyle::First),
+        SetStyle::Last => Some(SetStyle::Last),
+        SetStyle::FirstAndLast => Some(SetStyle::FirstAndLast),
+        SetStyle::EveryN(_) => {
             let n_value: usize = get_number_input_in_range(
                 "Enter how many files do you want to save: ",
                 1,
@@ -196,22 +174,54 @@ fn select_filter_for_chosen_set(
             )
             .map_err(|e| format!("{}", e))?;
 
-            let chunk_size = (chosen_set.full_set.len() as f64 / n_value as f64).round() as usize;
+            Some(SetStyle::EveryN(n_value))
+        }
+        SetStyle::EvenlySpacedN(_) => {
+            let n_value: usize = get_number_input_in_range(
+                "Enter the number of how often to save a file when interating over the set: ",
+                1,
+                len_of_set_sub_one + 1,
+            )
+            .map_err(|e| format!("{}", e))?;
+            Some(SetStyle::EvenlySpacedN(n_value))
+        }
+    };
 
-            for (chunk_num, chunk) in chosen_set.full_set.chunks(chunk_size).enumerate() {
-                println!("CHUNK");
-                if chunk_num == n_value - 1 {
-                    let len_chunk = chunk.len() - 1;
+    Ok(())
+}
 
-                    for (index, value) in chunk.iter().enumerate() {
-                        if index == len_chunk {
-                            keep_list.push(value.clone());
-                        } else {
-                            delete_list.push(value.clone());
-                        }
+fn separate_files_based_on_style(
+    chosen_set: &ManageSetsType,
+    keep_list: &mut Vec<String>,
+    delete_list: &mut Vec<String>,
+) -> Result<(), ()> {
+    let len_of_set_sub_one = chosen_set.full_set.len() - 1;
+
+    match &chosen_set.chosen_style {
+        None => return Err(()),
+        Some(chosen_style) => match chosen_style {
+            SetStyle::First => {
+                for (index, value) in chosen_set.full_set.iter().enumerate() {
+                    match index {
+                        0 => keep_list.push(value.clone()),
+                        _ => delete_list.push(value.clone()),
                     }
-                } else {
-                    for (index, value) in chunk.iter().enumerate() {
+                }
+            }
+            SetStyle::Last => {
+                for (index, value) in chosen_set.full_set.iter().enumerate() {
+                    if index == len_of_set_sub_one {
+                        keep_list.push(value.clone());
+                    } else {
+                        delete_list.push(value.clone());
+                    }
+                }
+            }
+            SetStyle::FirstAndLast => {
+                for (index, value) in chosen_set.full_set.iter().enumerate() {
+                    if index == len_of_set_sub_one {
+                        keep_list.push(value.clone());
+                    } else {
                         match index {
                             0 => keep_list.push(value.clone()),
                             _ => delete_list.push(value.clone()),
@@ -219,8 +229,43 @@ fn select_filter_for_chosen_set(
                     }
                 }
             }
-        }
+            SetStyle::EveryN(n_value) => {
+                for (index, value) in chosen_set.full_set.iter().enumerate() {
+                    if index == len_of_set_sub_one || (len_of_set_sub_one - index) % n_value == 0 {
+                        keep_list.push(value.clone());
+                    } else {
+                        delete_list.push(value.clone());
+                    }
+                }
+            }
+            SetStyle::EvenlySpacedN(n_value) => {
+                let chunk_size =
+                    (chosen_set.full_set.len() as f64 / *n_value as f64).round() as usize;
+
+                for (chunk_num, chunk) in chosen_set.full_set.chunks(chunk_size).enumerate() {
+                    if chunk_num == n_value - 1 {
+                        let len_chunk = chunk.len() - 1;
+
+                        for (index, value) in chunk.iter().enumerate() {
+                            if index == len_chunk {
+                                keep_list.push(value.clone());
+                            } else {
+                                delete_list.push(value.clone());
+                            }
+                        }
+                    } else {
+                        for (index, value) in chunk.iter().enumerate() {
+                            match index {
+                                0 => keep_list.push(value.clone()),
+                                _ => delete_list.push(value.clone()),
+                            }
+                        }
+                    }
+                }
+            }
+        },
     }
+
     Ok(())
 }
 
