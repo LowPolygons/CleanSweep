@@ -35,6 +35,7 @@ pub fn scan(
     optional_subpath: &String,
     use_custom_filters: &bool,
     append_mode: &bool,
+    no_filter: &bool,
 ) -> Result<(), String> {
     // Initial path validation
     let mut path = current_dir().map_err(|err| format!("Error getting current dir {}", err))?;
@@ -48,26 +49,6 @@ pub fn scan(
     let cleansweep_dir = get_cleansweep_dir()
         .map_err(|e| format!("Failed to load the cleansweep directory - {:?}", e))?;
 
-    // Get the data structures needed for the scan
-    let user_settings: UserSettings =
-        json_io::read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()))
-            .map_err(|e| format!("Failed to load user settings, does it exist? {}", e))?;
-
-    let list_of_filters_as_strings: Vec<String> = if *use_custom_filters {
-        file_to_string_vec::file_to_string_vec(
-            cleansweep_dir.join(CleansweepFilePaths::FilterComponentList.name()),
-        )
-        .map_err(|e| format!("Failed to load list of custom filters - {:?}", e))?
-    } else {
-        get_default_filter_category_list()
-    };
-    let filters_to_use: Vec<Box<dyn FilterForCategory>> =
-        stringy_filters_to_filter_objects(&user_settings, &list_of_filters_as_strings)
-            .map_err(|e| e)?;
-
-    // Build the filter object
-    let filter_system: FilterSystem = FilterSystem::new(filters_to_use);
-
     // Perform scan
     let scanned_files: Vec<FileContainer> =
         FileScanner::scan(path).map_err(|err| format!("Failed to perform scan - {:?}", err))?;
@@ -76,8 +57,45 @@ pub fn scan(
     let mut to_keep: Vec<String> = Vec::new();
     let mut to_delete: Vec<String> = Vec::new();
 
-    sort_files_into_provided_lists(&scanned_files, &filter_system, &mut to_keep, &mut to_delete)
+    if *no_filter {
+        println!("Scan command run with no-filter, all files being added to the keep list");
+
+        for file_container in &scanned_files {
+            to_keep.push(
+                FileContainer::full_path_as_string(file_container.get_path())
+                    .map_err(|e| format!("{e}"))?,
+            );
+        }
+    } else {
+        // Get the data structures needed for the scan
+        let user_settings: UserSettings = json_io::read_file_to_struct(
+            cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()),
+        )
+        .map_err(|e| format!("Failed to load user settings, does it exist? {}", e))?;
+
+        let list_of_filters_as_strings: Vec<String> = if *use_custom_filters {
+            file_to_string_vec::file_to_string_vec(
+                cleansweep_dir.join(CleansweepFilePaths::FilterComponentList.name()),
+            )
+            .map_err(|e| format!("Failed to load list of custom filters - {:?}", e))?
+        } else {
+            get_default_filter_category_list()
+        };
+        let filters_to_use: Vec<Box<dyn FilterForCategory>> =
+            stringy_filters_to_filter_objects(&user_settings, &list_of_filters_as_strings)
+                .map_err(|e| e)?;
+
+        // Build the filter object
+        let filter_system: FilterSystem = FilterSystem::new(filters_to_use);
+
+        sort_files_into_provided_lists(
+            &scanned_files,
+            &filter_system,
+            &mut to_keep,
+            &mut to_delete,
+        )
         .map_err(|e| e)?;
+    }
 
     write_json_file_from_struct(
         &to_keep,
