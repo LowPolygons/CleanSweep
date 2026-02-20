@@ -21,7 +21,8 @@ fn main() -> Result<(), String> {
         Commands::Override {
             list_to_filter,
             filter,
-        } => override_command::override_command(list_to_filter, filter),
+            values,
+        } => override_command::override_command(list_to_filter, filter, values.clone()),
         Commands::Demolish => demolish::demolish(),
         Commands::ManageSets => manage_sets::command::manage_sets(),
         Commands::Purge { choice } => purge::purge(&choice),

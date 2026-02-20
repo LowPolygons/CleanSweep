@@ -41,6 +41,9 @@ pub enum Commands {
 
         #[arg(long)]
         filter: String,
+
+        #[arg(long, required = true, num_args = 1..)]
+        values: Vec<String>,
     },
 
     #[command(about = "Demolish")]
