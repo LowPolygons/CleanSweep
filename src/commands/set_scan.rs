@@ -10,7 +10,7 @@ use crate::{
         user_settings::{SetScanOptions, UserSettings},
     },
     systems::{
-        file_scanner::FileScanner,
+        file_scanner::{FileScanner, FileScannerScanMode},
         filter_system::filter_category_info::FilterCategory,
         json_io::{self, write_json_file_from_struct},
         set_scanner_system::SetScannerSystem,
@@ -44,8 +44,8 @@ pub fn set_scan(optional_subpath: &String) -> Result<(), String> {
     ];
 
     // Perform scan
-    let scanned_files: Vec<FileContainer> =
-        FileScanner::scan(path).map_err(|err| format!("Failed to perform scan - {:?}", err))?;
+    let scanned_files: Vec<FileContainer> = FileScanner::scan(path, FileScannerScanMode::Recursive)
+        .map_err(|err| format!("Failed to perform scan - {:?}", err))?;
 
     // Load the SetDetector object
     let found_sets: Vec<SetsReadWriteType> =

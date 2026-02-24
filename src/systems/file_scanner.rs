@@ -19,10 +19,19 @@ pub enum FileScannerError {
     CantReadEntryAfterReadDir,
 }
 
+// Passed into scan command to indicate behaviour
+pub enum FileScannerScanMode {
+    Recursive,
+    Immediate,
+}
+
 pub struct FileScanner {}
 impl FileScanner {
     // Utilise a stack to safely perform a breadth first search
-    pub fn scan<P: AsRef<Path>>(path: P) -> Result<Vec<FileContainer>, FileScannerError> {
+    pub fn scan<P: AsRef<Path>>(
+        path: P,
+        scan_mode: FileScannerScanMode,
+    ) -> Result<Vec<FileContainer>, FileScannerError> {
         let path: PathBuf = path.as_ref().into();
 
         if !path.is_dir() {
@@ -57,6 +66,11 @@ impl FileScanner {
                     return Err(FileScannerError::CantReadEntryAfterReadDir);
                 }
             }
+            // If scan mode == Immediate, clear the list
+            directories_to_search = match scan_mode {
+                FileScannerScanMode::Recursive => directories_to_search,
+                FileScannerScanMode::Immediate => Vec::new(),
+            };
         }
         Ok(file_containers)
     }

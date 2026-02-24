@@ -10,7 +10,8 @@ use clap::Parser;
 use cli::{Cli, Commands};
 
 use crate::commands::{
-    demolish, list, manage_sets, override_command, purge, reset, scan, set_scan, settings, setup,
+    demolish, list, manage_sets, override_command, print_data::print_data, purge, reset, scan,
+    set_scan, settings, setup,
 };
 
 fn main() -> Result<(), String> {
@@ -36,6 +37,7 @@ fn main() -> Result<(), String> {
         Commands::SetScan { path } => set_scan::set_scan(&path),
         Commands::Settings { choice } => settings::settings(&choice),
         Commands::Setup => setup::setup(),
+        Commands::PrintData { path, recursive } => print_data(path, recursive),
     }?;
 
     Ok(())

@@ -7,7 +7,7 @@ use crate::{
     },
     filter_codes::filter_codes::FilterCodes,
     systems::{
-        file_scanner::FileScanner,
+        file_scanner::{FileScanner, FileScannerScanMode},
         filter_system::{
             directory_contains_filter::DirectoryContainsFilter,
             extension_filter::ExtensionFilter,
@@ -50,8 +50,8 @@ pub fn scan(
         .map_err(|e| format!("Failed to load the cleansweep directory - {:?}", e))?;
 
     // Perform scan
-    let scanned_files: Vec<FileContainer> =
-        FileScanner::scan(path).map_err(|err| format!("Failed to perform scan - {:?}", err))?;
+    let scanned_files: Vec<FileContainer> = FileScanner::scan(path, FileScannerScanMode::Recursive)
+        .map_err(|err| format!("Failed to perform scan - {:?}", err))?;
 
     // Sort, get the paths as strings and save
     let mut to_keep: Vec<String> = Vec::new();

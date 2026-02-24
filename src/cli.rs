@@ -93,6 +93,15 @@ pub enum Commands {
 
     #[command(about = "Setup")]
     Setup,
+
+    #[command(about = "PrintData")]
+    PrintData {
+        #[arg(long, default_value_t = String::from(""))]
+        path: String,
+
+        #[arg(long, short)]
+        recursive: bool,
+    },
 }
 
 #[derive(Parser)]
