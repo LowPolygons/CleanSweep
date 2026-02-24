@@ -53,14 +53,14 @@ impl FilterCategory {
                     .get_statistics()
                     .get_last_accessed()
                     .time_since_zero()
-                    > date.time_since_zero()
+                    < date.time_since_zero()
             }
             FilterCategory::LastModified(date) => {
                 target
                     .get_statistics()
                     .get_last_modified()
                     .time_since_zero()
-                    > date.time_since_zero()
+                    < date.time_since_zero()
             }
             FilterCategory::DirectoryContains(list) => {
                 for item in list {

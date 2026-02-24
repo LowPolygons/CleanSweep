@@ -118,6 +118,10 @@ pub fn override_command(
                 let days_since_now = days_since_now_as_str_to_system_time(num_days_as_seconds)
                     .map_err(|e| format!("{e}"))?;
 
+                let _delete = FileDateData::new(days_since_now);
+
+                println!("filter_cutoff : {}", _delete.format());
+
                 Ok(FilterCategory::LastModified(FileDateData::new(
                     days_since_now,
                 )))

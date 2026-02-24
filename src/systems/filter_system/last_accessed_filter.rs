@@ -54,13 +54,13 @@ impl FilterForCategory for LastAccessedFilter {
             Err(FilterCategoryError::DidntInitBeforeUse)?
         }
 
-        let is_greater_than_lower_flagged = self.lower_last_accessed.is_file_flagged(file);
-        let is_greater_than_upper_flagged = self.lower_last_accessed.is_file_flagged(file);
+        let is_before_lower_flagged = self.lower_last_accessed.is_file_flagged(file);
+        let is_before_upper_flagged = self.lower_last_accessed.is_file_flagged(file);
 
-        if !is_greater_than_lower_flagged || is_greater_than_upper_flagged {
+        if is_before_lower_flagged || !is_before_upper_flagged {
             return Ok(FilterCodes::ToKeep);
         }
-        if is_greater_than_lower_flagged || !is_greater_than_upper_flagged {
+        if !is_before_lower_flagged || is_before_upper_flagged {
             return Ok(FilterCodes::ToDelete);
         }
 
