@@ -1,6 +1,5 @@
 use std::env::current_dir;
 
-
 use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
@@ -17,7 +16,7 @@ use crate::{
     utils::get_home_dir::get_cleansweep_dir,
 };
 
-pub fn set_scan(optional_subpath: &String) -> Result<(), String> {
+pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<(), String> {
     // Initial path validation
     let mut path = current_dir().map_err(|err| format!("Error getting current dir {}", err))?;
     path = path.join(optional_subpath);
@@ -43,8 +42,9 @@ pub fn set_scan(optional_subpath: &String) -> Result<(), String> {
     ];
 
     // Perform scan
-    let scanned_files: Vec<FileContainer> = FileScanner::scan(path, FileScannerScanMode::Recursive)
-        .map_err(|err| format!("Failed to perform scan - {:?}", err))?;
+    let scanned_files: Vec<FileContainer> =
+        FileScanner::scan(path, FileScannerScanMode::Recursive, ignore_dirs)
+            .map_err(|err| format!("Failed to perform scan - {:?}", err))?;
 
     // Load the SetDetector object
     let found_sets: Vec<SetsReadWriteType> =

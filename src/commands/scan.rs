@@ -24,7 +24,7 @@ use crate::{
     },
     utils::{
         create_defaults::get_default_filter_category_list, file_to_string_vec,
-        get_home_dir::get_cleansweep_dir,
+        get_home_dir::get_cleansweep_dir, path_types_to_string::path_to_string,
     },
 };
 use std::env::current_dir;
@@ -36,6 +36,7 @@ pub fn scan(
     optional_subpath: &String,
     use_custom_filters: &bool,
     no_filter: &bool,
+    ignore_dirs: &Vec<String>,
 ) -> Result<(), String> {
     // Initial path validation
     let mut path = current_dir().map_err(|err| format!("Error getting current dir {}", err))?;
@@ -50,8 +51,9 @@ pub fn scan(
         .map_err(|e| format!("Failed to load the cleansweep directory - {:?}", e))?;
 
     // Perform scan
-    let scanned_files: Vec<FileContainer> = FileScanner::scan(path, FileScannerScanMode::Recursive)
-        .map_err(|err| format!("Failed to perform scan - {:?}", err))?;
+    let scanned_files: Vec<FileContainer> =
+        FileScanner::scan(path, FileScannerScanMode::Recursive, ignore_dirs)
+            .map_err(|err| format!("Failed to perform scan - {:?}", err))?;
 
     // Sort, get the paths as strings and save
     let mut to_keep: Vec<String> = Vec::new();
@@ -61,10 +63,7 @@ pub fn scan(
         println!("Scan command run with no-filter, all files being added to the keep list");
 
         for file_container in &scanned_files {
-            to_keep.push(
-                FileContainer::full_path_as_string(file_container.get_path())
-                    .map_err(|e| format!("{e}"))?,
-            );
+            to_keep.push(path_to_string(file_container.get_path()).map_err(|e| format!("{e}"))?);
         }
     } else {
         // Get the data structures needed for the scan

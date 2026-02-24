@@ -2,12 +2,18 @@ use std::path::{Path, PathBuf};
 
 use thiserror::Error;
 
-use crate::containers::file_container::{FileContainer, FileContainerInitError};
+use crate::{
+    containers::file_container::{FileContainer, FileContainerInitError},
+    utils::path_types_to_string::path_buf_to_string,
+};
 
 #[derive(Debug, Error)]
 pub enum FileScannerError {
     #[error("Failed when attempting to read direction {0}")]
     ReadingDirectoryFail(String),
+
+    #[error("Failed when converting a directory path to string")]
+    CovertDirectoryPathToStringForComparison,
 
     #[error("Failed when attempting to turn a provided path into a FileContainer {0}")]
     FormingFileContainerError(FileContainerInitError),
@@ -31,6 +37,7 @@ impl FileScanner {
     pub fn scan<P: AsRef<Path>>(
         path: P,
         scan_mode: FileScannerScanMode,
+        ignore_dirs: &Vec<String>,
     ) -> Result<Vec<FileContainer>, FileScannerError> {
         let path: PathBuf = path.as_ref().into();
 
@@ -54,7 +61,22 @@ impl FileScanner {
             for entry in elements_in_dir {
                 if let Ok(entry) = entry {
                     if entry.path().is_dir() {
-                        directories_to_search.push(entry.path());
+                        // Check if it shouldn't be ignored
+                        let mut ignore_this = false;
+
+                        for dir_str in ignore_dirs {
+                            if path_buf_to_string(&entry.path())
+                                .map_err(|_| {
+                                    FileScannerError::CovertDirectoryPathToStringForComparison
+                                })?
+                                .contains(dir_str)
+                            {
+                                ignore_this = true;
+                            }
+                        }
+                        if !ignore_this {
+                            directories_to_search.push(entry.path());
+                        }
                     }
                     if entry.path().is_file() {
                         file_containers.push(

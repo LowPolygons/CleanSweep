@@ -82,12 +82,18 @@ pub enum Commands {
 
         #[arg(long, short)]
         no_filter: bool,
+
+        #[arg(long, num_args = 0..)]
+        ignore_dirs: Vec<String>,
     },
 
     #[command(about = "Used to scan for sets from your path or current directory")]
     SetScan {
         #[arg(long, default_value_t = String::from(""))]
         path: String,
+
+        #[arg(long, num_args = 0..)]
+        ignore_dirs: Vec<String>,
     },
 
     #[command(
@@ -110,6 +116,9 @@ pub enum Commands {
 
         #[arg(long, short)]
         recursive: bool,
+
+        #[arg(long, num_args = 0..)]
+        ignore_dirs: Vec<String>,
     },
 }
 

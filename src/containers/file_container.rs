@@ -29,12 +29,6 @@ pub enum FileContainerInitError {
     PathToStringError,
 }
 
-#[derive(Debug, Error)]
-pub enum PathToStringError {
-    #[error("Error converting path to string")]
-    ToStrError,
-}
-
 #[derive(Debug, Clone)]
 pub struct FileContainer {
     path: PathBuf,
@@ -42,15 +36,6 @@ pub struct FileContainer {
 }
 
 impl FileContainer {
-    pub fn full_path_as_string(path: &Path) -> Result<String, PathToStringError> {
-        let path_string = path
-            .to_str()
-            .ok_or(PathToStringError::ToStrError)?
-            .to_string();
-
-        Ok(path_string)
-    }
-
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, FileContainerInitError> {
         let path = path.as_ref().to_path_buf();
 

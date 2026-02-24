@@ -5,9 +5,14 @@ use dialoguer::{Select, theme::ColorfulTheme};
 use crate::{
     containers::file_container::FileContainer,
     systems::file_scanner::{FileScanner, FileScannerScanMode},
+    utils::path_types_to_string::path_to_string,
 };
 
-pub fn print_hidden_stats(optional_subpath: &String, recursive: &bool) -> Result<(), String> {
+pub fn print_hidden_stats(
+    optional_subpath: &String,
+    recursive: &bool,
+    ignore_dirs: &Vec<String>,
+) -> Result<(), String> {
     // Read files in immediate directory and format them into FileContainers
     // Open an interactive terminal and let the user fiddle about and choose them
     // Inline the formatted data of the selected file
@@ -37,7 +42,7 @@ pub fn print_hidden_stats(optional_subpath: &String, recursive: &bool) -> Result
         FileScannerScanMode::Immediate
     };
 
-    let scanned_files: Vec<FileContainer> = FileScanner::scan(path, scan_mode)
+    let scanned_files: Vec<FileContainer> = FileScanner::scan(path, scan_mode, ignore_dirs)
         .map_err(|e| format!("Failed to perform scan in immediate scan, {:?}", e))?;
 
     let mut file_labels: Vec<String> = vec![String::from("Exit Menu")];
@@ -46,8 +51,8 @@ pub fn print_hidden_stats(optional_subpath: &String, recursive: &bool) -> Result
     file_labels = scanned_files.iter().try_fold(
         file_labels,
         |mut file_labels, curr_container| -> Result<Vec<String>, String> {
-            let stringy_path = FileContainer::full_path_as_string(curr_container.get_path())
-                .map_err(|e| format!("{e}"))?;
+            let stringy_path =
+                path_to_string(curr_container.get_path()).map_err(|e| format!("{e}"))?;
             file_labels.push(stringy_path);
 
             Ok(file_labels)

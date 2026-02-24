@@ -34,11 +34,16 @@ fn main() -> ExitCode {
             path,
             use_custom_filters,
             no_filter,
-        } => scan::scan(&path, use_custom_filters, no_filter),
-        Commands::SetScan { path } => set_scan::set_scan(&path),
+            ignore_dirs,
+        } => scan::scan(&path, use_custom_filters, no_filter, ignore_dirs),
+        Commands::SetScan { path, ignore_dirs } => set_scan::set_scan(&path, ignore_dirs),
         Commands::Settings { choice } => settings::settings(&choice),
         Commands::Setup => setup::setup(),
-        Commands::PrintHiddenStats { path, recursive } => print_hidden_stats(path, recursive),
+        Commands::PrintHiddenStats {
+            path,
+            recursive,
+            ignore_dirs,
+        } => print_hidden_stats(path, recursive, ignore_dirs),
     };
 
     match success {

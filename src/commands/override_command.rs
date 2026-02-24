@@ -11,7 +11,7 @@ use crate::{
         filter_system::filter_category_info::FilterCategory,
         json_io::{read_file_to_struct, write_json_file_from_struct},
     },
-    utils::get_home_dir::get_cleansweep_dir,
+    utils::{get_home_dir::get_cleansweep_dir, path_types_to_string::path_to_string},
 };
 
 pub fn override_command(
@@ -148,10 +148,7 @@ pub fn override_command(
         .try_fold(
             Vec::<String>::new(),
             |mut to_keep, file| -> Result<Vec<String>, String> {
-                to_keep.push(
-                    FileContainer::full_path_as_string(file.get_path())
-                        .map_err(|e| format!("{e}"))?,
-                );
+                to_keep.push(path_to_string(file.get_path()).map_err(|e| format!("{e}"))?);
 
                 Ok(to_keep)
             },
@@ -163,10 +160,7 @@ pub fn override_command(
         .try_fold(
             Vec::<String>::new(),
             |mut to_keep, file| -> Result<Vec<String>, String> {
-                to_keep.push(
-                    FileContainer::full_path_as_string(file.get_path())
-                        .map_err(|e| format!("{e}"))?,
-                );
+                to_keep.push(path_to_string(file.get_path()).map_err(|e| format!("{e}"))?);
 
                 Ok(to_keep)
             },
