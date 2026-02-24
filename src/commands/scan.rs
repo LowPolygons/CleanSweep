@@ -17,6 +17,7 @@ use crate::{
             last_modified_filter::LastModifiedFilter,
             name_contains_filter::NameContainsFilter,
             name_filter::NameFilter,
+            name_starts_with_filter::NameStartsWithFilter,
             size_filter::SizeFilter,
         },
         json_io::{self, write_json_file_from_struct},
@@ -140,9 +141,24 @@ fn stringy_filters_to_filter_objects(
                 FilterCategory::NameContains(_) => {
                     filter = Box::new(NameContainsFilter::new());
                     keep_filter_item = FilterCategory::NameContains(
-                        user_settings.get_to_keep_list().get_name().clone(),
+                        user_settings
+                            .get_to_keep_list()
+                            .get_name_starts_with()
+                            .clone(),
                     );
                     delete_filter_item = FilterCategory::NameContains(
+                        user_settings
+                            .get_to_delete_list()
+                            .get_name_starts_with()
+                            .clone(),
+                    );
+                }
+                FilterCategory::NameStartsWith(_) => {
+                    filter = Box::new(NameStartsWithFilter::new());
+                    keep_filter_item = FilterCategory::NameStartsWith(
+                        user_settings.get_to_keep_list().get_name().clone(),
+                    );
+                    delete_filter_item = FilterCategory::NameStartsWith(
                         user_settings.get_to_delete_list().get_name().clone(),
                     );
                 }

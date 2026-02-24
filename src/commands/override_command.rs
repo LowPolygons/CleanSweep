@@ -71,6 +71,7 @@ pub fn override_command(
     let filter_to_use = match filter_choice {
         FilterCategory::Name(_) => Ok(FilterCategory::Name(values)),
         FilterCategory::NameContains(_) => Ok(FilterCategory::NameContains(values)),
+        FilterCategory::NameStartsWith(_) => Ok(FilterCategory::NameStartsWith(values)),
         FilterCategory::Size(_) => {
             if values.len() != 1 {
                 Err("Can't accept more than one value for the size filter".to_string())

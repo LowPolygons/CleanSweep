@@ -8,7 +8,7 @@ use crate::filter_codes::filter_codes::FilterCodes;
 pub enum FilterCategory {
     Name(Vec<String>),
     NameContains(Vec<String>),
-    // TODO: Name Contains
+    NameStartsWith(Vec<String>),
     Size(u64),
     Extension(Vec<String>),
     LastAccessed(FileDateData),
@@ -78,6 +78,14 @@ impl FilterCategory {
                 }
                 false
             }
+            FilterCategory::NameStartsWith(list) => {
+                for item in list {
+                    if target.get_statistics().get_name().starts_with(item) {
+                        return true;
+                    }
+                }
+                false
+            }
         }
     }
 
@@ -92,6 +100,15 @@ impl FilterCategory {
                     "Name Contains Filter".to_string(),
                     format!(
                         "The provided string {} contains the substring 'name' and the substring 'contains'",
+                        input
+                    ),
+                ));
+            } else if input.contains("start") {
+                return Some(FilterCategoryInputInterpretation::new(
+                    FilterCategory::NameStartsWith(Vec::new()),
+                    "Name Starts with Filter".to_string(),
+                    format!(
+                        "The provided string {} contains the substring 'name' and the substring 'start'",
                         input
                     ),
                 ));
