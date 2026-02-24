@@ -94,8 +94,8 @@ pub enum Commands {
     #[command(about = "Setup")]
     Setup,
 
-    #[command(about = "PrintData")]
-    PrintData {
+    #[command(about = "PrintHiddenData")]
+    PrintHiddenStats {
         #[arg(long, default_value_t = String::from(""))]
         path: String,
 
