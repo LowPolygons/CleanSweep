@@ -1,6 +1,4 @@
-use std::{fs, path::Path};
-
-use rand::RngExt;
+use std::fs;
 
 use crate::utils::{
     get_home_dir::get_cleansweep_dir,

@@ -1,16 +1,18 @@
+use core::time;
 use std::{
     fs::{self, File},
     io::Write,
     path::Path,
 };
 
-use rand::prelude::*;
-
 use crate::{
     cli::PurgeArgs,
     containers::cleansweep_file_paths::CleansweepFilePaths,
     systems::json_io::read_file_to_struct,
-    utils::{file_to_string_vec::file_to_string_vec, get_home_dir::get_cleansweep_dir},
+    utils::{
+        file_to_string_vec::file_to_string_vec, get_home_dir::get_cleansweep_dir,
+        run_time_user_input::get_string_input_matching_provided_string,
+    },
 };
 
 pub fn purge(args: &PurgeArgs) -> Result<(), String> {
@@ -58,15 +60,44 @@ pub fn purge(args: &PurgeArgs) -> Result<(), String> {
             Ok(())
         }
         PurgeArgs::Continue => {
-            let delete_these_files =
-                file_to_string_vec(Path::new(CleansweepFilePaths::ToDeleteLocalTemp.name()))
-                    .map_err(|e| format!("{:?}", e))?;
+            println!("Please enter 'confirm' for the following statements (space/case sensitive)");
 
-            for path in &delete_these_files {
-                println!("Deleting {}..", path);
-                // TODO: fs::remove_file(path)
-                MOCK_REMOVE_FILE(path)
-                    .map_err(|e| format!("  ..Failed to remove file {}, {}", path, e))?
+            let confirm_irreverability = get_string_input_matching_provided_string(
+                "I confirm that i want these files to be deleted and that this is an irreversable action",
+                "confirm",
+            ).map_err(|e| format!("{e}"))?;
+
+            let confirm_user_settings_validity = get_string_input_matching_provided_string(
+                "I confirm that these files were scanned using my most up-to-date settings and therefore any deletions are expected",
+                "confirm",
+            ).map_err(|e| format!("{e}"))?;
+
+            if !confirm_irreverability {
+                println!("Your input for confirming the irreversability was incorrect, cancelling");
+            }
+
+            if !confirm_user_settings_validity {
+                println!(
+                    "Your input for confirming your settings were up to date was incorrect, cancelling"
+                );
+            }
+
+            if confirm_irreverability && confirm_user_settings_validity {
+                println!("Waiting 5 seconds. Break out to cancel operation");
+
+                std::thread::sleep(time::Duration::from_secs(5));
+
+                println!("Deleting files..");
+
+                let delete_these_files =
+                    file_to_string_vec(Path::new(CleansweepFilePaths::ToDeleteLocalTemp.name()))
+                        .map_err(|e| format!("{:?}", e))?;
+
+                for path in &delete_these_files {
+                    println!("Deleting {}..", path);
+                    fs::remove_file(path)
+                        .map_err(|e| format!("  ..Failed to remove file {}, {}", path, e))?
+                }
             }
 
             fs::remove_file(CleansweepFilePaths::ToDeleteLocalTemp.name())
@@ -76,17 +107,5 @@ pub fn purge(args: &PurgeArgs) -> Result<(), String> {
 
             Ok(())
         }
-    }
-}
-
-// TODO: cargo remove rand
-fn MOCK_REMOVE_FILE(_: &String) -> Result<(), String> {
-    let mut rng = rand::rng();
-    let number = rng.random_range(1..=100);
-
-    if number > 99 {
-        return Err("Pretend fail".to_string());
-    } else {
-        return Ok(());
     }
 }
