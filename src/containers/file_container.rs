@@ -3,7 +3,6 @@ use std::{fs::Metadata, time::SystemTime};
 
 use std::ffi::OsStr;
 
-use clap::error;
 use thiserror::Error;
 
 use crate::containers::file_date_data::FileDateData;

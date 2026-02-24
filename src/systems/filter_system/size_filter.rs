@@ -1,4 +1,3 @@
-use std::path::is_separator;
 
 use crate::containers::file_container::FileContainer;
 use crate::filter_codes::filter_codes::FilterCodes;

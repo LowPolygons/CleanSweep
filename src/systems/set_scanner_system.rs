@@ -1,18 +1,14 @@
 use crate::{
     containers::{file_container::FileContainer, sets_read_write_type::SetsReadWriteType},
-    systems::filter_system::filter_category_info::{FilterCategory, FilterForCategory},
+    systems::filter_system::filter_category_info::FilterCategory,
 };
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum SetScannerError {
-    #[error("Error converting Path to string")]
-    ConvertPathToName,
-
     #[error("Error when creating a regex")]
     CreatingRegexError,
 
@@ -43,10 +39,6 @@ impl SetScannerSystem {
         //      ("hello", "txt"),
         //      ("hello2", "txt")
         //  }
-        // for file in scanned_files {
-        //     println!("{:?}", *file.get_path());
-        // }
-
         let path_to_stem_suffix_map = scanned_files.into_iter().fold(
             HashMap::<String, Vec<(String, String)>>::new(),
             |mut path_stem_suffix_map, curr_file| {
@@ -70,9 +62,6 @@ impl SetScannerSystem {
             },
         );
 
-        // for (k, v) in &path_to_stem_suffix_map {
-        //     println!("{}{:?}", k, v)
-        // }
         let string_num_separator =
             Regex::new(r"\d+(\.\d+)?$").map_err(|_| SetScannerError::CreatingRegexError)?;
 
@@ -91,10 +80,8 @@ impl SetScannerSystem {
                         Vec::<(String, String, f64)>::new(),
                         |mut split_file_names, (stem, suffix)| {
                             if !string_num_separator.is_match(&stem) {
-                                // println!("NOT IN SET {}.{}", stem, suffix);
                                 return Ok(split_file_names);
                             }
-                            // println!("{}.{}", stem, suffix);
                             let captures =
                                 string_num_separator.captures(&stem).ok_or_else(|| {
                                     SetScannerError::CaptureNumberAfterExistanceConfirmationError

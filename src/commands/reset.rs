@@ -1,11 +1,8 @@
 use crate::cli::ListAndResetArgs;
 
-use std::fs::File;
 use std::path::PathBuf;
 
 use crate::containers::cleansweep_file_paths::CleansweepFilePaths;
-use crate::containers::user_settings::UserSettings;
-use crate::utils::create_defaults::create_default_user_settings;
 use crate::utils::get_home_dir::get_cleansweep_dir;
 
 use crate::systems::json_io::*;

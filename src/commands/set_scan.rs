@@ -1,6 +1,5 @@
-use std::{collections::HashMap, env::current_dir};
+use std::env::current_dir;
 
-use regex::Regex;
 
 use crate::{
     containers::{

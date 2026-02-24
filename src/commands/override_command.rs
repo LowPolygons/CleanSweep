@@ -1,7 +1,4 @@
-use std::{
-    path::Path,
-    time::{Duration, SystemTime},
-};
+use std::path::Path;
 
 use crate::{
     cli::KeepAndDelete,
