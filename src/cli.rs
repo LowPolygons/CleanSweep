@@ -28,13 +28,15 @@ pub enum PurgeArgs {
 
 #[derive(Subcommand, Clone)]
 pub enum Commands {
-    #[command(about = "List command")]
+    #[command(about = "Used to print a list of all files contained in the chosen list")]
     List {
         #[arg(long, value_enum, default_value_t = ListAndResetArgs::ToDelete)]
         choice: ListAndResetArgs,
     },
 
-    #[command(about = "Override")]
+    #[command(
+        about = "Used to move files from the chosen list to its opposing list based on a filter you pass"
+    )]
     Override {
         #[arg(long, value_enum)]
         list_to_filter: KeepAndDelete,
@@ -42,29 +44,35 @@ pub enum Commands {
         #[arg(long)]
         filter: String,
 
-        #[arg(long, required = true, num_args = 1..)]
+        #[arg(required = true, num_args = 1..)]
         values: Vec<String>,
     },
 
-    #[command(about = "Demolish")]
+    #[command(about = "Used to remove the cleansweep installation on your device")]
     Demolish,
 
-    #[command(about = "Manage Sets")]
+    #[command(
+        about = "Used to decide how CleanSweep should determine what files from each set should be kept or deleted"
+    )]
     ManageSets,
 
-    #[command(about = "Purge")]
+    #[command(
+        about = "Used to execute the final sanity check before deletion, and the actual deletion"
+    )]
     Purge {
         #[arg(value_enum)]
         choice: PurgeArgs,
     },
 
-    #[command(about = "Reset")]
+    #[command(about = "Used to wipe the chosen list")]
     Reset {
         #[arg(long, value_enum, default_value_t = ListAndResetArgs::ToDelete)]
         choice: ListAndResetArgs,
     },
 
-    #[command(about = "Scan")]
+    #[command(
+        about = "Used to scan your provided path (or current directory) and sort into keep/delete list based on your settings"
+    )]
     Scan {
         #[arg(long, default_value_t = String::from(""))]
         path: String,
@@ -76,22 +84,26 @@ pub enum Commands {
         no_filter: bool,
     },
 
-    #[command(about = "SetScan")]
+    #[command(about = "Used to scan for sets from your path or current directory")]
     SetScan {
         #[arg(long, default_value_t = String::from(""))]
         path: String,
     },
 
-    #[command(about = "Settings")]
+    #[command(
+        about = "Used to display, modify or reset your user settings outlined in the .cleansweep directory"
+    )]
     Settings {
         #[arg(value_enum, default_value_t = SettingsArgs::Display)]
         choice: SettingsArgs,
     },
 
-    #[command(about = "Setup")]
+    #[command(about = "Used to set up the initial .cleansweep directory")]
     Setup,
 
-    #[command(about = "PrintHiddenData")]
+    #[command(
+        about = "Used to open a menu where you can easily view the hidden data for the files in your immediate (optionally recursive) directory"
+    )]
     PrintHiddenStats {
         #[arg(long, default_value_t = String::from(""))]
         path: String,
