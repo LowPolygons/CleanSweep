@@ -120,8 +120,6 @@ pub fn override_command(
 
                 let _delete = FileDateData::new(days_since_now);
 
-                println!("filter_cutoff : {}", _delete.format());
-
                 Ok(FilterCategory::LastModified(FileDateData::new(
                     days_since_now,
                 )))
