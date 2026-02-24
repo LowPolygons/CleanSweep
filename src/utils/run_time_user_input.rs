@@ -37,3 +37,17 @@ pub fn get_number_input_in_range(label: &str, lower: usize, upper: usize) -> Res
 
     Ok(number)
 }
+
+pub fn get_string_input_matching_provided_string(
+    label: &str,
+    match_against: &str,
+) -> Result<bool, String> {
+    let colour = ColorfulTheme::default();
+
+    let input: String = Input::with_theme(&colour)
+        .with_prompt(label)
+        .interact_text()
+        .map_err(|_| format!("Failed to get text input"))?;
+
+    Ok(input == match_against)
+}
