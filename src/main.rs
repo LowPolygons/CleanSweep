@@ -6,6 +6,8 @@ mod filter_codes;
 mod systems;
 mod utils;
 
+use std::process::ExitCode;
+
 use clap::Parser;
 use cli::{Cli, Commands};
 
@@ -14,10 +16,10 @@ use crate::commands::{
     reset, scan, set_scan, settings, setup,
 };
 
-fn main() -> Result<(), String> {
+fn main() -> ExitCode {
     let cli = Cli::parse();
 
-    match &cli.command {
+    let success: Result<(), String> = match &cli.command {
         Commands::List { choice } => list::list(&choice),
         Commands::Override {
             list_to_filter,
@@ -38,7 +40,16 @@ fn main() -> Result<(), String> {
         Commands::Settings { choice } => settings::settings(&choice),
         Commands::Setup => setup::setup(),
         Commands::PrintHiddenStats { path, recursive } => print_hidden_stats(path, recursive),
-    }?;
+    };
 
-    Ok(())
+    match success {
+        Ok(_) => {}
+        Err(msg) => {
+            println!("{}", msg);
+
+            return ExitCode::FAILURE;
+        }
+    }
+
+    ExitCode::SUCCESS
 }

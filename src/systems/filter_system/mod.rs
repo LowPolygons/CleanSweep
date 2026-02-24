@@ -8,4 +8,3 @@ pub mod name_filter;
 pub mod size_filter;
 
 pub mod filter_system;
-pub mod filter_system_builder;
