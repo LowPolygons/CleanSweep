@@ -14,9 +14,6 @@ impl FileDateData {
     pub fn format(&self) -> DateTime<Utc> {
         self.time.into()
     }
-    pub fn get_time(&self) -> &SystemTime {
-        &self.time
-    }
     pub fn time_since_zero(&self) -> Result<u64, String> {
         Ok(self
             .time
@@ -43,7 +40,7 @@ pub fn days_since_now_as_str_to_system_time(
 ) -> Result<SystemTime, DaysSinceNowToSystemTimeError> {
     let num_days_as_seconds = value
         .parse::<u64>()
-        .map_err(|e| DaysSinceNowToSystemTimeError::FailedToParseNumberToUInt)?
+        .map_err(|_| DaysSinceNowToSystemTimeError::FailedToParseNumberToUInt)?
         * 86400;
 
     let days_since_now = SystemTime::now()
