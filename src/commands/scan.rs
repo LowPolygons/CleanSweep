@@ -34,7 +34,6 @@ use std::env::current_dir;
 pub fn scan(
     optional_subpath: &String,
     use_custom_filters: &bool,
-    append_mode: &bool,
     no_filter: &bool,
 ) -> Result<(), String> {
     // Initial path validation

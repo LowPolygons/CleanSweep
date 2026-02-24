@@ -73,9 +73,6 @@ pub enum Commands {
         use_custom_filters: bool,
 
         #[arg(long, short)]
-        append_mode: bool,
-
-        #[arg(long, short)]
         no_filter: bool,
     },
 

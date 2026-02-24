@@ -33,9 +33,8 @@ fn main() -> ExitCode {
         Commands::Scan {
             path,
             use_custom_filters,
-            append_mode,
             no_filter,
-        } => scan::scan(&path, use_custom_filters, append_mode, no_filter),
+        } => scan::scan(&path, use_custom_filters, no_filter),
         Commands::SetScan { path } => set_scan::set_scan(&path),
         Commands::Settings { choice } => settings::settings(&choice),
         Commands::Setup => setup::setup(),
