@@ -15,8 +15,8 @@ impl FileStatistics {
         name: String,
         size: u64,
         extension: String,
-        last_accessed: FileDateData,
         last_modified: FileDateData,
+        last_accessed: FileDateData,
         directory: String,
     ) -> Self {
         FileStatistics {
