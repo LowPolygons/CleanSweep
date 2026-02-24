@@ -5,3 +5,5 @@ Refactor commands to return a Result<Option<String>, int>
 Ok(None) => Complete program success
 Ok(Some) => Failure due to user misuse, correctly caught by code
 Err(int) => Failure due to code failure, caught with map_err
+
+Remove MOCK demolish and remove file
