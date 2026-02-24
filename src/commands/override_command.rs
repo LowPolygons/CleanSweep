@@ -8,7 +8,7 @@ use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
         file_container::FileContainer,
-        file_date_data::{FileDateData, secs_since_epoch_to_time},
+        file_date_data::{FileDateData, days_since_now_as_str_to_system_time},
     },
     systems::{
         filter_system::filter_category_info::FilterCategory,
@@ -38,8 +38,8 @@ pub fn override_command(
     let mut scanned_deleters =
         get_list_file_containers_from_strings(&list_of_deleters).map_err(|e| format!("{e}"))?;
 
-    let mut chosen_list_to_filter: &mut Vec<FileContainer>;
-    let mut other_list: &mut Vec<FileContainer>;
+    let chosen_list_to_filter: &mut Vec<FileContainer>;
+    let other_list: &mut Vec<FileContainer>;
     let chosen_list_path: CleansweepFilePaths;
     let other_list_path: CleansweepFilePaths;
 
@@ -96,15 +96,10 @@ pub fn override_command(
                 let num_days_as_seconds = values
                     .get(0)
                     .ok_or_else(|| ())
-                    .map_err(|_| format!("Index somehow out of range?"))?
-                    .parse::<u64>()
-                    .map_err(|e| format!("Failed to parse number to an unsigned int, {e}"))?
-                    * 86400;
+                    .map_err(|_| format!("Index somehow out of range?"))?;
 
-                let days_since_now =
-                    SystemTime::now().checked_sub(Duration::from_secs(num_days_as_seconds))
-                    .ok_or_else(||())
-                    .map_err(|_| format!("Input number of days exceeds expected bounds - like goes past unix epoch"))?;
+                let days_since_now = days_since_now_as_str_to_system_time(num_days_as_seconds)
+                    .map_err(|e| format!("{e}"))?;
 
                 Ok(FilterCategory::LastAccessed(FileDateData::new(
                     days_since_now,
@@ -118,15 +113,10 @@ pub fn override_command(
                 let num_days_as_seconds = values
                     .get(0)
                     .ok_or_else(|| ())
-                    .map_err(|_| format!("Index somehow out of range?"))?
-                    .parse::<u64>()
-                    .map_err(|e| format!("Failed to parse number to an unsigned int, {e}"))?
-                    * 86400;
+                    .map_err(|_| format!("Index somehow out of range?"))?;
 
-                let days_since_now =
-                    SystemTime::now().checked_sub(Duration::from_secs(num_days_as_seconds))
-                    .ok_or_else(||())
-                    .map_err(|_| format!("Input number of days exceeds expected bounds - like goes past unix epoch"))?;
+                let days_since_now = days_since_now_as_str_to_system_time(num_days_as_seconds)
+                    .map_err(|e| format!("{e}"))?;
 
                 Ok(FilterCategory::LastModified(FileDateData::new(
                     days_since_now,
@@ -134,19 +124,22 @@ pub fn override_command(
             }
         }
         FilterCategory::DirectoryContains(_) => Ok(FilterCategory::DirectoryContains(values)),
-    }.map_err(|e| format!("{e}"))?;
+    }
+    .map_err(|e| format!("{e}"))?;
+
+    const KEEP_IN_LIST: bool = true;
+    const REMOVE_FROM_LIST: bool = false;
 
     chosen_list_to_filter.retain(|file_container| {
         if !filter_to_use.is_file_flagged(file_container) {
-            // Doesn't need to move
-            true
+            KEEP_IN_LIST
         } else {
             println!(
                 "Moving {:?} to the opposing list",
                 file_container.get_path()
             );
             other_list.push(file_container.clone());
-            false
+            REMOVE_FROM_LIST
         }
     });
 
