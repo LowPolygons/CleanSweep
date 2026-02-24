@@ -54,16 +54,12 @@ pub fn settings(args: &SettingsArgs) -> Result<(), String> {
             }
             .map_err(|e| format!("Failed to access the $EDITOR var, {e:?}"))?;
 
-            let user_settings: UserSettings =
-                read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()))
-                    .map_err(|e| format!("{e}"))?;
-
             std::process::Command::new(editor)
                 .arg(&cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()))
                 .status()
                 .map_err(|e| format!("Failed to edit file {e}"))?;
 
-            println!("Whatever changes you made direclty affected the user_settings file.");
+            println!("Whatever changes you made directly affected the user_settings file.");
             println!(
                 "If a new command attempts to open it and fails, consider running 'cleansweep settings reset"
             );
