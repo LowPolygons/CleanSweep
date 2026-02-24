@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use thiserror::Error;
+
 use crate::{
     cli::KeepAndDelete,
     containers::{
@@ -13,6 +15,34 @@ use crate::{
     },
     utils::{get_home_dir::get_cleansweep_dir, path_types_to_string::path_to_string},
 };
+
+#[derive(Debug, Error)]
+pub enum OverrideError {
+    #[error("Failed to get the cleansweep directory")]
+    GetCleansweepDirectoryFailure,
+
+    #[error("Failed to read the list json file into the internal structure")]
+    ReadFileToStructFailure,
+
+    #[error("Failed to turn list of paths as strings into file container objects")]
+    GetFileContainerListFromStringsFailure,
+
+    // WARN: May be a user input error
+    #[error("Failed to turn chosen filter category into a usable object with user inputs")]
+    MakeGenericFilterCategoryUsableFailure,
+
+    #[error("Failed to turn Path into a String")]
+    PathToStringFailure,
+
+    #[error("Failed to write list json file from the internal structure")]
+    WriteJsonFileFromStructFailure,
+
+    /*
+     * Errors as a result of user misuse
+     */
+    #[error("Could not match the input to any existing Filter Category")]
+    MatchStringToCategoryFailure,
+}
 
 pub fn override_command(
     list_to_filter: &KeepAndDelete,

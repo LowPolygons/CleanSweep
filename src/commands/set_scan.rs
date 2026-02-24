@@ -1,5 +1,7 @@
 use std::env::current_dir;
 
+use thiserror::Error;
+
 use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
@@ -15,6 +17,30 @@ use crate::{
     },
     utils::get_home_dir::get_cleansweep_dir,
 };
+
+#[derive(Debug, Error)]
+pub enum SetScanError {
+    #[error("Failed to get the users current directory")]
+    GetCurrentDirectoryFailure,
+
+    #[error("Could not verify whether the full path exists")]
+    VerifyIfPathExistsFailure,
+
+    #[error("The path you have provided relative to your current directory does not exist")]
+    ProvidedPathDoesNotExist,
+
+    #[error("Failed to read the user_settings.json file into a UserSettings object")]
+    ReadUserSettingsFileToObjectFailure,
+
+    #[error("Failed to scan and format the files found at the provided path")]
+    FileScanAndFormatFailure,
+
+    #[error("Failed to create a list of found sets from the list of files")]
+    CovertFileListToFoundSetsFailure,
+
+    #[error("Failed to write the sets json file from the sets structure")]
+    WriteJsonFileToStruct,
+}
 
 pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<(), String> {
     // Initial path validation
@@ -34,6 +60,7 @@ pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<
         cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()),
     )
     .map_err(|e| format!("Failed to load user settings, does it exist? {}", e))?;
+
     let user_set_scans: &SetScanOptions = user_settings.get_set_scan_option();
 
     let filters: Vec<FilterCategory> = vec![

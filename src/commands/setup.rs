@@ -1,12 +1,35 @@
 use std::fs::File;
 use std::path::PathBuf;
 
+use thiserror::Error;
+
 use crate::containers::cleansweep_file_paths::CleansweepFilePaths;
 use crate::containers::user_settings::UserSettings;
 use crate::utils::create_defaults::create_default_user_settings;
 use crate::utils::get_home_dir::get_cleansweep_dir;
 
 use crate::systems::json_io::*;
+
+#[derive(Debug, Error)]
+pub enum SetupError {
+    #[error("Failed to get the cleansweep directory")]
+    GetCleansweepDirectoryFailure,
+
+    #[error("Failed to validate whether the .cleansweep path already exists")]
+    ValidateIfPathExistsFailure,
+
+    #[error("Failed to create the cleansweep directory")]
+    CreateCleansweepDirectoryFailure,
+
+    #[error("Failed to create the target file in the cleansweep directory")]
+    CreateFileInCleansweepDirectoryFailure,
+
+    #[error("Failed to write the json file for the corresponding object")]
+    WriteJsonFileFromStructFailure,
+
+    #[error("Cleansweep already exists on this machine!")]
+    CleansweepAlreadyExists,
+}
 
 pub fn setup() -> Result<(), String> {
     let cleansweep_dir: PathBuf = get_cleansweep_dir()

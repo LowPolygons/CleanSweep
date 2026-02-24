@@ -1,12 +1,40 @@
 use std::env::current_dir;
 
 use dialoguer::{Select, theme::ColorfulTheme};
+use thiserror::Error;
 
 use crate::{
     containers::file_container::FileContainer,
     systems::file_scanner::{FileScanner, FileScannerScanMode},
     utils::path_types_to_string::path_to_string,
 };
+
+#[derive(Debug, Error)]
+pub enum PrintHiddenStatsError {
+    #[error("Failed to get the users current directory")]
+    GetCurrentDirectoryFailure,
+
+    #[error("Failed to determine whether the full path exists")]
+    CouldNotVerifyIfPathExists,
+
+    #[error("Failed to perform the scan and formatting on the path")]
+    FileScanAndFormatFailure,
+
+    #[error("Failed to covert the path object into a string")]
+    PathToStringFailure,
+
+    #[error("Failed to create the interactive menu for choosing which file to see")]
+    InteractiveMenuSelectionFailure,
+
+    #[error("Failed to index the chosen file from the actual list of containers")]
+    GetChosenFileFromListFailure,
+
+    #[error("Failed to display the hidden statistics of the file")]
+    PrintHiddenStatsFailure,
+
+    #[error("The path you have provided relative to the current directory does not exist")]
+    ProvidedPathDoesNotExist,
+}
 
 pub fn print_hidden_stats(
     optional_subpath: &String,

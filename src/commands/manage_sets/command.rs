@@ -1,4 +1,5 @@
 use dialoguer::{Select, theme::ColorfulTheme};
+use thiserror::Error;
 
 use crate::{
     commands::manage_sets::containers::{ManageSetsType, SetStyle},
@@ -11,6 +12,31 @@ use crate::{
         run_time_user_input::{get_number_input, get_number_input_in_range},
     },
 };
+
+#[derive(Debug, Error)]
+pub enum ManageSetsError {
+    #[error("Failed when attempting to get the cleansweep directory")]
+    GetCleansweepDirectoryFailure,
+
+    #[error("Failed when trying to turn the sets file into the internal structure")]
+    ReadSetsFileToStructFailure,
+
+    // TODO: Maybe rework code in such a way that this error will not result in program termination
+    #[error("Failed to index the first item in a set")]
+    GetFirstItemInSetFailure,
+
+    #[error("Failed to create the interactive menu for listing the sets")]
+    ListSetsToManageFailure,
+
+    #[error("Failed to set the default management style for the sets")]
+    SetDefaultManagementStyleFailure,
+
+    #[error("Failed to set the management style for the chosen set")]
+    SetManagementStyleForChosenSetFailure,
+
+    #[error("Failed to save struct of files to the corresponding json file")]
+    WriteJsonFileFromStructFailure,
+}
 
 pub fn manage_sets() -> Result<(), String> {
     let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{e}"))?;

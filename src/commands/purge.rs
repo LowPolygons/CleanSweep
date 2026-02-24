@@ -5,6 +5,8 @@ use std::{
     path::Path,
 };
 
+use thiserror::Error;
+
 use crate::{
     cli::PurgeArgs,
     containers::cleansweep_file_paths::CleansweepFilePaths,
@@ -14,6 +16,33 @@ use crate::{
         run_time_user_input::get_string_input_matching_provided_string,
     },
 };
+
+#[derive(Debug, Error)]
+pub enum PurgeError {
+    #[error("Failure getting the cleansweep directory")]
+    GetCleansweepDirectoryFailure,
+
+    #[error("Failure attempting to read list json into struct")]
+    ReadListJsonToStructFailure,
+
+    #[error("Failure attempting to create temporary file")]
+    CreateTemporaryFileFailure,
+
+    #[error("Failure writing data to the temporary file")]
+    WriteToTemporaryFileFailure,
+
+    #[error("Failure trying to read list of files into an internal string vector")]
+    CreateListOfStringPathsFromFileFailure,
+
+    #[error("Failure trying to delete a listed file")]
+    DeleteFileFailure,
+
+    #[error("Failure trying to delete temporary file")]
+    DeleteTemporaryFileFailure,
+
+    #[error("You did not correctly confirm if you wish to continue with the purge")]
+    StringInputDoesNotMatchExpected,
+}
 
 pub fn purge(args: &PurgeArgs) -> Result<(), String> {
     let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{}", e))?;

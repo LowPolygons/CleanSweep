@@ -1,5 +1,7 @@
 use std::env::VarError;
 
+use thiserror::Error;
+
 use crate::{
     cli::SettingsArgs,
     containers::{
@@ -9,6 +11,27 @@ use crate::{
     systems::json_io::{read_file_to_struct, write_json_file_from_struct},
     utils::{create_defaults::create_default_user_settings, get_home_dir::get_cleansweep_dir},
 };
+
+#[derive(Debug, Error)]
+pub enum SettingsError {
+    #[error("Failure trying to get the cleansweep directory")]
+    GetCleansweepDirectoryFailure,
+
+    #[error("Failure trying to overwrite the existing user settings with the defaults")]
+    OverwriteUserSettingsWithDefaultFailure,
+
+    #[error("Failed to verify whether the target editor exists")]
+    VerifyIfAnEditorExistsFailure,
+
+    #[error("Failed to access the users Editor variable")]
+    AccessEditorVarFailure,
+
+    #[error("Failed to prompt an open-editor command")]
+    OpenEditorCommandFailure,
+
+    #[error("Failed to read the user_settings.json file into a UserSettings object")]
+    ReadUserSettingsFileToObjectFailure,
+}
 
 pub fn settings(args: &SettingsArgs) -> Result<(), String> {
     let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{}", e))?;

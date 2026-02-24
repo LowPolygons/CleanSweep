@@ -6,6 +6,9 @@ Ok(None) => Complete program success
 Ok(Some) => Failure due to user misuse, correctly caught by code
 Err(int) => Failure due to code failure, caught with map_err
 
+Swap all commands to return an ErrorCode and controlled panic, even in case of user input misuse 
+
+
 Remove MOCK demolish and remove file
 
 There is quite a bit of repetition with the matching in scan and override command

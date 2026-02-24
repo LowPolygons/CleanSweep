@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use crate::cli::ListAndResetArgs;
 
 use std::path::PathBuf;
@@ -6,6 +8,15 @@ use crate::containers::cleansweep_file_paths::CleansweepFilePaths;
 use crate::utils::get_home_dir::get_cleansweep_dir;
 
 use crate::systems::json_io::*;
+
+#[derive(Debug, Error)]
+pub enum ResetError {
+    #[error("Failure trying to get the cleansweep directory")]
+    GetCleansweepDirectoryFailure,
+
+    #[error("Failure trying to write json file from internal struct")]
+    WriteJsonFileFromStructFailure,
+}
 
 pub fn reset(args: &ListAndResetArgs) -> Result<(), String> {
     let cleansweep_dir: PathBuf = get_cleansweep_dir()

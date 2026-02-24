@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
@@ -29,9 +31,42 @@ use crate::{
 };
 use std::env::current_dir;
 
-// optional_subpath -> default ""
-// use_custom_filters -> default false
-// append_mode -> default false
+#[derive(Debug, Error)]
+pub enum ScanError {
+    #[error("Failure getting the users current directory")]
+    GetCurrentDirectoryFailure,
+
+    #[error("Could not verify whether the provided directory exists or not")]
+    VerifyIfDirectoryExistsFailure,
+
+    #[error("Failure trying to get the cleansweep directory")]
+    GetCleansweepDirectoryFailure,
+
+    #[error("Failure trying to scan the provided path and format the files")]
+    FileScanAndFormatFailure,
+
+    #[error("Failure attempting to turn path into a String")]
+    PathToStringFailure,
+
+    #[error("Failure trying to read the user_settings.json into internal structure")]
+    ReadUserSettingsFileToStructFailure,
+
+    #[error("Failure trying to turn the file containing a list of filters into a string vector")]
+    ReadListOfFiltersToStringVectorFailure,
+
+    #[error("Failure trying to turn the filters as strings into Filter objects")]
+    ConvertStringyFiltersToFilterObjectsFailure,
+
+    #[error("Failed to sort the scanned files into the Keep/Delete lists")]
+    SortScannedFilesIntoListsFailure,
+
+    #[error("Failed to write the list into its corresponding json file")]
+    WriteJsonFileFromStructFailure,
+
+    #[error("The path you have provided relative to your current directory does not exist")]
+    ProvidedPathDoesNotExist,
+}
+
 pub fn scan(
     optional_subpath: &String,
     use_custom_filters: &bool,

@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use crate::{
     cli::ListAndResetArgs,
     containers::{
@@ -6,6 +8,24 @@ use crate::{
     systems::json_io::read_file_to_struct,
     utils::get_home_dir::get_cleansweep_dir,
 };
+
+#[derive(Debug, Error)]
+pub enum ListError {
+    /*
+     * Errors as a result of code failure
+     */
+    #[error("Failed to get the Cleansweep Directory")]
+    GetCleansweepDirError,
+
+    #[error("Failed when trying to read the sets json file to the internal type")]
+    ReadingJsonFileToSetStructFailure,
+
+    #[error("Failed when trying to read the list json file to the internal type")]
+    ReadingJsonFileToStructFailure,
+    /*
+     * Errors as a result of bad user input
+     */
+}
 
 pub fn list(args: &ListAndResetArgs) -> Result<(), String> {
     let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{}", e))?;
