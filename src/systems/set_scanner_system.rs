@@ -43,11 +43,9 @@ impl SetScannerSystem {
             HashMap::<String, Vec<(String, String)>>::new(),
             |mut path_stem_suffix_map, curr_file| {
                 if !SetScannerSystem::maybe_in_set(curr_file, filters) {
-                    println!("FAILED {:?}", curr_file.get_path());
                     return path_stem_suffix_map;
                 }
 
-                println!("MAYBE IN SET {:?}", curr_file.get_path());
                 let stats = curr_file.get_statistics();
                 let dir = stats.get_directory();
                 let stem = stats.get_name();
