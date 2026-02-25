@@ -71,11 +71,13 @@ impl SetScannerSystem {
                 //  // - stem
                 //  // - If it cannot find one, it is not in a map
                 //  // - This is then stored in a Vec::<(String, String, f64)>
-                //  // - Eg: ("hello2", "txt") -> ("hello", "txt", 2)
+                //  // - The final value is the original full name, this is to prevent errors where
+                //  '000.2000' gets shortened to 0.2
+                //  // - Eg: ("hello2", "txt") -> ("hello", "txt", 2, "hello2")
                 let split_file_names = stem_suffix
                     .into_iter()
                     .try_fold(
-                        Vec::<(String, String, f64)>::new(),
+                        Vec::<(String, String, f64, String)>::new(),
                         |mut split_file_names, (stem, suffix)| {
                             if !string_num_separator.is_match(&stem) {
                                 return Ok(split_file_names);
@@ -96,6 +98,7 @@ impl SetScannerSystem {
                                 number_portion
                                     .parse::<f64>()
                                     .map_err(|_| SetScannerError::ConvertStringToError)?,
+                                stem,
                             ));
                             Ok(split_file_names)
                         },
@@ -108,15 +111,20 @@ impl SetScannerSystem {
                 //  // - This string portion is referred to as the Unique Stem Portion
                 //  // - Creates a new map for this directory which maps usps to the list of files
                 let usps = split_file_names.into_iter().fold(
-                    HashMap::<String, Vec<(String, String, f64)>>::new(),
-                    |mut usps, (stem, suffix, number)| {
+                    HashMap::<String, Vec<(String, String, f64, String)>>::new(),
+                    |mut usps, (stem, suffix, number, full_stem)| {
                         // println!("{} {} {}", stem, suffix, number);
                         usps.entry(stem.clone())
                             .and_modify(|vec| {
-                                vec.push((stem.clone(), suffix.clone(), number));
+                                vec.push((stem.clone(), suffix.clone(), number, full_stem.clone()));
                                 vec.sort_by(|tup_a, tup_b| tup_a.2.total_cmp(&tup_b.2));
                             })
-                            .or_insert(vec![(stem.clone(), suffix.clone(), number)]);
+                            .or_insert(vec![(
+                                stem.clone(),
+                                suffix.clone(),
+                                number,
+                                full_stem.clone(),
+                            )]);
                         usps
                     },
                 );
@@ -129,8 +137,8 @@ impl SetScannerSystem {
                     .fold(found_sets, |mut found_sets, (_, usp_tup)| {
                         let files_in_usp = usp_tup
                             .into_iter()
-                            .map(|(stem, suffix, number)| {
-                                format!("{}/{}{}.{}", path, stem, number, suffix)
+                            .map(|(_stem, suffix, _number, full_stem)| {
+                                format!("{}/{}.{}", path, full_stem, suffix)
                             })
                             .collect();
 
