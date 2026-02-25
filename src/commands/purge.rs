@@ -10,7 +10,7 @@ use thiserror::Error;
 use crate::{
     cli::PurgeArgs,
     containers::cleansweep_file_paths::CleansweepFilePaths,
-    systems::json_io::read_file_to_struct,
+    systems::json_io::{read_file_to_struct, write_json_file_from_struct},
     utils::{
         file_to_string_vec::file_to_string_vec, get_common_dirs::get_cleansweep_dir,
         run_time_user_input::get_string_input_matching_provided_string,
@@ -45,6 +45,9 @@ pub enum PurgeError {
 
     #[error("You did not correctly confirm if you wish to continue with the purge")]
     StringInputDoesNotMatchExpected,
+
+    #[error("Failed to write the delete lsit with the left over files")]
+    WriteDeleteListWithLeftoversFailure,
 }
 
 pub fn purge(args: &PurgeArgs) -> Result<(), PurgeError> {
@@ -151,6 +154,12 @@ pub fn purge(args: &PurgeArgs) -> Result<(), PurgeError> {
                 .map_err(|_| PurgeError::DeleteTemporaryFileFailure)?;
             fs::remove_file(CleansweepFilePaths::ToKeepLocalTemp.name())
                 .map_err(|_| PurgeError::DeleteTemporaryFileFailure)?;
+
+            write_json_file_from_struct(
+                &files_which_failed_deletion,
+                cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()),
+            )
+            .map_err(|_| PurgeError::WriteDeleteListWithLeftoversFailure)?;
 
             Ok(())
         }
