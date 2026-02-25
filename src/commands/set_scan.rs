@@ -79,6 +79,7 @@ pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<
         SetScannerSystem::get_found_sets(&scanned_files, &filters)
             .map_err(|_| SetScanError::CovertFileListToFoundSetsFailure)?;
 
+    println!("Found {} sets..", found_sets.len());
     for set in &found_sets {
         println!("Set:");
         for file in &set.files {
