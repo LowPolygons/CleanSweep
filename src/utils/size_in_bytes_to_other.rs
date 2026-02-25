@@ -1,15 +1,5 @@
 use thiserror::Error;
 
-enum SupportedExtensions {
-    Bytes,
-    KiloBytes,
-    MegaBytes,
-    GigaBytes,
-    TerraBytes,
-    PetaBytes,
-    ExaBytes,
-}
-
 #[derive(Debug, Error)]
 pub enum SizeInBytesToOtherError {
     #[error("You are seemingly handling more than 1000 Exabytes, something has gone wrong")]

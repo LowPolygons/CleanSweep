@@ -69,7 +69,7 @@ fn main() -> ExitCode {
     match success {
         Ok(_) => {}
         Err(msg) => {
-            println!("{}", msg);
+            println!("{msg}");
 
             return ExitCode::FAILURE;
         }
