@@ -61,11 +61,11 @@ pub fn manage_sets() -> Result<(), ManageSetsError> {
                 .map_err(|_| ManageSetsError::GetFirstItemInSetFailure)?
                 .clone();
 
-            if dir_set_scan_was_run_from.is_empty() {
+            if dir_set_scan_was_run_from.is_empty() && scanned_sets.len() != 1 {
                 dir_set_scan_was_run_from = label.clone();
             }
 
-            while label.find(&dir_set_scan_was_run_from).is_none() {
+            while label.find(&dir_set_scan_was_run_from).is_none() && scanned_sets.len() != 1 {
                 dir_set_scan_was_run_from =
                     dir_set_scan_was_run_from[0..dir_set_scan_was_run_from.len() - 1].to_string()
             }
@@ -82,11 +82,28 @@ pub fn manage_sets() -> Result<(), ManageSetsError> {
         },
     )?;
 
+    // If the last char was a /, dont store in the $PATH var
+    let maybe_last_char = dir_set_scan_was_run_from.chars().last();
+
+    if let Some(last_char) = maybe_last_char {
+        if last_char == '/' {
+            dir_set_scan_was_run_from = dir_set_scan_was_run_from.chars().enumerate().fold(
+                String::new(),
+                |mut string, (index, character)| {
+                    if index != dir_set_scan_was_run_from.len() - 1 {
+                        string = format!("{}{}", string, character);
+                    }
+                    string
+                },
+            );
+        }
+    }
+
     let len_to_strip_away: usize = dir_set_scan_was_run_from.len();
     let mut first_in_sets: Vec<String>;
 
     println!(
-        "References to $PATH represent {}",
+        "References to PATH represent \"{}\"",
         dir_set_scan_was_run_from
     );
 
@@ -102,7 +119,7 @@ pub fn manage_sets() -> Result<(), ManageSetsError> {
                 .iter()
                 .map(|item| {
                     format!(
-                        "{} : $PATH/{}",
+                        "{} : [PATH]{}",
                         item.style_to_string(),
                         item.label_truncated(len_to_strip_away)
                     )
@@ -224,6 +241,9 @@ fn select_management_style() -> Result<SetStyle, String> {
     let sub_options: Vec<SetStyle> = vec![
         SetStyle::First,
         SetStyle::Last,
+        SetStyle::FirstN(0),
+        SetStyle::LastN(0),
+        SetStyle::FirstNandLastM(0, 0),
         SetStyle::FirstAndLast,
         SetStyle::EveryN(0),
         SetStyle::EvenlySpacedN(0),
@@ -261,6 +281,42 @@ fn select_management_style_for_set(
     let len_of_set_sub_one = chosen_set.full_set.len() - 1;
 
     chosen_set.chosen_style = match selection {
+        SetStyle::FirstN(_) => {
+            let n_value: usize = get_number_input_in_range(
+                "Enter how many of the first files you with to save",
+                1,
+                len_of_set_sub_one + 1,
+            )
+            .map_err(|e| format!("{e}"))?;
+
+            Some(SetStyle::FirstN(n_value))
+        }
+        SetStyle::LastN(_) => {
+            let n_value: usize = get_number_input_in_range(
+                "Enter how many of the last files you with to save",
+                1,
+                len_of_set_sub_one + 1,
+            )
+            .map_err(|e| format!("{e}"))?;
+
+            Some(SetStyle::LastN(n_value))
+        }
+        SetStyle::FirstNandLastM(_, _) => {
+            let n_value: usize = get_number_input_in_range(
+                "Enter how many of the first files you with to save",
+                1,
+                len_of_set_sub_one + 1,
+            )
+            .map_err(|e| format!("{e}"))?;
+
+            let m_value: usize = get_number_input_in_range(
+                "Enter how many of the last files you with to save",
+                1,
+                len_of_set_sub_one + 1,
+            )
+            .map_err(|e| format!("{e}"))?;
+            Some(SetStyle::FirstNandLastM(n_value, m_value))
+        }
         SetStyle::EveryN(_) => {
             let n_value: usize = get_number_input_in_range(
                 "Enter the number of how often to save a file when interating over the set: ",
@@ -326,6 +382,35 @@ fn separate_files_based_on_style(
                             0 => keep_list.push(value.clone()),
                             _ => delete_list.push(value.clone()),
                         }
+                    }
+                }
+            }
+            SetStyle::FirstN(n_value) => {
+                for (index, value) in chosen_set.full_set.iter().enumerate() {
+                    if index < *n_value {
+                        keep_list.push(value.clone())
+                    } else {
+                        delete_list.push(value.clone());
+                    }
+                }
+            }
+            SetStyle::LastN(n_value) => {
+                for (index, value) in chosen_set.full_set.iter().enumerate() {
+                    if index > (len_of_set_sub_one - n_value) {
+                        keep_list.push(value.clone())
+                    } else {
+                        delete_list.push(value.clone());
+                    }
+                }
+            }
+            SetStyle::FirstNandLastM(n_value, m_value) => {
+                for (index, value) in chosen_set.full_set.iter().enumerate() {
+                    if index < *n_value {
+                        keep_list.push(value.clone())
+                    } else if index > (len_of_set_sub_one - m_value) {
+                        keep_list.push(value.clone())
+                    } else {
+                        delete_list.push(value.clone());
                     }
                 }
             }

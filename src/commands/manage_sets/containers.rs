@@ -5,6 +5,9 @@ pub enum SetStyle {
     First,
     Last,
     FirstAndLast,
+    FirstN(usize),
+    LastN(usize),
+    FirstNandLastM(usize, usize),
     EveryN(usize),
     EvenlySpacedN(usize),
 }
@@ -15,6 +18,9 @@ impl fmt::Display for SetStyle {
             SetStyle::First => "First",
             SetStyle::Last => "Last",
             SetStyle::FirstAndLast => "First And Last",
+            SetStyle::FirstN(_) => "First N",
+            SetStyle::LastN(_) => "Last N",
+            SetStyle::FirstNandLastM(_, _) => "First N and Last M",
             SetStyle::EveryN(_) => "Every N",
             SetStyle::EvenlySpacedN(_) => "N Evenly Spaced",
         };
