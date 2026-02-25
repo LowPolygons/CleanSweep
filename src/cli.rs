@@ -32,6 +32,9 @@ pub enum Commands {
     List {
         #[arg(long, value_enum, default_value_t = ListAndResetArgs::ToDelete)]
         choice: ListAndResetArgs,
+
+        #[arg(long)]
+        summarise: bool,
     },
 
     #[command(

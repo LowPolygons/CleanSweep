@@ -6,7 +6,7 @@ use crate::{
     cli::KeepAndDelete,
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
-        file_container::FileContainer,
+        file_container::{FileContainer, get_list_file_containers_from_strings},
         file_date_data::{
             DaysSinceNowToSystemTimeError, FileDateData, days_since_now_as_str_to_system_time,
         },
@@ -236,17 +236,4 @@ pub fn override_command(
     .map_err(|_| OverrideError::WriteJsonFileFromStructFailure)?;
 
     Ok(())
-}
-
-fn get_list_file_containers_from_strings(list: &Vec<String>) -> Result<Vec<FileContainer>, ()> {
-    Ok(list
-        .iter()
-        .try_fold(
-            Vec::<FileContainer>::new(),
-            |mut scanned_files, path_as_str| -> Result<Vec<FileContainer>, ()> {
-                scanned_files.push(FileContainer::new(Path::new(path_as_str)).map_err(|_| ())?);
-                Ok(scanned_files)
-            },
-        )
-        .map_err(|_| ())?)
 }

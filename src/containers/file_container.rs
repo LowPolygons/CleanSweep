@@ -89,3 +89,16 @@ impl FileContainer {
         &self.path
     }
 }
+
+pub fn get_list_file_containers_from_strings(list: &Vec<String>) -> Result<Vec<FileContainer>, ()> {
+    Ok(list
+        .iter()
+        .try_fold(
+            Vec::<FileContainer>::new(),
+            |mut scanned_files, path_as_str| -> Result<Vec<FileContainer>, ()> {
+                scanned_files.push(FileContainer::new(Path::new(path_as_str)).map_err(|_| ())?);
+                Ok(scanned_files)
+            },
+        )
+        .map_err(|_| ())?)
+}

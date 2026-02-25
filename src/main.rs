@@ -27,8 +27,8 @@ fn main() -> ExitCode {
         match &cli.command {
             Commands::ManageSets => manage_sets::command::manage_sets()
                 .map_err(|e| CleanSweepErrors::ManageSetsFailure(e)),
-            Commands::List { choice } => {
-                list::list(&choice).map_err(|e| CleanSweepErrors::ListFailure(e))
+            Commands::List { choice, summarise } => {
+                list::list(&choice, summarise).map_err(|e| CleanSweepErrors::ListFailure(e))
             }
             Commands::Override {
                 list,
