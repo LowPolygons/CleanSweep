@@ -12,6 +12,18 @@ pub enum SetStyle {
     EvenlySpacedN(usize),
 }
 
+pub enum AppendOrOverride {
+    Append,
+    Override,
+}
+
+pub enum ChoiceInGettingStyle {
+    Append,
+    Reset,
+    Copy,
+    Set,
+}
+
 impl fmt::Display for SetStyle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
