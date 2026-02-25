@@ -31,6 +31,9 @@ pub enum ManageSetsError {
     #[error("Failed to set the default management style for the sets")]
     SetDefaultManagementStyleFailure,
 
+    #[error("Failed to get a mutable reference to the chosen set")]
+    GetMutRefToChosenSetFailure,
+
     #[error("Failed to set the management style for the chosen set")]
     SetManagementStyleForChosenSetFailure,
 
@@ -38,23 +41,24 @@ pub enum ManageSetsError {
     WriteJsonFileFromStructFailure,
 }
 
-pub fn manage_sets() -> Result<(), String> {
-    let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{e}"))?;
+pub fn manage_sets() -> Result<(), ManageSetsError> {
+    let cleansweep_dir =
+        get_cleansweep_dir().map_err(|_| ManageSetsError::GetCleansweepDirectoryFailure)?;
 
     let scanned_sets: Vec<SetsReadWriteType> =
         read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::FoundSets.name()))
-            .map_err(|e| format!("{e}"))?;
+            .map_err(|_| ManageSetsError::ReadSetsFileToStructFailure)?;
 
     let mut dir_set_scan_was_run_from = String::new();
 
     let mut managed_sets: Vec<ManageSetsType> = scanned_sets.iter().try_fold(
         Vec::<ManageSetsType>::new(),
-        |mut acc, set| -> Result<Vec<ManageSetsType>, String> {
+        |mut acc, set| -> Result<Vec<ManageSetsType>, ManageSetsError> {
             let label = set
                 .files
                 .get(0)
                 .ok_or(|| "No File")
-                .map_err(|_| format!("No File"))?
+                .map_err(|_| ManageSetsError::GetFirstItemInSetFailure)?
                 .clone();
 
             if dir_set_scan_was_run_from.is_empty() {
@@ -111,7 +115,7 @@ pub fn manage_sets() -> Result<(), String> {
             .items(&first_in_sets)
             .default(0)
             .interact()
-            .map_err(|e| format!("Failed to create select instance, {:?}", e))?;
+            .map_err(|_| ManageSetsError::ListSetsToManageFailure)?;
 
         if selection == 0 {
             // Hardcoded exit option
@@ -121,16 +125,17 @@ pub fn manage_sets() -> Result<(), String> {
             println!(
                 "Any sets where a provided 'N-Value' exceeds its length will not have a default applied"
             );
-            select_default_style(&mut managed_sets).map_err(|e| format!("{e}"))?;
+            select_default_style(&mut managed_sets)
+                .map_err(|_| ManageSetsError::SetDefaultManagementStyleFailure)?;
         } else {
             select_management_style_for_set(
                 managed_sets
                     .get_mut(selection - length_initial_first_in_sets)
                     .ok_or_else(|| ())
-                    .map_err(|_| format!("Bad index to managed_sets!"))?,
+                    .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?,
                 len_to_strip_away,
             )
-            .map_err(|e| format!("{e}"))?;
+            .map_err(|_| ManageSetsError::SetManagementStyleForChosenSetFailure)?;
         }
     }
 
@@ -156,13 +161,13 @@ pub fn manage_sets() -> Result<(), String> {
         &files_for_keep,
         cleansweep_dir.join(CleansweepFilePaths::ToKeep.name()),
     )
-    .map_err(|e| format!("{e}"))?;
+    .map_err(|_| ManageSetsError::WriteJsonFileFromStructFailure)?;
 
     write_json_file_from_struct(
         &files_for_delete,
         cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()),
     )
-    .map_err(|e| format!("{e}"))?;
+    .map_err(|_| ManageSetsError::WriteJsonFileFromStructFailure)?;
 
     Ok(())
 }

@@ -33,8 +33,9 @@ pub enum SettingsError {
     ReadUserSettingsFileToObjectFailure,
 }
 
-pub fn settings(args: &SettingsArgs) -> Result<(), String> {
-    let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{}", e))?;
+pub fn settings(args: &SettingsArgs) -> Result<(), SettingsError> {
+    let cleansweep_dir =
+        get_cleansweep_dir().map_err(|_| SettingsError::GetCleansweepDirectoryFailure)?;
 
     match args {
         SettingsArgs::Reset => {
@@ -44,24 +45,26 @@ pub fn settings(args: &SettingsArgs) -> Result<(), String> {
                 &defalt_user_settings,
                 cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()),
             )
-            .map_err(|e| format!("{}", e))?;
+            .map_err(|_| SettingsError::OverwriteUserSettingsWithDefaultFailure)?;
 
             return Ok(());
         }
+        // TODO: this err{} match should have more precise error return based on the match err {}
+        // bit
         SettingsArgs::Modify => {
             let editor = match std::env::var("EDITOR") {
                 Ok(val) => Ok(val),
                 Err(err) => {
                     let result = match err {
                         VarError::NotPresent => {
-                            if std::fs::exists("/usr/bin/nano").map_err(|e| {
-                                format!("Couldnt validate /usr/bin/nano directory, {e}")
-                            })? {
+                            if std::fs::exists("/usr/bin/nano")
+                                .map_err(|_| SettingsError::VerifyIfAnEditorExistsFailure)?
+                            {
                                 println!("No EDITOR var set, defaulting to nano");
                                 Ok("/usr/bin/nano".to_string())
-                            } else if std::fs::exists("/usr/bin/vi").map_err(|e| {
-                                format!("Couldnt validate /usr/bin/vi directory, {e}")
-                            })? {
+                            } else if std::fs::exists("/usr/bin/vi")
+                                .map_err(|_| SettingsError::VerifyIfAnEditorExistsFailure)?
+                            {
                                 println!("No EDITOR var set, couldn't find nano, using vi");
                                 Ok("/usr/bin/vi".to_string())
                             } else {
@@ -75,12 +78,12 @@ pub fn settings(args: &SettingsArgs) -> Result<(), String> {
                     result
                 }
             }
-            .map_err(|e| format!("Failed to access the $EDITOR var, {e:?}"))?;
+            .map_err(|_| SettingsError::AccessEditorVarFailure)?;
 
             std::process::Command::new(editor)
                 .arg(&cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()))
                 .status()
-                .map_err(|e| format!("Failed to edit file {e}"))?;
+                .map_err(|_| SettingsError::OpenEditorCommandFailure)?;
 
             println!("Whatever changes you made directly affected the user_settings file.");
             println!(
@@ -93,7 +96,7 @@ pub fn settings(args: &SettingsArgs) -> Result<(), String> {
         SettingsArgs::Display => {
             let user_settings: UserSettings =
                 read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()))
-                    .map_err(|e| format!("{e}"))?;
+                    .map_err(|_| SettingsError::ReadUserSettingsFileToObjectFailure)?;
 
             for line in get_user_setting_lines(user_settings) {
                 println!("{}", line);

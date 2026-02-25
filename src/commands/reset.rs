@@ -18,9 +18,9 @@ pub enum ResetError {
     WriteJsonFileFromStructFailure,
 }
 
-pub fn reset(args: &ListAndResetArgs) -> Result<(), String> {
-    let cleansweep_dir: PathBuf = get_cleansweep_dir()
-        .map_err(|e| format!("Failed to get cleansweep directory in setup: {:?}", e))?;
+pub fn reset(args: &ListAndResetArgs) -> Result<(), ResetError> {
+    let cleansweep_dir: PathBuf =
+        get_cleansweep_dir().map_err(|_| ResetError::GetCleansweepDirectoryFailure)?;
 
     let path_to_open = match args {
         ListAndResetArgs::ToDelete => CleansweepFilePaths::ToDelete,
@@ -28,22 +28,8 @@ pub fn reset(args: &ListAndResetArgs) -> Result<(), String> {
         ListAndResetArgs::Sets => CleansweepFilePaths::FoundSets,
     };
 
-    write_json_file_from_struct(&Empty::new(), cleansweep_dir.join(&path_to_open.name())).map_err(
-        |err| match &err {
-            JsonWriteError::FileCreateFromPathError => {
-                format!(
-                    "Failed to create the file from the given path - {}",
-                    &path_to_open.name()
-                )
-            }
-            JsonWriteError::SerdeJsonWritePrettyError => {
-                format!(
-                    "Failed to write the json string into the file - {}",
-                    &path_to_open.name()
-                )
-            }
-        },
-    )?;
+    write_json_file_from_struct(&Empty::new(), cleansweep_dir.join(&path_to_open.name()))
+        .map_err(|_| ResetError::WriteJsonFileFromStructFailure)?;
 
     println!(
         "Reset the directory $HOME/.cleansweep/{}",

@@ -31,6 +31,7 @@ pub fn secs_since_epoch_to_time(seconds: u64) -> SystemTime {
 pub enum DaysSinceNowToSystemTimeError {
     #[error("Failed to parse number to an unsigned intereger")]
     FailedToParseNumberToUInt,
+
     #[error("Number of days exceeds expected bounds, likely goes past unix epoch")]
     NumDaysExceedsExpectedBounds,
 }

@@ -72,23 +72,21 @@ pub fn scan(
     use_custom_filters: &bool,
     no_filter: &bool,
     ignore_dirs: &Vec<String>,
-) -> Result<(), String> {
+) -> Result<(), ScanError> {
     // Initial path validation
-    let mut path = current_dir().map_err(|err| format!("Error getting current dir {}", err))?;
+    let mut path = current_dir().map_err(|_| ScanError::GetCurrentDirectoryFailure)?;
     path = path.join(optional_subpath);
 
-    if !std::fs::exists(&path)
-        .map_err(|_| format!("Could not verify if the full directory {:?} exists", &path))?
-    {
-        return Err(format!("The provided path does not exist"));
+    if !std::fs::exists(&path).map_err(|_| ScanError::VerifyIfDirectoryExistsFailure)? {
+        return Err(ScanError::ProvidedPathDoesNotExist);
     }
-    let cleansweep_dir = get_cleansweep_dir()
-        .map_err(|e| format!("Failed to load the cleansweep directory - {:?}", e))?;
+    let cleansweep_dir =
+        get_cleansweep_dir().map_err(|_| ScanError::GetCleansweepDirectoryFailure)?;
 
     // Perform scan
     let scanned_files: Vec<FileContainer> =
         FileScanner::scan(path, FileScannerScanMode::Recursive, ignore_dirs)
-            .map_err(|err| format!("Failed to perform scan - {:?}", err))?;
+            .map_err(|_| ScanError::FileScanAndFormatFailure)?;
 
     // Sort, get the paths as strings and save
     let mut to_keep: Vec<String> = Vec::new();
@@ -98,26 +96,29 @@ pub fn scan(
         println!("Scan command run with no-filter, all files being added to the keep list");
 
         for file_container in &scanned_files {
-            to_keep.push(path_to_string(file_container.get_path()).map_err(|e| format!("{e}"))?);
+            to_keep.push(
+                path_to_string(file_container.get_path())
+                    .map_err(|_| ScanError::PathToStringFailure)?,
+            );
         }
     } else {
         // Get the data structures needed for the scan
         let user_settings: UserSettings = json_io::read_file_to_struct(
             cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()),
         )
-        .map_err(|e| format!("Failed to load user settings, does it exist? {}", e))?;
+        .map_err(|_| ScanError::ReadUserSettingsFileToStructFailure)?;
 
         let list_of_filters_as_strings: Vec<String> = if *use_custom_filters {
             file_to_string_vec::file_to_string_vec(
                 cleansweep_dir.join(CleansweepFilePaths::FilterComponentList.name()),
             )
-            .map_err(|e| format!("Failed to load list of custom filters - {:?}", e))?
+            .map_err(|_| ScanError::ReadListOfFiltersToStringVectorFailure)?
         } else {
             get_default_filter_category_list()
         };
         let filters_to_use: Vec<Box<dyn FilterForCategory>> =
             stringy_filters_to_filter_objects(&user_settings, &list_of_filters_as_strings)
-                .map_err(|e| e)?;
+                .map_err(|_| ScanError::ConvertStringyFiltersToFilterObjectsFailure)?;
 
         // Build the filter object
         let filter_system: FilterSystem = FilterSystem::new(filters_to_use);
@@ -128,19 +129,19 @@ pub fn scan(
             &mut to_keep,
             &mut to_delete,
         )
-        .map_err(|e| e)?;
+        .map_err(|_| ScanError::SortScannedFilesIntoListsFailure)?;
     }
 
     write_json_file_from_struct(
         &to_keep,
         cleansweep_dir.join(CleansweepFilePaths::ToKeep.name()),
     )
-    .map_err(|e| format!("Failed to save list of files to keep - {:?}", e))?;
+    .map_err(|_| ScanError::WriteJsonFileFromStructFailure)?;
     write_json_file_from_struct(
         &to_delete,
         cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()),
     )
-    .map_err(|e| format!("Failed to save list of files to delete - {:?}", e))?;
+    .map_err(|_| ScanError::WriteJsonFileFromStructFailure)?;
 
     Ok(())
 }

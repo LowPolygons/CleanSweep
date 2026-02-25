@@ -28,22 +28,22 @@ pub enum DemolishError {
     UserInputDidNotMatchExpected,
 }
 
-pub fn demolish() -> Result<(), String> {
-    let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{e}"))?;
+pub fn demolish() -> Result<(), DemolishError> {
+    let cleansweep_dir = get_cleansweep_dir().map_err(|_| DemolishError::GetCleansweepDirError)?;
 
     let has_confirmed = get_string_input_matching_provided_string(
         "To carry out demolish, please write \"cleansweep demolish\"",
         "cleansweep demolish",
     )
-    .map_err(|e| format!("{e}"))?;
+    .map_err(|_| DemolishError::MatchStringInputToProvidedFailure)?;
 
     if has_confirmed {
         fs::remove_dir_all(cleansweep_dir)
-            .map_err(|e| format!("Failed to remove everything from the directory, {}", e))?;
+            .map_err(|_| DemolishError::FileSystemRemoveDirAllFailure)?;
 
         println!("Deleted the .cleansweep directory");
     } else {
-        println!("You did not provide the correct string to carry out the demolish");
+        return Err(DemolishError::UserInputDidNotMatchExpected);
     }
 
     Ok(())

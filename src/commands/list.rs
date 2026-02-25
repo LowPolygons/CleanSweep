@@ -27,8 +27,8 @@ pub enum ListError {
      */
 }
 
-pub fn list(args: &ListAndResetArgs) -> Result<(), String> {
-    let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{}", e))?;
+pub fn list(args: &ListAndResetArgs) -> Result<(), ListError> {
+    let cleansweep_dir = get_cleansweep_dir().map_err(|_| ListError::GetCleansweepDirError)?;
 
     let mut args_is_sets: bool = false;
     let label: String;
@@ -52,7 +52,7 @@ pub fn list(args: &ListAndResetArgs) -> Result<(), String> {
     if args_is_sets {
         let list_of_files: Vec<SetsReadWriteType> =
             read_file_to_struct(cleansweep_dir.join(path_to_open.name()))
-                .map_err(|e| format!("{}", e))?;
+                .map_err(|_| ListError::ReadingJsonFileToSetStructFailure)?;
 
         println!("{}:", label);
         for set in &list_of_files {
@@ -64,7 +64,7 @@ pub fn list(args: &ListAndResetArgs) -> Result<(), String> {
     } else {
         let list_of_files: Vec<String> =
             read_file_to_struct(cleansweep_dir.join(path_to_open.name()))
-                .map_err(|e| format!("{}", e))?;
+                .map_err(|_| ListError::ReadingJsonFileToStructFailure)?;
 
         println!("{}:", label);
         for file in list_of_files {

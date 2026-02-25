@@ -14,3 +14,5 @@ Remove MOCK demolish and remove file
 There is quite a bit of repetition with the matching in scan and override command
 
 Moving this to the filter category file and preventing repetition makes adding new filters significantly easier
+
+Purge command should affect the underlying to_delete list, only leaving files it failed to delete

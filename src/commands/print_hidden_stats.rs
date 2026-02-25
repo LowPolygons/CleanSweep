@@ -40,27 +40,22 @@ pub fn print_hidden_stats(
     optional_subpath: &String,
     recursive: &bool,
     ignore_dirs: &Vec<String>,
-) -> Result<(), String> {
+) -> Result<(), PrintHiddenStatsError> {
     // Read files in immediate directory and format them into FileContainers
     // Open an interactive terminal and let the user fiddle about and choose them
     // Inline the formatted data of the selected file
     let path = current_dir()
-        .map_err(|e| format!("Error getting the current dir {}", e))?
+        .map_err(|_| PrintHiddenStatsError::GetCurrentDirectoryFailure)?
         .join(optional_subpath);
 
     match path.try_exists() {
         Ok(status) => {
             if !status {
-                return Err(format!(
-                    "The provided path was verified to have not existed"
-                ));
+                return Err(PrintHiddenStatsError::ProvidedPathDoesNotExist);
             }
         }
-        Err(e) => {
-            return Err(format!(
-                "Could not verify whether the path {:?} exists, {}",
-                path, e
-            ));
+        Err(_) => {
+            return Err(PrintHiddenStatsError::CouldNotVerifyIfPathExists);
         }
     }
 
@@ -71,21 +66,24 @@ pub fn print_hidden_stats(
     };
 
     let scanned_files: Vec<FileContainer> = FileScanner::scan(path, scan_mode, ignore_dirs)
-        .map_err(|e| format!("Failed to perform scan in immediate scan, {:?}", e))?;
+        .map_err(|_| PrintHiddenStatsError::FileScanAndFormatFailure)?;
 
     let mut file_labels: Vec<String> = vec![String::from("Exit Menu")];
     let index_offset = file_labels.len();
 
-    file_labels = scanned_files.iter().try_fold(
-        file_labels,
-        |mut file_labels, curr_container| -> Result<Vec<String>, String> {
-            let stringy_path =
-                path_to_string(curr_container.get_path()).map_err(|e| format!("{e}"))?;
-            file_labels.push(stringy_path);
+    file_labels = scanned_files
+        .iter()
+        .try_fold(
+            file_labels,
+            |mut file_labels, curr_container| -> Result<Vec<String>, PrintHiddenStatsError> {
+                let stringy_path = path_to_string(curr_container.get_path())
+                    .map_err(|_| PrintHiddenStatsError::PathToStringFailure)?;
+                file_labels.push(stringy_path);
 
-            Ok(file_labels)
-        },
-    )?;
+                Ok(file_labels)
+            },
+        )
+        .map_err(|e| e)?;
 
     loop {
         let selection = Select::with_theme(&ColorfulTheme::default())
@@ -93,7 +91,7 @@ pub fn print_hidden_stats(
             .items(&file_labels)
             .default(0)
             .interact()
-            .map_err(|e| format!("Failed to create select instance, {}", e))?;
+            .map_err(|_| PrintHiddenStatsError::InteractiveMenuSelectionFailure)?;
 
         if selection == 0 {
             break;
@@ -102,9 +100,9 @@ pub fn print_hidden_stats(
         let chosen_file: &FileContainer = scanned_files
             .get(selection - index_offset)
             .ok_or_else(|| ())
-            .map_err(|_| format!("Failed to index item from list of file containers"))?;
+            .map_err(|_| PrintHiddenStatsError::GetChosenFileFromListFailure)?;
 
-        print_file_data(chosen_file).map_err(|e| format!("{e}"))?;
+        print_file_data(chosen_file).map_err(|_| PrintHiddenStatsError::PrintHiddenStatsFailure)?;
     }
 
     Ok(())

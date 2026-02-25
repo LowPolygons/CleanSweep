@@ -7,7 +7,9 @@ use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
         file_container::FileContainer,
-        file_date_data::{FileDateData, days_since_now_as_str_to_system_time},
+        file_date_data::{
+            DaysSinceNowToSystemTimeError, FileDateData, days_since_now_as_str_to_system_time,
+        },
     },
     systems::{
         filter_system::filter_category_info::FilterCategory,
@@ -42,28 +44,38 @@ pub enum OverrideError {
      */
     #[error("Could not match the input to any existing Filter Category")]
     MatchStringToCategoryFailure,
+
+    #[error("Cannot accept more than one value for the selected filter.")]
+    TooManyArgsPassedForFilter,
+
+    #[error("Cannot parse your input into its expected type")]
+    FailedToParseInputToCorrectType,
+
+    #[error("You're input seemingly pre-dates the UNIX Epoch")]
+    InputPredatesUnixEpoch,
 }
 
 pub fn override_command(
     list_to_filter: &KeepAndDelete,
     filter_choice: &String,
     values: Vec<String>,
-) -> Result<(), String> {
-    let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{e}"))?;
+) -> Result<(), OverrideError> {
+    let cleansweep_dir =
+        get_cleansweep_dir().map_err(|_| OverrideError::GetCleansweepDirectoryFailure)?;
 
     let list_of_keepers: Vec<String> =
         read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::ToKeep.name()))
-            .map_err(|e| format!("{e}"))?;
+            .map_err(|_| OverrideError::GetCleansweepDirectoryFailure)?;
 
     let list_of_deleters: Vec<String> =
         read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()))
-            .map_err(|e| format!("{e}"))?;
+            .map_err(|_| OverrideError::ReadFileToStructFailure)?;
 
-    let mut scanned_keepers =
-        get_list_file_containers_from_strings(&list_of_keepers).map_err(|e| format!("{e}"))?;
+    let mut scanned_keepers = get_list_file_containers_from_strings(&list_of_keepers)
+        .map_err(|_| OverrideError::GetFileContainerListFromStringsFailure)?;
 
-    let mut scanned_deleters =
-        get_list_file_containers_from_strings(&list_of_deleters).map_err(|e| format!("{e}"))?;
+    let mut scanned_deleters = get_list_file_containers_from_strings(&list_of_deleters)
+        .map_err(|_| OverrideError::GetFileContainerListFromStringsFailure)?;
 
     let chosen_list_to_filter: &mut Vec<FileContainer>;
     let other_list: &mut Vec<FileContainer>;
@@ -88,7 +100,7 @@ pub fn override_command(
     // Create the filter
     let chosen_filter_generic = FilterCategory::match_string_to_category(filter_choice)
         .ok_or_else(|| ())
-        .map_err(|_| format!("Could not match input to any Filter Category"))?;
+        .map_err(|_| OverrideError::MatchStringToCategoryFailure)?;
 
     println!(
         "Chosen Category: {}, {}",
@@ -104,30 +116,37 @@ pub fn override_command(
         FilterCategory::NameStartsWith(_) => Ok(FilterCategory::NameStartsWith(values)),
         FilterCategory::Size(_) => {
             if values.len() != 1 {
-                Err("Can't accept more than one value for the size filter".to_string())
+                Err(OverrideError::TooManyArgsPassedForFilter)
             } else {
                 Ok(FilterCategory::Size(
                     values
                         .get(0)
                         .ok_or_else(|| ())
-                        .map_err(|_| format!("Index somehow out of range?"))?
+                        .map_err(|_| OverrideError::MakeGenericFilterCategoryUsableFailure)?
                         .parse::<u64>()
-                        .map_err(|e| format!("Failed to parse number to an unsigned int, {e}"))?,
+                        .map_err(|_| OverrideError::FailedToParseInputToCorrectType)?,
                 ))
             }
         }
         FilterCategory::Extension(_) => Ok(FilterCategory::Extension(values)),
         FilterCategory::LastAccessed(_) => {
             if values.len() != 1 {
-                Err("Can't accept more than one value for the size filter".to_string())
+                Err(OverrideError::TooManyArgsPassedForFilter)
             } else {
                 let num_days_as_seconds = values
                     .get(0)
                     .ok_or_else(|| ())
-                    .map_err(|_| format!("Index somehow out of range?"))?;
+                    .map_err(|_| OverrideError::MakeGenericFilterCategoryUsableFailure)?;
 
                 let days_since_now = days_since_now_as_str_to_system_time(num_days_as_seconds)
-                    .map_err(|e| format!("{e}"))?;
+                    .map_err(|e| match e {
+                        DaysSinceNowToSystemTimeError::FailedToParseNumberToUInt => {
+                            OverrideError::FailedToParseInputToCorrectType
+                        }
+                        DaysSinceNowToSystemTimeError::NumDaysExceedsExpectedBounds => {
+                            OverrideError::InputPredatesUnixEpoch
+                        }
+                    })?;
 
                 Ok(FilterCategory::LastAccessed(FileDateData::new(
                     days_since_now,
@@ -136,15 +155,22 @@ pub fn override_command(
         }
         FilterCategory::LastModified(_) => {
             if values.len() != 1 {
-                Err("Can't accept more than one value for the size filter".to_string())
+                Err(OverrideError::TooManyArgsPassedForFilter)
             } else {
                 let num_days_as_seconds = values
                     .get(0)
                     .ok_or_else(|| ())
-                    .map_err(|_| format!("Index somehow out of range?"))?;
+                    .map_err(|_| OverrideError::MakeGenericFilterCategoryUsableFailure)?;
 
                 let days_since_now = days_since_now_as_str_to_system_time(num_days_as_seconds)
-                    .map_err(|e| format!("{e}"))?;
+                    .map_err(|e| match e {
+                        DaysSinceNowToSystemTimeError::FailedToParseNumberToUInt => {
+                            OverrideError::FailedToParseInputToCorrectType
+                        }
+                        DaysSinceNowToSystemTimeError::NumDaysExceedsExpectedBounds => {
+                            OverrideError::InputPredatesUnixEpoch
+                        }
+                    })?;
 
                 let _delete = FileDateData::new(days_since_now);
 
@@ -154,8 +180,7 @@ pub fn override_command(
             }
         }
         FilterCategory::DirectoryContains(_) => Ok(FilterCategory::DirectoryContains(values)),
-    }
-    .map_err(|e| format!("{e}"))?;
+    }?;
 
     const KEEP_IN_LIST: bool = true;
     const REMOVE_FROM_LIST: bool = false;
@@ -177,49 +202,51 @@ pub fn override_command(
         .iter()
         .try_fold(
             Vec::<String>::new(),
-            |mut to_keep, file| -> Result<Vec<String>, String> {
-                to_keep.push(path_to_string(file.get_path()).map_err(|e| format!("{e}"))?);
+            // Only Error that occurs here is PathToStringFailure
+            |mut to_keep, file| -> Result<Vec<String>, ()> {
+                to_keep.push(path_to_string(file.get_path()).map_err(|_| ())?);
 
                 Ok(to_keep)
             },
         )
-        .map_err(|e| format!("{e}"))?;
+        .map_err(|_| OverrideError::PathToStringFailure)?;
 
     let other_as_string: Vec<String> = other_list
         .iter()
         .try_fold(
             Vec::<String>::new(),
-            |mut to_keep, file| -> Result<Vec<String>, String> {
-                to_keep.push(path_to_string(file.get_path()).map_err(|e| format!("{e}"))?);
+            |mut to_keep, file| -> Result<Vec<String>, ()> {
+                // Only Error that occurs here is PathToStringFailure
+                to_keep.push(path_to_string(file.get_path()).map_err(|_| ())?);
 
                 Ok(to_keep)
             },
         )
-        .map_err(|e| format!("{e}"))?;
+        .map_err(|_| OverrideError::PathToStringFailure)?;
 
     write_json_file_from_struct(
         &chosen_as_string,
         cleansweep_dir.join(chosen_list_path.name()),
     )
-    .map_err(|e| format!("Failed to save list of files - {:?}", e))?;
+    .map_err(|_| OverrideError::WriteJsonFileFromStructFailure)?;
     write_json_file_from_struct(
         &other_as_string,
         cleansweep_dir.join(other_list_path.name()),
     )
-    .map_err(|e| format!("Failed to save list of files - {:?}", e))?;
+    .map_err(|_| OverrideError::WriteJsonFileFromStructFailure)?;
+
     Ok(())
 }
 
-fn get_list_file_containers_from_strings(list: &Vec<String>) -> Result<Vec<FileContainer>, String> {
+fn get_list_file_containers_from_strings(list: &Vec<String>) -> Result<Vec<FileContainer>, ()> {
     Ok(list
         .iter()
         .try_fold(
             Vec::<FileContainer>::new(),
-            |mut scanned_files, path_as_str| -> Result<Vec<FileContainer>, String> {
-                scanned_files
-                    .push(FileContainer::new(Path::new(path_as_str)).map_err(|e| format!("{e}"))?);
+            |mut scanned_files, path_as_str| -> Result<Vec<FileContainer>, ()> {
+                scanned_files.push(FileContainer::new(Path::new(path_as_str)).map_err(|_| ())?);
                 Ok(scanned_files)
             },
         )
-        .map_err(|e| format!("{e}"))?)
+        .map_err(|_| ())?)
 }

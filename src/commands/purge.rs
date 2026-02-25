@@ -31,6 +31,9 @@ pub enum PurgeError {
     #[error("Failure writing data to the temporary file")]
     WriteToTemporaryFileFailure,
 
+    #[error("Failed to create an input field")]
+    CreateInputFieldFailure,
+
     #[error("Failure trying to read list of files into an internal string vector")]
     CreateListOfStringPathsFromFileFailure,
 
@@ -44,36 +47,37 @@ pub enum PurgeError {
     StringInputDoesNotMatchExpected,
 }
 
-pub fn purge(args: &PurgeArgs) -> Result<(), String> {
-    let cleansweep_dir = get_cleansweep_dir().map_err(|e| format!("{}", e))?;
+pub fn purge(args: &PurgeArgs) -> Result<(), PurgeError> {
+    let cleansweep_dir =
+        get_cleansweep_dir().map_err(|_| PurgeError::GetCleansweepDirectoryFailure)?;
 
     match &args {
         PurgeArgs::Stage => {
             let keep_list: Vec<String> =
                 read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::ToKeep.name()))
-                    .map_err(|e| format!("{}", e))?;
+                    .map_err(|_| PurgeError::ReadListJsonToStructFailure)?;
             let delete_list: Vec<String> =
                 read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()))
-                    .map_err(|e| format!("{}", e))?;
+                    .map_err(|_| PurgeError::ReadListJsonToStructFailure)?;
 
             println!("Staging {} files for deletion..", delete_list.len());
 
             let mut temp_keep_list_file =
                 File::create(Path::new(CleansweepFilePaths::ToKeepLocalTemp.name()))
-                    .map_err(|e| format!("Failed to create the temp file: {}", e))?;
+                    .map_err(|_| PurgeError::CreateTemporaryFileFailure)?;
             let mut temp_delete_list_file =
                 File::create(Path::new(CleansweepFilePaths::ToDeleteLocalTemp.name()))
-                    .map_err(|e| format!("Failed to create the temp file: {}", e))?;
+                    .map_err(|_| PurgeError::CreateTemporaryFileFailure)?;
 
             for str_path in &delete_list {
                 temp_delete_list_file
                     .write_all(format!("{}\n", str_path).as_bytes())
-                    .map_err(|e| format!("Failed to write line to temp delete file: {}", e))?;
+                    .map_err(|_| PurgeError::WriteToTemporaryFileFailure)?;
             }
             for str_path in &keep_list {
                 temp_keep_list_file
                     .write_all(format!("{}\n", str_path).as_bytes())
-                    .map_err(|e| format!("Failed to write line to temp delete file: {}", e))?;
+                    .map_err(|_| PurgeError::WriteToTemporaryFileFailure)?;
             }
 
             println!(
@@ -94,21 +98,23 @@ pub fn purge(args: &PurgeArgs) -> Result<(), String> {
             let confirm_irreverability = get_string_input_matching_provided_string(
                 "I confirm that i want these files to be deleted and that this is an irreversable action",
                 "confirm",
-            ).map_err(|e| format!("{e}"))?;
+            ).map_err(|_| PurgeError::CreateInputFieldFailure)?;
 
             let confirm_user_settings_validity = get_string_input_matching_provided_string(
                 "I confirm that these files were scanned using my most up-to-date settings and therefore any deletions are expected",
                 "confirm",
-            ).map_err(|e| format!("{e}"))?;
+            ).map_err(|_| PurgeError::CreateInputFieldFailure)?;
 
             if !confirm_irreverability {
                 println!("Your input for confirming the irreversability was incorrect, cancelling");
+                return Err(PurgeError::StringInputDoesNotMatchExpected);
             }
 
             if !confirm_user_settings_validity {
                 println!(
                     "Your input for confirming your settings were up to date was incorrect, cancelling"
                 );
+                return Err(PurgeError::StringInputDoesNotMatchExpected);
             }
 
             if confirm_irreverability && confirm_user_settings_validity {
@@ -120,19 +126,18 @@ pub fn purge(args: &PurgeArgs) -> Result<(), String> {
 
                 let delete_these_files =
                     file_to_string_vec(Path::new(CleansweepFilePaths::ToDeleteLocalTemp.name()))
-                        .map_err(|e| format!("{:?}", e))?;
+                        .map_err(|_| PurgeError::CreateListOfStringPathsFromFileFailure)?;
 
                 for path in &delete_these_files {
                     println!("Deleting {}..", path);
-                    fs::remove_file(path)
-                        .map_err(|e| format!("  ..Failed to remove file {}, {}", path, e))?
+                    fs::remove_file(path).map_err(|_| PurgeError::DeleteFileFailure)?
                 }
             }
 
             fs::remove_file(CleansweepFilePaths::ToDeleteLocalTemp.name())
-                .map_err(|_| String::new())?;
+                .map_err(|_| PurgeError::DeleteTemporaryFileFailure)?;
             fs::remove_file(CleansweepFilePaths::ToKeepLocalTemp.name())
-                .map_err(|_| String::new())?;
+                .map_err(|_| PurgeError::DeleteTemporaryFileFailure)?;
 
             Ok(())
         }
