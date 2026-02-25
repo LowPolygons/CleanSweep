@@ -117,6 +117,8 @@ pub fn purge(args: &PurgeArgs) -> Result<(), PurgeError> {
                 return Err(PurgeError::StringInputDoesNotMatchExpected);
             }
 
+            let mut files_which_failed_deletion: Vec<String> = Vec::new();
+
             if confirm_irreverability && confirm_user_settings_validity {
                 println!("Waiting 5 seconds. Break out to cancel operation");
 
@@ -130,8 +132,19 @@ pub fn purge(args: &PurgeArgs) -> Result<(), PurgeError> {
 
                 for path in &delete_these_files {
                     println!("Deleting {}..", path);
-                    fs::remove_file(path).map_err(|_| PurgeError::DeleteFileFailure)?
+
+                    match fs::remove_file(path) {
+                        Ok(_) => {}
+                        Err(_) => {
+                            println!("Failed to delete {}", path);
+                            files_which_failed_deletion.push(path.clone())
+                        }
+                    }
                 }
+            }
+
+            if files_which_failed_deletion.len() != 0 {
+                return Err(PurgeError::DeleteFileFailure);
             }
 
             fs::remove_file(CleansweepFilePaths::ToDeleteLocalTemp.name())
