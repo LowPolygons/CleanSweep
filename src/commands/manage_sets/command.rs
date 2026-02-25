@@ -29,7 +29,7 @@ pub enum ManageSetsError {
     #[error("Failed to choose the management style for the chosen option correctly")]
     ChooseManagementStyleFailure,
 
-    #[error("Failed when deciding how to get the new set list")] //get_choice_of_how_to_get_style
+    #[error("Failed when deciding how to get the new set list")]
     GetChoiceOfHowToGetStyleFailure,
 
     #[error(
@@ -41,15 +41,10 @@ pub enum ManageSetsError {
         "Failed when trying to preview how a set will be separated based on its current styles"
     )]
     PreviewSeparatedFilesBasedOnStylesFailure,
-    // #[error("Failed to set the default management style for the sets")]
-    // SetDefaultManagementStyleFailure,
-    //
+
     #[error("Failed to get a mutable reference to the chosen set")]
     GetMutRefToChosenSetFailure,
 
-    // #[error("Failed to set the management style for the chosen set")]
-    // SetManagementStyleForChosenSetFailure,
-    //
     #[error("Failed to save struct of files to the corresponding json file")]
     WriteJsonFileFromStructFailure,
 }
@@ -437,16 +432,16 @@ fn choose_management_style() -> Result<SetStyle, ()> {
     let sub_options: Vec<SetStyle> = vec![
         SetStyle::First,
         SetStyle::Last,
+        SetStyle::FirstAndLast,
         SetStyle::FirstN(0),
         SetStyle::LastN(0),
         SetStyle::FirstNandLastM(0, 0),
-        SetStyle::FirstAndLast,
         SetStyle::EveryN(0),
         SetStyle::EvenlySpacedN(0),
     ];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Submenu")
+        .with_prompt("Choose a management style:")
         .items(&sub_options)
         .interact()
         .map_err(|_| ())?;
@@ -505,217 +500,6 @@ fn choose_management_style() -> Result<SetStyle, ()> {
         },
     )
 }
-//
-// fn select_default_style(managed_sets: &mut Vec<ManageSetsType>) -> Result<(), String> {
-//     let selection = select_management_style().map_err(|e| format!("{e}"))?;
-//
-//     let value = match selection {
-//         SetStyle::FirstN(_) => {
-//             let n_value: usize =
-//                 get_number_input("Enter how many of the first files you wish to keep:", true)
-//                     .map_err(|e| format!("{e}"))?;
-//
-//             SetStyle::FirstN(n_value)
-//         }
-//         SetStyle::LastN(_) => {
-//             let n_value: usize =
-//                 get_number_input("Enter how many of the last files you wish to keep:", true)
-//                     .map_err(|e| format!("{e}"))?;
-//
-//             SetStyle::LastN(n_value)
-//         }
-//         SetStyle::FirstNandLastM(_, _) => {
-//             let n_value: usize =
-//                 get_number_input("Enter how many of the first files you wish to keep:", true)
-//                     .map_err(|e| format!("{e}"))?;
-//
-//             let m_value: usize =
-//                 get_number_input("Enter how many of the last files you wish to keep:", true)
-//                     .map_err(|e| format!("{e}"))?;
-//
-//             SetStyle::FirstNandLastM(n_value, m_value)
-//         }
-//         SetStyle::EveryN(_) => {
-//             let n_value: usize = get_number_input(
-//                 "Enter the number of how often to save a file when interating over the set: ",
-//                 true,
-//             )
-//             .map_err(|e| format!("{}", e))?;
-//
-//             SetStyle::EveryN(n_value)
-//         }
-//         SetStyle::EvenlySpacedN(_) => {
-//             println!(
-//                 "This will, on average save exactly N files. There will be a margin of error if N > len / 2"
-//             );
-//             let n_value: usize =
-//                 get_number_input("Enter how many files do you want to save: ", true)
-//                     .map_err(|e| format!("{}", e))?;
-//             SetStyle::EvenlySpacedN(n_value)
-//         }
-//         other => other,
-//     };
-//
-//     for set in managed_sets.iter_mut() {
-//         let new_style = match &value {
-//             SetStyle::FirstN(n_value) => {
-//                 if *n_value > set.full_set.len() {
-//                     None
-//                 } else {
-//                     Some(SetStyle::FirstN(*n_value))
-//                 }
-//             }
-//             SetStyle::LastN(n_value) => {
-//                 if *n_value > set.full_set.len() {
-//                     None
-//                 } else {
-//                     Some(SetStyle::LastN(*n_value))
-//                 }
-//             }
-//             SetStyle::FirstNandLastM(n_value, m_value) => {
-//                 if *n_value > set.full_set.len() || *m_value > set.full_set.len() {
-//                     None
-//                 } else {
-//                     Some(SetStyle::FirstNandLastM(*n_value, *m_value))
-//                 }
-//             }
-//             SetStyle::EveryN(n_value) => {
-//                 if *n_value > set.full_set.len() {
-//                     None
-//                 } else {
-//                     Some(SetStyle::EveryN(*n_value))
-//                 }
-//             }
-//             SetStyle::EvenlySpacedN(n_value) => {
-//                 if *n_value > set.full_set.len() {
-//                     None
-//                 } else {
-//                     Some(SetStyle::EvenlySpacedN(*n_value))
-//                 }
-//             }
-//             other => Some(other.clone()),
-//         };
-//
-//         if let Some(style) = new_style {
-//             set.chosen_styles.push(style);
-//         }
-//     }
-//
-//     Ok(())
-// }
-//
-// fn select_management_style() -> Result<SetStyle, String> {
-//     let sub_options: Vec<SetStyle> = vec![
-//         SetStyle::First,
-//         SetStyle::Last,
-//         SetStyle::FirstN(0),
-//         SetStyle::LastN(0),
-//         SetStyle::FirstNandLastM(0, 0),
-//         SetStyle::FirstAndLast,
-//         SetStyle::EveryN(0),
-//         SetStyle::EvenlySpacedN(0),
-//     ];
-//
-//     let selection = Select::with_theme(&ColorfulTheme::default())
-//         .with_prompt("Submenu")
-//         .items(&sub_options)
-//         .interact()
-//         .map_err(|e| format!("Failed to create select instance, {:?}", e))?;
-//
-//     match sub_options.get(selection).ok_or(|| ()) {
-//         Ok(val) => return Ok(val.clone()),
-//         Err(_) => return Err("Failed to choose set style due to bad indexing".to_string()),
-//     }
-// }
-
-// fn select_management_style_for_set(
-//     chosen_set: &mut ManageSetsType,
-//     len_to_strip: usize,
-// ) -> Result<(), String> {
-//     chosen_set.full_set.iter().for_each(|elem| {
-//         println!(
-//             "- [PATH]{}",
-//             elem.clone()
-//                 .drain(len_to_strip..elem.len())
-//                 .fold(String::new(), |mut string, char| {
-//                     string = format!("{}{}", string, char);
-//                     string
-//                 })
-//         )
-//     });
-//
-//     let selection = select_management_style().map_err(|e| format!("{e}"))?;
-//     let len_of_set_sub_one = chosen_set.full_set.len() - 1;
-//
-//     let new_style = match selection {
-//         SetStyle::FirstN(_) => {
-//             let n_value: usize = get_number_input_in_range(
-//                 "Enter how many of the first files you with to save",
-//                 1,
-//                 len_of_set_sub_one + 1,
-//             )
-//             .map_err(|e| format!("{e}"))?;
-//
-//             Some(SetStyle::FirstN(n_value))
-//         }
-//         SetStyle::LastN(_) => {
-//             let n_value: usize = get_number_input_in_range(
-//                 "Enter how many of the last files you with to save",
-//                 1,
-//                 len_of_set_sub_one + 1,
-//             )
-//             .map_err(|e| format!("{e}"))?;
-//
-//             Some(SetStyle::LastN(n_value))
-//         }
-//         SetStyle::FirstNandLastM(_, _) => {
-//             let n_value: usize = get_number_input_in_range(
-//                 "Enter how many of the first files you with to save",
-//                 1,
-//                 len_of_set_sub_one + 1,
-//             )
-//             .map_err(|e| format!("{e}"))?;
-//
-//             let m_value: usize = get_number_input_in_range(
-//                 "Enter how many of the last files you with to save",
-//                 1,
-//                 len_of_set_sub_one + 1,
-//             )
-//             .map_err(|e| format!("{e}"))?;
-//             Some(SetStyle::FirstNandLastM(n_value, m_value))
-//         }
-//         SetStyle::EveryN(_) => {
-//             let n_value: usize = get_number_input_in_range(
-//                 "Enter the number of how often to save a file when interating over the set: ",
-//                 1,
-//                 len_of_set_sub_one + 1,
-//             )
-//             .map_err(|e| format!("{}", e))?;
-//
-//             Some(SetStyle::EveryN(n_value))
-//         }
-//         SetStyle::EvenlySpacedN(_) => {
-//             println!(
-//                 "This will, on average save exactly N files. There will be a margin of error if N > len / 2"
-//             );
-//
-//             let n_value: usize = get_number_input_in_range(
-//                 "Enter how many files do you want to save: ",
-//                 1,
-//                 len_of_set_sub_one + 1,
-//             )
-//             .map_err(|e| format!("{}", e))?;
-//             Some(SetStyle::EvenlySpacedN(n_value))
-//         }
-//         other => Some(other.clone()),
-//     };
-//
-//     if let Some(style) = new_style {
-//         chosen_set.chosen_styles.push(style);
-//     }
-//
-//     Ok(())
-// }
 
 fn separate_files_based_on_style(
     chosen_set: &mut ManageSetsType,
