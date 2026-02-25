@@ -13,7 +13,7 @@ use crate::{
         filter_system::filter_category_info::FilterCategory,
         json_io::{read_file_to_struct, write_json_file_from_struct},
     },
-    utils::{get_home_dir::get_cleansweep_dir, path_types_to_string::path_to_string},
+    utils::{get_common_dirs::get_cleansweep_dir, path_types_to_string::path_to_string},
 };
 
 #[derive(Debug, Error)]

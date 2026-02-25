@@ -8,7 +8,7 @@ use crate::{
     },
     systems::json_io::{read_file_to_struct, write_json_file_from_struct},
     utils::{
-        get_home_dir::get_cleansweep_dir,
+        get_common_dirs::get_cleansweep_dir,
         run_time_user_input::{get_number_input, get_number_input_in_range},
     },
 };

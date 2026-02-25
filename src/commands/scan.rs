@@ -26,7 +26,7 @@ use crate::{
     },
     utils::{
         create_defaults::get_default_filter_category_list, file_to_string_vec,
-        get_home_dir::get_cleansweep_dir, path_types_to_string::path_to_string,
+        get_common_dirs::get_cleansweep_dir, path_types_to_string::path_to_string,
     },
 };
 use std::env::current_dir;

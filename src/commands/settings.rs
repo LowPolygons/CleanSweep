@@ -9,7 +9,7 @@ use crate::{
         user_settings::{UserSettings, get_user_setting_lines},
     },
     systems::json_io::{read_file_to_struct, write_json_file_from_struct},
-    utils::{create_defaults::create_default_user_settings, get_home_dir::get_cleansweep_dir},
+    utils::{create_defaults::create_default_user_settings, get_common_dirs::get_cleansweep_dir},
 };
 
 #[derive(Debug, Error)]

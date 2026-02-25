@@ -15,7 +15,7 @@ use crate::{
         json_io::{self, write_json_file_from_struct},
         set_scanner_system::SetScannerSystem,
     },
-    utils::get_home_dir::get_cleansweep_dir,
+    utils::get_common_dirs::get_cleansweep_dir,
 };
 
 #[derive(Debug, Error)]

@@ -5,7 +5,7 @@ use crate::cli::ListAndResetArgs;
 use std::path::PathBuf;
 
 use crate::containers::cleansweep_file_paths::CleansweepFilePaths;
-use crate::utils::get_home_dir::get_cleansweep_dir;
+use crate::utils::get_common_dirs::get_cleansweep_dir;
 
 use crate::systems::json_io::*;
 

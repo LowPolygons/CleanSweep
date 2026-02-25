@@ -3,7 +3,7 @@ use std::fs;
 use thiserror::Error;
 
 use crate::utils::{
-    get_home_dir::get_cleansweep_dir,
+    get_common_dirs::get_cleansweep_dir,
     run_time_user_input::get_string_input_matching_provided_string,
 };
 

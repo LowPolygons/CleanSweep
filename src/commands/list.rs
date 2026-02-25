@@ -6,7 +6,7 @@ use crate::{
         cleansweep_file_paths::CleansweepFilePaths, sets_read_write_type::SetsReadWriteType,
     },
     systems::json_io::read_file_to_struct,
-    utils::get_home_dir::get_cleansweep_dir,
+    utils::get_common_dirs::get_cleansweep_dir,
 };
 
 #[derive(Debug, Error)]
