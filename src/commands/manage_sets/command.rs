@@ -1,5 +1,3 @@
-use std::cmp::min;
-
 use dialoguer::{Select, theme::ColorfulTheme};
 use thiserror::Error;
 
@@ -11,10 +9,7 @@ use crate::{
         cleansweep_file_paths::CleansweepFilePaths, sets_read_write_type::SetsReadWriteType,
     },
     systems::json_io::{read_file_to_struct, write_json_file_from_struct},
-    utils::{
-        get_common_dirs::get_cleansweep_dir,
-        run_time_user_input::{get_number_input, get_number_input_in_range},
-    },
+    utils::{get_common_dirs::get_cleansweep_dir, run_time_user_input::get_number_input},
 };
 
 #[derive(Debug, Error)]
@@ -434,7 +429,7 @@ fn check_input_works_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
         }
         SetStyle::EveryN(n_value) => *n_value <= set.full_set.len(),
         SetStyle::EvenlySpacedN(n_value) => *n_value <= set.full_set.len(),
-        other => true,
+        _ => true,
     }
 }
 

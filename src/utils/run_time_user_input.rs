@@ -24,6 +24,7 @@ pub fn get_number_input(label: &str, first_time_calling: bool) -> Result<usize, 
     Ok(number)
 }
 
+#[allow(dead_code)]
 pub fn get_number_input_in_range(label: &str, lower: usize, upper: usize) -> Result<usize, String> {
     let mut number: usize = get_number_input(label, true).map_err(|e| format!("{e}"))?;
 
