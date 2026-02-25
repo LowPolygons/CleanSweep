@@ -22,10 +22,10 @@ fn main() -> ExitCode {
     let success: Result<(), String> = match &cli.command {
         Commands::List { choice } => list::list(&choice),
         Commands::Override {
-            list_to_filter,
+            list,
             filter,
             values,
-        } => override_command::override_command(list_to_filter, filter, values.clone()),
+        } => override_command::override_command(list, filter, values.clone()),
         Commands::Demolish => demolish::demolish(),
         Commands::ManageSets => manage_sets::command::manage_sets(),
         Commands::Purge { choice } => purge::purge(&choice),

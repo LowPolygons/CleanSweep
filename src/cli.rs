@@ -39,7 +39,7 @@ pub enum Commands {
     )]
     Override {
         #[arg(long, value_enum)]
-        list_to_filter: KeepAndDelete,
+        list: KeepAndDelete,
 
         #[arg(long)]
         filter: String,
