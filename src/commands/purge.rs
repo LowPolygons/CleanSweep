@@ -146,10 +146,6 @@ pub fn purge(args: &PurgeArgs) -> Result<(), PurgeError> {
                 }
             }
 
-            if files_which_failed_deletion.len() != 0 {
-                return Err(PurgeError::DeleteFileFailure);
-            }
-
             fs::remove_file(CleansweepFilePaths::ToDeleteLocalTemp.name())
                 .map_err(|_| PurgeError::DeleteTemporaryFileFailure)?;
             fs::remove_file(CleansweepFilePaths::ToKeepLocalTemp.name())
@@ -160,6 +156,10 @@ pub fn purge(args: &PurgeArgs) -> Result<(), PurgeError> {
                 cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()),
             )
             .map_err(|_| PurgeError::WriteDeleteListWithLeftoversFailure)?;
+
+            if files_which_failed_deletion.len() != 0 {
+                return Err(PurgeError::DeleteFileFailure);
+            }
 
             Ok(())
         }
