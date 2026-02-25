@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use dialoguer::{Select, theme::ColorfulTheme};
 use thiserror::Error;
 
@@ -73,7 +75,7 @@ pub fn manage_sets() -> Result<(), ManageSetsError> {
             let new_set = ManageSetsType {
                 full_set: set.files.clone(),
                 label,
-                chosen_style: None,
+                chosen_styles: Vec::new(),
             };
 
             acc.push(new_set);
@@ -120,7 +122,7 @@ pub fn manage_sets() -> Result<(), ManageSetsError> {
                 .map(|item| {
                     format!(
                         "{} : [PATH]{}",
-                        item.style_to_string(),
+                        item.styles_to_string(),
                         item.label_truncated(len_to_strip_away)
                     )
                 })
@@ -193,6 +195,31 @@ fn select_default_style(managed_sets: &mut Vec<ManageSetsType>) -> Result<(), St
     let selection = select_management_style().map_err(|e| format!("{e}"))?;
 
     let value = match selection {
+        SetStyle::FirstN(_) => {
+            let n_value: usize =
+                get_number_input("Enter how many of the first files you wish to keep:", true)
+                    .map_err(|e| format!("{e}"))?;
+
+            SetStyle::FirstN(n_value)
+        }
+        SetStyle::LastN(_) => {
+            let n_value: usize =
+                get_number_input("Enter how many of the last files you wish to keep:", true)
+                    .map_err(|e| format!("{e}"))?;
+
+            SetStyle::LastN(n_value)
+        }
+        SetStyle::FirstNandLastM(_, _) => {
+            let n_value: usize =
+                get_number_input("Enter how many of the first files you wish to keep:", true)
+                    .map_err(|e| format!("{e}"))?;
+
+            let m_value: usize =
+                get_number_input("Enter how many of the last files you wish to keep:", true)
+                    .map_err(|e| format!("{e}"))?;
+
+            SetStyle::FirstNandLastM(n_value, m_value)
+        }
         SetStyle::EveryN(_) => {
             let n_value: usize = get_number_input(
                 "Enter the number of how often to save a file when interating over the set: ",
@@ -215,7 +242,29 @@ fn select_default_style(managed_sets: &mut Vec<ManageSetsType>) -> Result<(), St
     };
 
     for set in managed_sets.iter_mut() {
-        set.chosen_style = match &value {
+        // TODO: Implement checks for First/Last/FirstLast N
+        let new_style = match &value {
+            SetStyle::FirstN(n_value) => {
+                if *n_value > set.full_set.len() {
+                    None
+                } else {
+                    Some(SetStyle::FirstN(*n_value))
+                }
+            }
+            SetStyle::LastN(n_value) => {
+                if *n_value > set.full_set.len() {
+                    None
+                } else {
+                    Some(SetStyle::LastN(*n_value))
+                }
+            }
+            SetStyle::FirstNandLastM(n_value, m_value) => {
+                if *n_value > set.full_set.len() || *m_value > set.full_set.len() {
+                    None
+                } else {
+                    Some(SetStyle::FirstNandLastM(*n_value, *m_value))
+                }
+            }
             SetStyle::EveryN(n_value) => {
                 if *n_value > set.full_set.len() {
                     None
@@ -232,6 +281,10 @@ fn select_default_style(managed_sets: &mut Vec<ManageSetsType>) -> Result<(), St
             }
             other => Some(other.clone()),
         };
+
+        if let Some(style) = new_style {
+            set.chosen_styles.push(style);
+        }
     }
 
     Ok(())
@@ -280,7 +333,7 @@ fn select_management_style_for_set(
     let selection = select_management_style().map_err(|e| format!("{e}"))?;
     let len_of_set_sub_one = chosen_set.full_set.len() - 1;
 
-    chosen_set.chosen_style = match selection {
+    let new_style = match selection {
         SetStyle::FirstN(_) => {
             let n_value: usize = get_number_input_in_range(
                 "Enter how many of the first files you with to save",
@@ -343,24 +396,29 @@ fn select_management_style_for_set(
         other => Some(other.clone()),
     };
 
+    if let Some(style) = new_style {
+        chosen_set.chosen_styles.push(style);
+    }
+
     Ok(())
 }
 
 fn separate_files_based_on_style(
-    chosen_set: &ManageSetsType,
+    chosen_set: &mut ManageSetsType,
     keep_list: &mut Vec<String>,
     delete_list: &mut Vec<String>,
 ) -> Result<(), ()> {
-    let len_of_set_sub_one = chosen_set.full_set.len() - 1;
+    for current_style in &chosen_set.chosen_styles {
+        // Apply Sets in order
+        let len_of_set_sub_one = chosen_set.full_set.len() - 1;
+        let mut new_set_list: Vec<String> = Vec::new();
 
-    match &chosen_set.chosen_style {
-        None => return Err(()),
-        Some(chosen_style) => match chosen_style {
+        match current_style {
             SetStyle::First => {
                 for (index, value) in chosen_set.full_set.iter().enumerate() {
                     match index {
                         0 => keep_list.push(value.clone()),
-                        _ => delete_list.push(value.clone()),
+                        _ => new_set_list.push(value.clone()),
                     }
                 }
             }
@@ -369,7 +427,7 @@ fn separate_files_based_on_style(
                     if index == len_of_set_sub_one {
                         keep_list.push(value.clone());
                     } else {
-                        delete_list.push(value.clone());
+                        new_set_list.push(value.clone());
                     }
                 }
             }
@@ -378,9 +436,13 @@ fn separate_files_based_on_style(
                     if index == len_of_set_sub_one {
                         keep_list.push(value.clone());
                     } else {
-                        match index {
-                            0 => keep_list.push(value.clone()),
-                            _ => delete_list.push(value.clone()),
+                        if index == 0 {
+                            keep_list.push(value.clone());
+                        } else {
+                            match index {
+                                0 => keep_list.push(value.clone()),
+                                _ => new_set_list.push(value.clone()),
+                            }
                         }
                     }
                 }
@@ -388,29 +450,29 @@ fn separate_files_based_on_style(
             SetStyle::FirstN(n_value) => {
                 for (index, value) in chosen_set.full_set.iter().enumerate() {
                     if index < *n_value {
-                        keep_list.push(value.clone())
+                        keep_list.push(value.clone());
                     } else {
-                        delete_list.push(value.clone());
+                        new_set_list.push(value.clone());
                     }
                 }
             }
             SetStyle::LastN(n_value) => {
                 for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    if index > (len_of_set_sub_one - n_value) {
-                        keep_list.push(value.clone())
+                    if index > len_of_set_sub_one.saturating_sub(*n_value) {
+                        keep_list.push(value.clone());
                     } else {
-                        delete_list.push(value.clone());
+                        new_set_list.push(value.clone());
                     }
                 }
             }
             SetStyle::FirstNandLastM(n_value, m_value) => {
                 for (index, value) in chosen_set.full_set.iter().enumerate() {
                     if index < *n_value {
-                        keep_list.push(value.clone())
+                        keep_list.push(value.clone());
                     } else if index > (len_of_set_sub_one - m_value) {
-                        keep_list.push(value.clone())
+                        keep_list.push(value.clone());
                     } else {
-                        delete_list.push(value.clone());
+                        new_set_list.push(value.clone());
                     }
                 }
             }
@@ -419,7 +481,7 @@ fn separate_files_based_on_style(
                     if index == len_of_set_sub_one || (len_of_set_sub_one - index) % n_value == 0 {
                         keep_list.push(value.clone());
                     } else {
-                        delete_list.push(value.clone());
+                        new_set_list.push(value.clone());
                     }
                 }
             }
@@ -435,20 +497,31 @@ fn separate_files_based_on_style(
                             if index == len_chunk {
                                 keep_list.push(value.clone());
                             } else {
-                                delete_list.push(value.clone());
+                                new_set_list.push(value.clone());
                             }
                         }
                     } else {
                         for (index, value) in chunk.iter().enumerate() {
+                            if index == 0 {
+                                keep_list.push(value.clone());
+                            }
                             match index {
                                 0 => keep_list.push(value.clone()),
-                                _ => delete_list.push(value.clone()),
+                                _ => new_set_list.push(value.clone()),
                             }
                         }
                     }
                 }
             }
-        },
+        }
+        chosen_set.full_set = new_set_list;
+    }
+
+    // Lastly, if there were styles applied, move all the remaining to delete list
+    if chosen_set.chosen_styles.len() != 0 {
+        for file in &chosen_set.full_set {
+            delete_list.push(file.clone());
+        }
     }
 
     Ok(())

@@ -31,15 +31,18 @@ impl fmt::Display for SetStyle {
 pub struct ManageSetsType {
     pub full_set: Vec<String>,
     pub label: String,
-    pub chosen_style: Option<SetStyle>,
+    pub chosen_styles: Vec<SetStyle>,
 }
 
 impl ManageSetsType {
-    pub fn style_to_string(&self) -> String {
-        return match &self.chosen_style {
-            Some(v) => format!("{}", v),
-            None => format!("None Chosen"),
-        };
+    pub fn styles_to_string(&self) -> String {
+        let mut string = String::from("[");
+        for style in &self.chosen_styles {
+            string = format!("{} -> {:?}", string, style)
+        }
+        string = format!("{} ]", string);
+
+        string
     }
     pub fn label_truncated(&self, length_to_strip: usize) -> String {
         let length = self.label.len();
