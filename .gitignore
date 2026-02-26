@@ -3,3 +3,8 @@ dist/
 cleansweep.egg-info/
 __pycache__/
 build/
+
+
+# Added by cargo
+
+/target

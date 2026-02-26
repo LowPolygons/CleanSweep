@@ -1,0 +1,133 @@
+use std::env::current_dir;
+
+use dialoguer::{Select, theme::ColorfulTheme};
+use thiserror::Error;
+
+use crate::{
+    containers::file_container::FileContainer,
+    systems::file_scanner::{FileScanner, FileScannerScanMode},
+    utils::path_types_to_string::path_to_string,
+};
+
+#[derive(Debug, Error)]
+pub enum PrintHiddenStatsError {
+    #[error("Failed to get the users current directory")]
+    GetCurrentDirectoryFailure,
+
+    #[error("Failed to determine whether the full path exists")]
+    CouldNotVerifyIfPathExists,
+
+    #[error("Failed to perform the scan and formatting on the path")]
+    FileScanAndFormatFailure,
+
+    #[error("Failed to covert the path object into a string")]
+    PathToStringFailure,
+
+    #[error("Failed to create the interactive menu for choosing which file to see")]
+    InteractiveMenuSelectionFailure,
+
+    #[error("Failed to index the chosen file from the actual list of containers")]
+    GetChosenFileFromListFailure,
+
+    #[error("Failed to display the hidden statistics of the file")]
+    PrintHiddenStatsFailure,
+
+    #[error("The path you have provided relative to the current directory does not exist")]
+    ProvidedPathDoesNotExist,
+}
+
+pub fn print_hidden_stats(
+    optional_subpath: &String,
+    recursive: &bool,
+    ignore_dirs: &Vec<String>,
+) -> Result<(), PrintHiddenStatsError> {
+    // Read files in immediate directory and format them into FileContainers
+    // Open an interactive terminal and let the user fiddle about and choose them
+    // Inline the formatted data of the selected file
+    let path = current_dir()
+        .map_err(|_| PrintHiddenStatsError::GetCurrentDirectoryFailure)?
+        .join(optional_subpath);
+
+    match path.try_exists() {
+        Ok(status) => {
+            if !status {
+                return Err(PrintHiddenStatsError::ProvidedPathDoesNotExist);
+            }
+        }
+        Err(_) => {
+            return Err(PrintHiddenStatsError::CouldNotVerifyIfPathExists);
+        }
+    }
+
+    let scan_mode = if *recursive {
+        FileScannerScanMode::Recursive
+    } else {
+        FileScannerScanMode::Immediate
+    };
+
+    let scanned_files: Vec<FileContainer> = FileScanner::scan(path, scan_mode, ignore_dirs)
+        .map_err(|_| PrintHiddenStatsError::FileScanAndFormatFailure)?;
+
+    let mut file_labels: Vec<String> = vec![String::from("Exit Menu")];
+    let index_offset = file_labels.len();
+
+    file_labels = scanned_files
+        .iter()
+        .try_fold(
+            file_labels,
+            |mut file_labels, curr_container| -> Result<Vec<String>, PrintHiddenStatsError> {
+                let stringy_path = path_to_string(curr_container.get_path())
+                    .map_err(|_| PrintHiddenStatsError::PathToStringFailure)?;
+                file_labels.push(stringy_path);
+
+                Ok(file_labels)
+            },
+        )
+        .map_err(|e| e)?;
+
+    loop {
+        let selection = Select::with_theme(&ColorfulTheme::default())
+            .with_prompt("Choose a file to view it's stats")
+            .items(&file_labels)
+            .default(0)
+            .interact()
+            .map_err(|_| PrintHiddenStatsError::InteractiveMenuSelectionFailure)?;
+
+        if selection == 0 {
+            break;
+        }
+
+        let chosen_file: &FileContainer = scanned_files
+            .get(selection - index_offset)
+            .ok_or_else(|| ())
+            .map_err(|_| PrintHiddenStatsError::GetChosenFileFromListFailure)?;
+
+        print_file_data(chosen_file).map_err(|_| PrintHiddenStatsError::PrintHiddenStatsFailure)?;
+    }
+
+    Ok(())
+}
+
+fn print_file_data(chosen_file: &FileContainer) -> Result<(), String> {
+    let stats = chosen_file.get_statistics();
+
+    println!("Hidden Statistics: ");
+    println!("- Size (bytes): {}", stats.get_size());
+    println!("- Last Accessed : {}", stats.get_last_accessed().format());
+    println!("- Last Modified : {}", stats.get_last_modified().format());
+
+    let exit_indicator: Vec<String> = vec!["Finish".to_string()];
+
+    let _ = Select::with_theme(&ColorfulTheme::default())
+        .items(exit_indicator)
+        .default(0)
+        .interact()
+        .map_err(|e| {
+            format!(
+                "Failed to create select instance for exiting print state {}",
+                e
+            )
+        })?;
+
+    Ok(())
+}
