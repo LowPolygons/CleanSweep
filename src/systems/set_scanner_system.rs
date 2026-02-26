@@ -67,7 +67,7 @@ impl SetScannerSystem {
             .into_iter()
             .try_fold(found_sets, |mut found_sets, (path, stem_suffix)| {
                 // Step 1:
-                //  // -:iunmap <Tab> Iterate over the tuples and attempt to extract the number portion off the end of the
+                //  // - Iterate over the tuples and attempt to extract the number portion off the end of the
                 //  // - stem
                 //  // - If it cannot find one, it is not in a map
                 //  // - This is then stored in a Vec::<(String, String, f64)>

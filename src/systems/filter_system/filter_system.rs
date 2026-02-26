@@ -38,9 +38,6 @@ impl FilterSystem {
             return Ok(FilterCodes::ToDelete);
         }
 
-        // TODO: Consider removing this completely - Keep is already purely a sanity check
-        // Ok(FilterCodes::NonSpecial)
-        // INFO: Potentially temporary
         Ok(FilterCodes::ToKeep)
     }
 }

@@ -40,6 +40,7 @@ impl fmt::Display for SetStyle {
     }
 }
 
+#[derive(Clone)]
 pub struct ManageSetsType {
     pub full_set: Vec<String>,
     pub label: String,

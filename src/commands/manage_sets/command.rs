@@ -163,13 +163,14 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
                 let mut keep_as_of_now: Vec<String> = Vec::new();
                 let mut delete_as_of_now: Vec<String> = Vec::new();
 
-                let mutable_ref_to_set = managed_sets
-                    .get_mut(selection - length_initial_first_in_sets)
+                let mut ref_to_set = managed_sets
+                    .get(selection - length_initial_first_in_sets)
                     .ok_or_else(|| ())
-                    .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?;
+                    .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?
+                    .clone();
 
                 separate_files_based_on_style(
-                    mutable_ref_to_set,
+                    &mut ref_to_set,
                     &mut keep_as_of_now,
                     &mut delete_as_of_now,
                 )
@@ -643,9 +644,6 @@ fn separate_files_based_on_style(
                         }
                     } else {
                         for (index, value) in chunk.iter().enumerate() {
-                            if index == 0 {
-                                keep_list.push(value.clone());
-                            }
                             match index {
                                 0 => keep_list.push(value.clone()),
                                 _ => new_set_list.push(value.clone()),
