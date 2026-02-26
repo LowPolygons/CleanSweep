@@ -49,7 +49,7 @@ pub enum ManageSetsError {
     WriteJsonFileFromStructFailure,
 }
 
-pub fn manage_sets() -> Result<(), ManageSetsError> {
+pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
     let cleansweep_dir =
         get_cleansweep_dir().map_err(|_| ManageSetsError::GetCleansweepDirectoryFailure)?;
 
@@ -156,6 +156,7 @@ pub fn manage_sets() -> Result<(), ManageSetsError> {
             let maybe_how_to_get_style = get_choice_of_how_to_get_style(is_default)
                 .map_err(|_| ManageSetsError::GetChoiceOfHowToGetStyleFailure)?;
 
+            // They chose to print the current set to the screen
             if maybe_how_to_get_style.is_none() {
                 // To have reached here, the function must NOT be in default
                 // In the event of misuse, the function still won't error, though
@@ -174,14 +175,56 @@ pub fn manage_sets() -> Result<(), ManageSetsError> {
                 )
                 .map_err(|_| ManageSetsError::PreviewSeparatedFilesBasedOnStylesFailure)?;
 
+                // Iterate and excluding the first one, truncate if in short mode
+                let print_keeps = keep_as_of_now.iter().enumerate().fold(
+                    Vec::<String>::new(),
+                    |mut print_keeps, (index, string)| {
+                        if index != 0 && *short_mode {
+                            let length_string = string.len();
+                            let twenty_percent: usize = 2 * length_string / 10;
+                            let new_string = string
+                                .clone()
+                                .drain(string.len() - twenty_percent..string.len())
+                                .fold(String::new(), |mut new_str, char| {
+                                    new_str = format!("{}{}", new_str, char);
+                                    new_str
+                                });
+
+                            print_keeps.push(format!("..{}", new_string));
+                        } else {
+                            print_keeps.push(string.clone());
+                        }
+                        print_keeps
+                    },
+                );
+                let print_deletes = delete_as_of_now.iter().enumerate().fold(
+                    Vec::<String>::new(),
+                    |mut print_deletes, (index, string)| {
+                        if index != 0 && *short_mode {
+                            let length_string = string.len();
+                            let twenty_percent: usize = 2 * length_string / 10;
+                            let new_string = string
+                                .clone()
+                                .drain(string.len() - twenty_percent..string.len())
+                                .fold(String::new(), |mut new_str, char| {
+                                    new_str = format!("{}{}", new_str, char);
+                                    new_str
+                                });
+
+                            print_deletes.push(format!("..{}", new_string));
+                        } else {
+                            print_deletes.push(string.clone());
+                        }
+                        print_deletes
+                    },
+                );
+
                 println!("This is how the set will be handled if you exit now:");
                 println!("To be added to Keep list:");
-                keep_as_of_now.iter().for_each(|item| println!("- {item}"));
+                print_keeps.iter().for_each(|item| println!("- {item}"));
 
                 println!("To Be added to Delete list:");
-                delete_as_of_now
-                    .iter()
-                    .for_each(|item| println!("- {item}"));
+                print_deletes.iter().for_each(|item| println!("- {item}"));
                 continue;
             }
 

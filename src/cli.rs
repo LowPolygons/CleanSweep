@@ -57,7 +57,10 @@ pub enum Commands {
     #[command(
         about = "Used to decide how CleanSweep should determine what files from each set should be kept or deleted"
     )]
-    ManageSets,
+    ManageSets {
+        #[arg(long)]
+        short_mode: bool,
+    },
 
     #[command(
         about = "Used to execute the final sanity check before deletion, and the actual deletion"
