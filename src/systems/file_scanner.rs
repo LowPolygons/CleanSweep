@@ -97,3 +97,47 @@ impl FileScanner {
         Ok(file_containers)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::env::current_dir;
+
+    use crate::systems::file_scanner::{FileScanner, FileScannerError, FileScannerScanMode};
+
+    #[test]
+    fn scan_succeeds() {
+        let failure_test_path: String = "testing/THIS_DOES_NOT_EXIST".to_string();
+
+        let failure_test_path = current_dir().unwrap().join(failure_test_path);
+
+        let no_ignore_dirs: Vec<String> = Vec::new();
+
+        let should_fail = FileScanner::scan(
+            failure_test_path,
+            FileScannerScanMode::Recursive,
+            &no_ignore_dirs,
+        );
+
+        assert!(matches!(
+            should_fail,
+            Err(FileScannerError::PathIsNotDirectory(_))
+        ));
+    }
+
+    #[test]
+    fn scan_fails() {
+        let successful_test_path: String = "testing/scan_test".to_string();
+
+        let full_successful_test_path = current_dir().unwrap().join(successful_test_path);
+
+        let no_ignore_dirs: Vec<String> = Vec::new();
+
+        let should_pass = FileScanner::scan(
+            full_successful_test_path,
+            FileScannerScanMode::Recursive,
+            &no_ignore_dirs,
+        );
+
+        assert!(matches!(should_pass, Ok(_)));
+    }
+}
