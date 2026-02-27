@@ -198,27 +198,18 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
                         print_keeps
                     },
                 );
-                let print_deletes = delete_as_of_now.iter().enumerate().fold(
-                    Vec::<String>::new(),
-                    |mut print_deletes, (index, string)| {
-                        if index != 0 && *short_mode {
-                            let length_string = string.len();
-                            let twenty_percent: usize = 2 * length_string / 10;
-                            let new_string = string
-                                .clone()
-                                .drain(string.len() - twenty_percent..string.len())
-                                .fold(String::new(), |mut new_str, char| {
-                                    new_str = format!("{}{}", new_str, char);
-                                    new_str
-                                });
 
-                            print_deletes.push(format!("..{}", new_string));
-                        } else {
-                            print_deletes.push(string.clone());
-                        }
-                        print_deletes
-                    },
-                );
+                let print_keeps = if *short_mode {
+                    vec_paths_to_truncated(&keep_as_of_now)
+                } else {
+                    keep_as_of_now
+                };
+
+                let print_deletes = if *short_mode {
+                    vec_paths_to_truncated(&delete_as_of_now)
+                } else {
+                    delete_as_of_now
+                };
 
                 println!("This is how the set will be handled if you exit now:");
                 println!("To be added to Keep list:");
@@ -664,4 +655,28 @@ fn separate_files_based_on_style(
     }
 
     Ok(())
+}
+
+fn vec_paths_to_truncated(original_list: &Vec<String>) -> Vec<String> {
+    original_list.iter().enumerate().fold(
+        Vec::<String>::new(),
+        |mut print_deletes, (index, string)| {
+            if index != 0 {
+                let length_string = string.len();
+                let twenty_percent: usize = 2 * length_string / 10;
+                let new_string = string
+                    .clone()
+                    .drain(string.len() - twenty_percent..string.len())
+                    .fold(String::new(), |mut new_str, char| {
+                        new_str = format!("{}{}", new_str, char);
+                        new_str
+                    });
+
+                print_deletes.push(format!("..{}", new_string));
+            } else {
+                print_deletes.push(string.clone());
+            }
+            print_deletes
+        },
+    )
 }
