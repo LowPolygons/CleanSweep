@@ -33,7 +33,7 @@ PATH = $PATH:[your install path]/CleanSweep/target/release/cleansweep
 
 ## Commands
 
-[More information on how they work](FUNCTIONALITY.md)
+[More information on how they work](doc/functionality.md)
 
 ### Setup
 ```sh
@@ -77,7 +77,7 @@ More control on where the scan begins, relative to your current directory
 #### `--use-custom-filters`
 Instead of using the full set of filters, you can list only the filters you want to use in `$HOME/.cleansweep/filter_components.txt`
 
-See [here](FUNCTIONALITY.md) for more information on how your inputs here work
+See [here](doc/functionality.md) for more information on how your inputs here work
 
 #### `--no-filter`
 Performing the scan will automatically place every found file in the to-keep list
@@ -171,7 +171,7 @@ Choose which list files will be potentially moved **from**
 
 #### `--filter [filter name] [values]`
 Input the name of a filter and the values it will use. For information on how your input is parsed,
-look [here](FUNCTIONALITY.md)
+look [here](doc/functionality.md)
 
 ### Print-Hidden-Stats
 ```sh
