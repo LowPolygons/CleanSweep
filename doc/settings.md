@@ -4,6 +4,8 @@
 
 The settings define the various categories needed for filtering files in the various scans.
 
+For information on the different user settings, read [here](user_settings.md)
+
 ## Display
 
 The display command will attempt to load the user setting list from the `.cleansweep` directory and print it to the screen.
