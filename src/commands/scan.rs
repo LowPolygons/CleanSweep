@@ -4,7 +4,7 @@ use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
         file_container::FileContainer,
-        file_date_data::{FileDateData, secs_since_epoch_to_time},
+        file_date_data::{FileDateData, days_since_now_to_system_time, secs_since_epoch_to_time},
         user_settings::UserSettings,
     },
     filter_codes::filter_codes::FilterCodes,
@@ -232,37 +232,45 @@ fn stringy_filters_to_filter_objects(
                 }
                 FilterCategory::LastAccessed(_) => {
                     filter = Box::new(LastAccessedFilter::new());
-                    keep_filter_item =
-                        FilterCategory::LastAccessed(FileDateData::new(secs_since_epoch_to_time(
+                    keep_filter_item = FilterCategory::LastAccessed(FileDateData::new(
+                        days_since_now_to_system_time(
                             user_settings
                                 .get_to_keep_list()
                                 .get_accessed_after()
                                 .clone(),
-                        )));
-                    delete_filter_item =
-                        FilterCategory::LastAccessed(FileDateData::new(secs_since_epoch_to_time(
+                        )
+                        .map_err(|e| format!("{e}"))?,
+                    ));
+                    delete_filter_item = FilterCategory::LastAccessed(FileDateData::new(
+                        days_since_now_to_system_time(
                             user_settings
-                                .get_to_delete_list()
+                                .get_to_keep_list()
                                 .get_accessed_after()
                                 .clone(),
-                        )));
+                        )
+                        .map_err(|e| format!("{e}"))?,
+                    ));
                 }
                 FilterCategory::LastModified(_) => {
                     filter = Box::new(LastModifiedFilter::new());
-                    keep_filter_item =
-                        FilterCategory::LastModified(FileDateData::new(secs_since_epoch_to_time(
+                    keep_filter_item = FilterCategory::LastModified(FileDateData::new(
+                        days_since_now_to_system_time(
                             user_settings
                                 .get_to_keep_list()
                                 .get_modified_after()
                                 .clone(),
-                        )));
-                    delete_filter_item =
-                        FilterCategory::LastModified(FileDateData::new(secs_since_epoch_to_time(
+                        )
+                        .map_err(|e| format!("{e}"))?,
+                    ));
+                    delete_filter_item = FilterCategory::LastModified(FileDateData::new(
+                        days_since_now_to_system_time(
                             user_settings
-                                .get_to_delete_list()
+                                .get_to_keep_list()
                                 .get_modified_after()
                                 .clone(),
-                        )));
+                        )
+                        .map_err(|e| format!("{e}"))?,
+                    ));
                 }
             }
 

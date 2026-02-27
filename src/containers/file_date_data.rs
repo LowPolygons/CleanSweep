@@ -39,13 +39,20 @@ pub enum DaysSinceNowToSystemTimeError {
 pub fn days_since_now_as_str_to_system_time(
     value: &str,
 ) -> Result<SystemTime, DaysSinceNowToSystemTimeError> {
-    let num_days_as_seconds = value
+    let num_days = value
         .parse::<u64>()
-        .map_err(|_| DaysSinceNowToSystemTimeError::FailedToParseNumberToUInt)?
-        * 86400;
+        .map_err(|_| DaysSinceNowToSystemTimeError::FailedToParseNumberToUInt)?;
+
+    days_since_now_to_system_time(num_days)
+}
+
+pub fn days_since_now_to_system_time(
+    value: u64,
+) -> Result<SystemTime, DaysSinceNowToSystemTimeError> {
+    let num_days_as_secs = value * 86400;
 
     let days_since_now = SystemTime::now()
-        .checked_sub(Duration::from_secs(num_days_as_seconds))
+        .checked_sub(Duration::from_secs(num_days_as_secs))
         .ok_or_else(|| ())
         .map_err(|_| DaysSinceNowToSystemTimeError::NumDaysExceedsExpectedBounds)?;
 
