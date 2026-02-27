@@ -2,5 +2,4 @@
 pub enum FilterCodes {
     ToKeep,
     ToDelete,
-    NonSpecial,
 }

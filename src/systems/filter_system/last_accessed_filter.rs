@@ -64,7 +64,6 @@ impl FilterForCategory for LastAccessedFilter {
             return Ok(FilterCodes::ToDelete);
         }
 
-        // Should never reach
-        Ok(FilterCodes::NonSpecial)
+        Ok(FilterCodes::ToKeep)
     }
 }

@@ -57,6 +57,6 @@ impl FilterForCategory for NameStartsWithFilter {
             return Ok(FilterCodes::ToDelete);
         }
 
-        Ok(FilterCodes::NonSpecial)
+        Ok(FilterCodes::ToKeep)
     }
 }

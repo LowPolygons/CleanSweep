@@ -64,6 +64,6 @@ impl FilterForCategory for LastModifiedFilter {
             return Ok(FilterCodes::ToDelete);
         }
 
-        Ok(FilterCodes::NonSpecial)
+        Ok(FilterCodes::ToKeep)
     }
 }

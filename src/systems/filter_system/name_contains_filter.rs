@@ -57,6 +57,6 @@ impl FilterForCategory for NameContainsFilter {
             return Ok(FilterCodes::ToDelete);
         }
 
-        Ok(FilterCodes::NonSpecial)
+        Ok(FilterCodes::ToKeep)
     }
 }

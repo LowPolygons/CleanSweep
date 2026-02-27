@@ -58,6 +58,6 @@ impl FilterForCategory for ExtensionFilter {
             return Ok(FilterCodes::ToDelete);
         }
 
-        Ok(FilterCodes::NonSpecial)
+        Ok(FilterCodes::ToKeep)
     }
 }

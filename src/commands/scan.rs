@@ -4,7 +4,7 @@ use crate::{
     containers::{
         cleansweep_file_paths::CleansweepFilePaths,
         file_container::FileContainer,
-        file_date_data::{FileDateData, days_since_now_to_system_time, secs_since_epoch_to_time},
+        file_date_data::{FileDateData, days_since_now_to_system_time},
         user_settings::UserSettings,
     },
     filter_codes::filter_codes::FilterCodes,
@@ -325,7 +325,6 @@ fn sort_files_into_provided_lists(
                         )
                     })?,
             ),
-            FilterCodes::NonSpecial => {}
         }
     }
     Ok(())

@@ -1,4 +1,3 @@
-
 use crate::containers::file_container::FileContainer;
 use crate::filter_codes::filter_codes::FilterCodes;
 use crate::systems::filter_system::filter_category_info::{
@@ -60,6 +59,6 @@ impl FilterForCategory for SizeFilter {
             return Ok(FilterCodes::ToDelete);
         }
         // Should never be reached
-        Ok(FilterCodes::NonSpecial)
+        Ok(FilterCodes::ToKeep)
     }
 }
