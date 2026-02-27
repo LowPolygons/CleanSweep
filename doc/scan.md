@@ -5,7 +5,7 @@
 
 From the current or provided filepath, it will run a recursive scan for every single file.
 
-This is handled by the FileScanner system. For information on how this works, read [here](todo.md)
+This is handled by the FileScanner system
 
 These file paths are then converted into `FileContainer` objects, storing some `FileStatistics`
 
