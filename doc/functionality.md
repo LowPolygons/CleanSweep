@@ -12,7 +12,7 @@ To gain a better understanding of each command, read more below
 
 - ### [Scan](scan.md)
 
-- ### [Set-scan](set_scan.md)
+- ### [Set-Scan](set_scan.md)
 
 - ### [Manage-Sets](manage_sets.md)
 
@@ -30,7 +30,21 @@ If it cannot open the file, it will prompt you that the file may be empty.
 
 ### Purge
 
+`stage` must run before `continue`
+
+Stage will read in a ***copy*** of your ToKeep and ToDelete list into temporary files
+
+It is the duty of the user to ensure that files are in the right places in these lists
+
+`continue` will then read the temporary ToDelete list and these will be the files that are deleted after user confirmation
+
+This means that you may find files in your Delete list, and simply removing the line from the list will prevent its deletion
+
+Similarly, moving lines from the keep list into the delete like will cause their deletion
+
 ### Reset
+
+Resetting the target list simply writes `{}` to the target file
 
 ### Demolish
 

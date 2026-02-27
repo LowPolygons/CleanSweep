@@ -6,6 +6,9 @@ A CLI to help remove old and large files on a system
 
 Install Cargo on your machine
 
+```sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
 Clone the repository
 
@@ -136,7 +139,7 @@ When previewing the effects of your management styles per set, this argument wil
 cleansweep reset --choice [to_keep, to_delete, sets]
 ```
 
-Run this command to reset the chosen list-file, or all of them if non specified
+Run this command to reset the chosen list, or the to-delete list if non specified
 
 ### Purge
 ```sh
