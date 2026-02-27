@@ -33,11 +33,6 @@ pub enum ManageSetsError {
     GetChoiceOfHowToGetStyleFailure,
 
     #[error(
-        "Dev Note: This error should never be reached, if you see this it is a written software problem"
-    )]
-    SomehowNoneDespiteCheckingFailure,
-
-    #[error(
         "Failed when trying to preview how a set will be separated based on its current styles"
     )]
     PreviewSeparatedFilesBasedOnStylesFailure,
@@ -144,126 +139,105 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
 
         if selection == 0 {
             break;
+        }
+
+        if selection == 1 {
+            println!(
+                "Any sets where a provided 'N-Value' exceeds its length will not have a default applied"
+            );
+        }
+
+        let is_default = selection == 1;
+
+        let maybe_how_to_get_style = get_choice_of_how_to_get_style(is_default)
+            .map_err(|_| ManageSetsError::GetChoiceOfHowToGetStyleFailure)?;
+
+        let how_to_get_style: ChoiceInGettingStyle;
+
+        // They chose to print the current set to the screen
+        if let Some(maybe_how_to_get_style) = maybe_how_to_get_style {
+            how_to_get_style = maybe_how_to_get_style;
         } else {
-            if selection == 1 {
-                println!(
-                    "Any sets where a provided 'N-Value' exceeds its length will not have a default applied"
-                );
-            }
+            // To have reached here, the function must NOT be in default
+            // In the event of misuse, the function still won't error, though
+            let mut keep_as_of_now: Vec<String> = Vec::new();
+            let mut delete_as_of_now: Vec<String> = Vec::new();
 
-            let is_default = selection == 1;
-
-            let maybe_how_to_get_style = get_choice_of_how_to_get_style(is_default)
-                .map_err(|_| ManageSetsError::GetChoiceOfHowToGetStyleFailure)?;
-
-            // They chose to print the current set to the screen
-            if maybe_how_to_get_style.is_none() {
-                // To have reached here, the function must NOT be in default
-                // In the event of misuse, the function still won't error, though
-                let mut keep_as_of_now: Vec<String> = Vec::new();
-                let mut delete_as_of_now: Vec<String> = Vec::new();
-
-                let mut ref_to_set = managed_sets
-                    .get(selection - length_initial_first_in_sets)
-                    .ok_or_else(|| ())
-                    .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?
-                    .clone();
-
-                separate_files_based_on_style(
-                    &mut ref_to_set,
-                    &mut keep_as_of_now,
-                    &mut delete_as_of_now,
-                )
-                .map_err(|_| ManageSetsError::PreviewSeparatedFilesBasedOnStylesFailure)?;
-
-                // Iterate and excluding the first one, truncate if in short mode
-                let print_keeps = keep_as_of_now.iter().enumerate().fold(
-                    Vec::<String>::new(),
-                    |mut print_keeps, (index, string)| {
-                        if index != 0 && *short_mode {
-                            let length_string = string.len();
-                            let twenty_percent: usize = 2 * length_string / 10;
-                            let new_string = string
-                                .clone()
-                                .drain(string.len() - twenty_percent..string.len())
-                                .fold(String::new(), |mut new_str, char| {
-                                    new_str = format!("{}{}", new_str, char);
-                                    new_str
-                                });
-
-                            print_keeps.push(format!("..{}", new_string));
-                        } else {
-                            print_keeps.push(string.clone());
-                        }
-                        print_keeps
-                    },
-                );
-
-                let print_keeps = if *short_mode {
-                    vec_paths_to_truncated(&keep_as_of_now)
-                } else {
-                    keep_as_of_now
-                };
-
-                let print_deletes = if *short_mode {
-                    vec_paths_to_truncated(&delete_as_of_now)
-                } else {
-                    delete_as_of_now
-                };
-
-                println!("This is how the set will be handled if you exit now:");
-                println!("To be added to Keep list:");
-                print_keeps.iter().for_each(|item| println!("- {item}"));
-
-                println!("To Be added to Delete list:");
-                print_deletes.iter().for_each(|item| println!("- {item}"));
-                continue;
-            }
-
-            let how_to_get_style = maybe_how_to_get_style
+            let mut ref_to_set = managed_sets
+                .get(selection - length_initial_first_in_sets)
                 .ok_or_else(|| ())
-                .map_err(|_| ManageSetsError::SomehowNoneDespiteCheckingFailure)?;
+                .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?
+                .clone();
 
-            // First match gets you the new Vec<>
-            let new_style = match &how_to_get_style {
-                ChoiceInGettingStyle::Append => vec![
-                    choose_management_style()
-                        .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?,
-                ],
-                ChoiceInGettingStyle::Reset => Vec::new(),
-                ChoiceInGettingStyle::Set => vec![
-                    choose_management_style()
-                        .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?,
-                ],
-                ChoiceInGettingStyle::Copy => {
-                    copy_management_style_from_set(&managed_sets, len_to_strip_away)
-                        .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?
-                }
+            separate_files_based_on_style(
+                &mut ref_to_set,
+                &mut keep_as_of_now,
+                &mut delete_as_of_now,
+            )
+            .map_err(|_| ManageSetsError::PreviewSeparatedFilesBasedOnStylesFailure)?;
+
+            // Iterate and excluding the first one, truncate if in short mode
+            let print_keeps = if *short_mode {
+                vec_paths_to_truncated(&keep_as_of_now)
+            } else {
+                keep_as_of_now
             };
 
-            if selection == 1 {
-                for mutable_ref_to_set in &mut managed_sets {
-                    if apply_style_to_set(mutable_ref_to_set, &how_to_get_style, &new_style)
-                        .contains(&false)
-                    {
-                        println!(
-                            "Some filters weren't applied due to 'N' values exceeding their length"
-                        )
-                    }
-                }
+            let print_deletes = if *short_mode {
+                vec_paths_to_truncated(&delete_as_of_now)
             } else {
-                let mutable_ref_to_set = managed_sets
-                    .get_mut(selection - length_initial_first_in_sets)
-                    .ok_or_else(|| ())
-                    .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?;
+                delete_as_of_now
+            };
 
+            println!("This is how the set will be handled if you exit now:");
+            println!("To be added to Keep list:");
+            print_keeps.iter().for_each(|item| println!("- {item}"));
+
+            println!("To Be added to Delete list:");
+            print_deletes.iter().for_each(|item| println!("- {item}"));
+
+            continue;
+        }
+
+        // First match gets you the new Vec<>
+        let new_style = match &how_to_get_style {
+            ChoiceInGettingStyle::Append => vec![
+                choose_management_style()
+                    .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?,
+            ],
+            ChoiceInGettingStyle::Reset => Vec::new(),
+            ChoiceInGettingStyle::Set => vec![
+                choose_management_style()
+                    .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?,
+            ],
+            ChoiceInGettingStyle::Copy => {
+                copy_management_style_from_set(&managed_sets, len_to_strip_away)
+                    .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?
+            }
+        };
+
+        if selection == 1 {
+            for mutable_ref_to_set in &mut managed_sets {
                 if apply_style_to_set(mutable_ref_to_set, &how_to_get_style, &new_style)
                     .contains(&false)
                 {
                     println!(
-                        "Some filters weren't applied to a set due to 'N' values exceeding their length"
+                        "Some filters weren't applied due to 'N' values exceeding their length"
                     )
                 }
+            }
+        } else {
+            let mutable_ref_to_set = managed_sets
+                .get_mut(selection - length_initial_first_in_sets)
+                .ok_or_else(|| ())
+                .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?;
+
+            if apply_style_to_set(mutable_ref_to_set, &how_to_get_style, &new_style)
+                .contains(&false)
+            {
+                println!(
+                    "Some filters weren't applied to a set due to 'N' values exceeding their length"
+                )
             }
         }
     }
@@ -353,22 +327,15 @@ fn apply_style_to_set(
 // Ok(None) => They wish to just preview what the current style would do
 // Err => Error
 fn get_choice_of_how_to_get_style(for_defaults: bool) -> Result<Option<ChoiceInGettingStyle>, ()> {
-    let options = if for_defaults {
-        vec![
-            "Append To List",
-            "Reset Style List",
-            "Override Set List",
-            "Copy Other Set List",
-        ]
-    } else {
-        vec![
-            "Append To List",
-            "Reset Style List",
-            "Override Set List",
-            "Copy Other Set List",
-            "Preview Current Style Effects",
-        ]
-    };
+    let mut options = vec![
+        "Append To List",
+        "Reset Style List",
+        "Override Set List",
+        "Copy Other Set List",
+    ];
+    if !for_defaults {
+        options.push("Preview Current Style Effects")
+    }
 
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Choose how to pick the management style")
