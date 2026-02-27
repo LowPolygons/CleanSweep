@@ -1,5 +1,7 @@
 # Settings
 
+## **[Back](functionality.md)**
+
 The settings define the various categories needed for filtering files in the various scans.
 
 ## Display

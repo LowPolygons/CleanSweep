@@ -1,5 +1,7 @@
 # Set-Scan
 
+## **[Back](functionality.md)**
+
 Unlike the regular scan, the Set-Scan does not perform any filtering into a `ToKeep` or `ToDelete` list.
 
 This scan utilises a new category, which can be detected based on these lines from the settings:

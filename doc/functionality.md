@@ -18,9 +18,16 @@ To gain a better understanding of each command, read more below
 
 - ### [Override](override.md)
 
-- ### [Print-Hidden-Stats](print_hidden_stats.md)
+- ### Print Hidden Stats
 
-### List
+This command will run a scan in the - by default - immediate directory, which options for a recursive scan. 
+
+The files will then be listed in an interactive environment where you can choose each one and view its:
+- Size
+- Last Access Date
+- Last Modified Date
+
+- ### List
 
 The list command will attempt to load the specified file - or the `ToDelete` list by default - and print each path on a separate line.
 
@@ -28,7 +35,7 @@ If the sets list is chosen, it will print the first item in the list of each set
 
 If it cannot open the file, it will prompt you that the file may be empty.
 
-### Purge
+- ### Purge
 
 `stage` must run before `continue`
 
@@ -42,11 +49,11 @@ This means that you may find files in your Delete list, and simply removing the 
 
 Similarly, moving lines from the keep list into the delete like will cause their deletion
 
-### Reset
+- ### Reset
 
 Resetting the target list simply writes `{}` to the target file
 
-### Demolish
+- ### Demolish
 
 After the user confirms their choice, the `~/.cleansweep` directory is deleted from the system. No backups are made.
 

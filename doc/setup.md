@@ -1,5 +1,7 @@
 # Setup
 
+## **[Back](functionality.md)**
+
 CleanSweep contains an algebraic Enum, with each value mapping to a relevant file path
 
 ```rs

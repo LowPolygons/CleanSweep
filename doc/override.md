@@ -1,5 +1,7 @@
 # Override
 
+## **[Back](functionality.md)**
+
 The override command will load the list of files you provide, apply a filter you pass and subsequently move any files which match to the opposing list.
 
 Example: I no longer want to store any image files which may have previously been flagged as ToKeep

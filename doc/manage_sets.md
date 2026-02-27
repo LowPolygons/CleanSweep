@@ -1,5 +1,6 @@
-
 # Manage-Sets
+
+## **[Back](functionality.md)**
 
 Running this command will open an interactive environment where a list of all sets will print to the screen.
 

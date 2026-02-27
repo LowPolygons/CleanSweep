@@ -1,6 +1,8 @@
 
 # Scan
 
+## **[Back](functionality.md)**
+
 From the current or provided filepath, it will run a recursive scan for every single file.
 
 This is handled by the FileScanner system. For information on how this works, read [here](todo.md)
