@@ -9,7 +9,7 @@ use crate::{
     },
     filter_codes::filter_codes::FilterCodes,
     systems::{
-        file_scanner::{FileScanner, FileScannerScanMode},
+        file_scanner::{FileScanner, FileScannerError, FileScannerScanMode},
         filter_system::{
             directory_contains_filter::DirectoryContainsFilter,
             extension_filter::ExtensionFilter,
@@ -22,11 +22,13 @@ use crate::{
             name_starts_with_filter::NameStartsWithFilter,
             size_filter::SizeFilter,
         },
-        json_io::{self, write_json_file_from_struct},
+        json_io::{self, JsonReadError, write_json_file_from_struct},
     },
     utils::{
-        create_defaults::get_default_filter_category_list, file_to_string_vec,
-        get_common_dirs::get_cleansweep_dir, path_types_to_string::path_to_string,
+        create_defaults::get_default_filter_category_list,
+        file_to_string_vec,
+        get_common_dirs::{FilePathsError, get_cleansweep_dir},
+        path_types_to_string::{PathToStringError, path_to_string},
     },
 };
 use std::env::current_dir;
@@ -39,17 +41,17 @@ pub enum ScanError {
     #[error("Could not verify whether the provided directory exists or not")]
     VerifyIfDirectoryExistsFailure,
 
-    #[error("Failure trying to get the cleansweep directory")]
-    GetCleansweepDirectoryFailure,
+    #[error("Failure trying to get the cleansweep directory - {0}")]
+    GetCleansweepDirectoryFailure(FilePathsError),
 
     #[error("Failure trying to scan the provided path and format the files")]
-    FileScanAndFormatFailure,
+    FileScanAndFormatFailure(FileScannerError),
 
-    #[error("Failure attempting to turn path into a String")]
-    PathToStringFailure,
+    #[error("Failure attempting to turn path into a String - {0}")]
+    PathToStringFailure(PathToStringError),
 
-    #[error("Failure trying to read the user_settings.json into internal structure")]
-    ReadUserSettingsFileToStructFailure,
+    #[error("Failure trying to read the user_settings.json into internal structure - {0}")]
+    ReadUserSettingsFileToStructFailure(JsonReadError),
 
     #[error("Failure trying to turn the file containing a list of filters into a string vector")]
     ReadListOfFiltersToStringVectorFailure,
@@ -81,12 +83,12 @@ pub fn scan(
         return Err(ScanError::ProvidedPathDoesNotExist);
     }
     let cleansweep_dir =
-        get_cleansweep_dir().map_err(|_| ScanError::GetCleansweepDirectoryFailure)?;
+        get_cleansweep_dir().map_err(|e| ScanError::GetCleansweepDirectoryFailure(e))?;
 
     // Perform scan
     let scanned_files: Vec<FileContainer> =
         FileScanner::scan(path, FileScannerScanMode::Recursive, ignore_dirs)
-            .map_err(|_| ScanError::FileScanAndFormatFailure)?;
+            .map_err(|e| ScanError::FileScanAndFormatFailure(e))?;
 
     // Sort, get the paths as strings and save
     let mut to_keep: Vec<String> = Vec::new();
@@ -98,7 +100,7 @@ pub fn scan(
         for file_container in &scanned_files {
             to_keep.push(
                 path_to_string(file_container.get_path())
-                    .map_err(|_| ScanError::PathToStringFailure)?,
+                    .map_err(|e| ScanError::PathToStringFailure(e))?,
             );
         }
     } else {
@@ -106,7 +108,7 @@ pub fn scan(
         let user_settings: UserSettings = json_io::read_file_to_struct(
             cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()),
         )
-        .map_err(|_| ScanError::ReadUserSettingsFileToStructFailure)?;
+        .map_err(|e| ScanError::ReadUserSettingsFileToStructFailure(e))?;
 
         let list_of_filters_as_strings: Vec<String> = if *use_custom_filters {
             file_to_string_vec::file_to_string_vec(

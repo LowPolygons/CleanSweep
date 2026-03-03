@@ -21,15 +21,6 @@ pub enum JsonReadError {
     SerdeJsonFromStrError,
 }
 
-#[derive(Debug, Error)]
-pub enum JsonWriteError {
-    #[error("Failed when trying to create a File object from provided Path")]
-    FileCreateFromPathError,
-
-    #[error("Serde Json errored trying to convert the passed struct into pretty json")]
-    SerdeJsonWritePrettyError,
-}
-
 pub fn read_file_to_struct<T: DeserializeOwned, P: AsRef<Path>>(
     path: P,
 ) -> Result<T, JsonReadError> {
@@ -39,6 +30,15 @@ pub fn read_file_to_struct<T: DeserializeOwned, P: AsRef<Path>>(
         serde_json::from_str(&stringy_json).map_err(|_| JsonReadError::SerdeJsonFromStrError)?;
 
     Ok(structy_value)
+}
+
+#[derive(Debug, Error)]
+pub enum JsonWriteError {
+    #[error("Failed when trying to create a File object from provided Path")]
+    FileCreateFromPathError,
+
+    #[error("Serde Json errored trying to convert the passed struct into pretty json")]
+    SerdeJsonWritePrettyError,
 }
 
 pub fn write_json_file_from_struct<T: Serialize, P: AsRef<Path>>(

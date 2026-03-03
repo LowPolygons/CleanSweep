@@ -6,14 +6,14 @@ use thiserror::Error;
 use crate::containers::cleansweep_file_paths::CleansweepFilePaths;
 use crate::containers::user_settings::UserSettings;
 use crate::utils::create_defaults::create_default_user_settings;
-use crate::utils::get_common_dirs::get_cleansweep_dir;
+use crate::utils::get_common_dirs::{FilePathsError, get_cleansweep_dir};
 
 use crate::systems::json_io::*;
 
 #[derive(Debug, Error)]
 pub enum SetupError {
-    #[error("Failed to get the cleansweep directory")]
-    GetCleansweepDirectoryFailure,
+    #[error("Failed to get the cleansweep directory - {0}")]
+    GetCleansweepDirectoryFailure(FilePathsError),
 
     #[error("Failed to validate whether the .cleansweep path already exists")]
     ValidateIfPathExistsFailure,
@@ -24,8 +24,8 @@ pub enum SetupError {
     #[error("Failed to create the target file in the cleansweep directory")]
     CreateFileInCleansweepDirectoryFailure,
 
-    #[error("Failed to write the json file for the corresponding object")]
-    WriteJsonFileFromStructFailure,
+    #[error("Failed to write the json file for the corresponding object - {0}")]
+    WriteJsonFileFromStructFailure(JsonWriteError),
 
     #[error("Cleansweep already exists on this machine!")]
     CleansweepAlreadyExists,
@@ -33,7 +33,7 @@ pub enum SetupError {
 
 pub fn setup() -> Result<(), SetupError> {
     let cleansweep_dir: PathBuf =
-        get_cleansweep_dir().map_err(|_| SetupError::GetCleansweepDirectoryFailure)?;
+        get_cleansweep_dir().map_err(|e| SetupError::GetCleansweepDirectoryFailure(e))?;
 
     if std::fs::exists(&cleansweep_dir).map_err(|_| SetupError::ValidateIfPathExistsFailure)? {
         println!("The .cleansweep directory already exists ");
@@ -64,14 +64,14 @@ pub fn setup() -> Result<(), SetupError> {
 
     for file in &json_files_to_write_with_nothing {
         write_json_file_from_struct(&Empty::new(), cleansweep_dir.join(&file.name()))
-            .map_err(|_| SetupError::WriteJsonFileFromStructFailure)?;
+            .map_err(|e| SetupError::WriteJsonFileFromStructFailure(e))?;
     }
 
     let default_user_settings: UserSettings = create_default_user_settings();
 
     for file in &user_settings_files {
         write_json_file_from_struct(&default_user_settings, cleansweep_dir.join(&file.name()))
-            .map_err(|_| SetupError::WriteJsonFileFromStructFailure)?;
+            .map_err(|e| SetupError::WriteJsonFileFromStructFailure(e))?;
     }
 
     println!("Setup completed - initialised the following at $HOME/.cleansweep");

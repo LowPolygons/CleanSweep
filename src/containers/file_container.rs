@@ -90,7 +90,15 @@ impl FileContainer {
     }
 }
 
-pub fn get_list_file_containers_from_strings(list: &Vec<String>) -> Result<Vec<FileContainer>, ()> {
+#[derive(Debug, Error)]
+pub enum GetFileContainerListFromStringsError {
+    #[error("Failed to create a File Container")]
+    CreateFileContainerFailure,
+}
+
+pub fn get_list_file_containers_from_strings(
+    list: &Vec<String>,
+) -> Result<Vec<FileContainer>, GetFileContainerListFromStringsError> {
     Ok(list
         .iter()
         .try_fold(
@@ -100,5 +108,5 @@ pub fn get_list_file_containers_from_strings(list: &Vec<String>) -> Result<Vec<F
                 Ok(scanned_files)
             },
         )
-        .map_err(|_| ())?)
+        .map_err(|_| GetFileContainerListFromStringsError::CreateFileContainerFailure)?)
 }

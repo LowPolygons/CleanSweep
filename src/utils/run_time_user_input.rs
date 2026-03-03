@@ -1,6 +1,19 @@
 use dialoguer::{Input, theme::ColorfulTheme};
+use thiserror::Error;
 
-pub fn get_number_input(label: &str, first_time_calling: bool) -> Result<usize, String> {
+#[derive(Debug, Error)]
+pub enum RunTimeInputError {
+    #[error("Failed to create an interactive environment for getting numerical input")]
+    ValidateNumericalInputFailure,
+
+    #[error("Failed to parse the input into the expected type")]
+    ParseFormattedNumberFailure,
+
+    #[error("Failed to create an interactive environment for getting text input")]
+    GetTextInputFailure,
+}
+
+pub fn get_number_input(label: &str, first_time_calling: bool) -> Result<usize, RunTimeInputError> {
     let colour = ColorfulTheme::default();
 
     let theme = if first_time_calling {
@@ -17,24 +30,9 @@ pub fn get_number_input(label: &str, first_time_calling: bool) -> Result<usize, 
                 .map_err(|_| "Please enter a valid number")
         })
         .interact_text()
-        .map_err(|e| format!("Failed to validate numerical input, {:?}", e))?
+        .map_err(|_| RunTimeInputError::ValidateNumericalInputFailure)?
         .parse()
-        .map_err(|e| format!("Error formatting the parsed number, {:?}", e))?;
-
-    Ok(number)
-}
-
-#[allow(dead_code)]
-pub fn get_number_input_in_range(label: &str, lower: usize, upper: usize) -> Result<usize, String> {
-    let mut number: usize = get_number_input(label, true).map_err(|e| format!("{e}"))?;
-
-    while number < lower || number > upper {
-        println!(
-            "Please enter a number in the correct range ({}-{})",
-            lower, upper
-        );
-        number = get_number_input(label, false).map_err(|e| format!("{e}"))?;
-    }
+        .map_err(|_| RunTimeInputError::ParseFormattedNumberFailure)?;
 
     Ok(number)
 }
@@ -42,13 +40,27 @@ pub fn get_number_input_in_range(label: &str, lower: usize, upper: usize) -> Res
 pub fn get_string_input_matching_provided_string(
     label: &str,
     match_against: &str,
-) -> Result<bool, String> {
+) -> Result<bool, RunTimeInputError> {
     let colour = ColorfulTheme::default();
 
     let input: String = Input::with_theme(&colour)
         .with_prompt(label)
         .interact_text()
-        .map_err(|_| format!("Failed to get text input"))?;
+        .map_err(|_| RunTimeInputError::GetTextInputFailure)?;
 
     Ok(input == match_against)
 }
+
+// pub fn get_number_input_in_range(label: &str, lower: usize, upper: usize) -> Result<usize, String> {
+//     let mut number: usize = get_number_input(label, true).map_err(|e| format!("{e}"))?;
+//
+//     while number < lower || number > upper {
+//         println!(
+//             "Please enter a number in the correct range ({}-{})",
+//             lower, upper
+//         );
+//         number = get_number_input(label, false).map_err(|e| format!("{e}"))?;
+//     }
+//
+//     Ok(number)
+// }

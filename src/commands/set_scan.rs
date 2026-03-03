@@ -10,12 +10,12 @@ use crate::{
         user_settings::{SetScanOptions, UserSettings},
     },
     systems::{
-        file_scanner::{FileScanner, FileScannerScanMode},
+        file_scanner::{FileScanner, FileScannerError, FileScannerScanMode},
         filter_system::filter_category_info::FilterCategory,
-        json_io::{self, write_json_file_from_struct},
-        set_scanner_system::SetScannerSystem,
+        json_io::{JsonReadError, read_file_to_struct, write_json_file_from_struct},
+        set_scanner_system::{SetScannerError, SetScannerSystem},
     },
-    utils::get_common_dirs::get_cleansweep_dir,
+    utils::get_common_dirs::{FilePathsError, get_cleansweep_dir},
 };
 
 #[derive(Debug, Error)]
@@ -29,17 +29,17 @@ pub enum SetScanError {
     #[error("The path you have provided relative to your current directory does not exist")]
     ProvidedPathDoesNotExist,
 
-    #[error("Failed to get the cleansweep directory")]
-    GetCleansweepDirectoryFailure,
+    #[error("Failed to get the cleansweep directory - {0}")]
+    GetCleansweepDirectoryFailure(FilePathsError),
 
-    #[error("Failed to read the user_settings.json file into a UserSettings object")]
-    ReadUserSettingsFileToObjectFailure,
+    #[error("Failed to read the user_settings.json file into a UserSettings object - {0}")]
+    ReadUserSettingsFileToObjectFailure(JsonReadError),
 
-    #[error("Failed to scan and format the files found at the provided path")]
-    FileScanAndFormatFailure,
+    #[error("Failed to scan and format the files found at the provided path - {0}")]
+    FileScanAndFormatFailure(FileScannerError),
 
-    #[error("Failed to create a list of found sets from the list of files")]
-    CovertFileListToFoundSetsFailure,
+    #[error("Failed to create a list of found sets from the list of files - {0}")]
+    CovertFileListToFoundSetsFailure(SetScannerError),
 
     #[error("Failed to write the sets json file from the sets structure")]
     WriteJsonFileToStruct,
@@ -54,13 +54,12 @@ pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<
         return Err(SetScanError::ProvidedPathDoesNotExist);
     }
     let cleansweep_dir =
-        get_cleansweep_dir().map_err(|_| SetScanError::GetCleansweepDirectoryFailure)?;
+        get_cleansweep_dir().map_err(|e| SetScanError::GetCleansweepDirectoryFailure(e))?;
 
     // Get the data structures needed for the scan
-    let user_settings = json_io::read_file_to_struct::<UserSettings, _>(
-        cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()),
-    )
-    .map_err(|_| SetScanError::ReadUserSettingsFileToObjectFailure)?;
+    let user_settings: UserSettings =
+        read_file_to_struct(cleansweep_dir.join(CleansweepFilePaths::UserSettings.name()))
+            .map_err(|e| SetScanError::ReadUserSettingsFileToObjectFailure(e))?;
 
     let user_set_scans: &SetScanOptions = user_settings.get_set_scan_option();
 
@@ -72,12 +71,12 @@ pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<
     // Perform scan
     let scanned_files: Vec<FileContainer> =
         FileScanner::scan(path, FileScannerScanMode::Recursive, ignore_dirs)
-            .map_err(|_| SetScanError::FileScanAndFormatFailure)?;
+            .map_err(|e| SetScanError::FileScanAndFormatFailure(e))?;
 
     // Load the SetDetector object
     let found_sets: Vec<SetsReadWriteType> =
         SetScannerSystem::get_found_sets(&scanned_files, &filters)
-            .map_err(|_| SetScanError::CovertFileListToFoundSetsFailure)?;
+            .map_err(|e| SetScanError::CovertFileListToFoundSetsFailure(e))?;
 
     println!("Found {} sets..", found_sets.len());
     for set in &found_sets {

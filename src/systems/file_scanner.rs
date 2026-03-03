@@ -105,7 +105,7 @@ mod tests {
     use crate::systems::file_scanner::{FileScanner, FileScannerError, FileScannerScanMode};
 
     #[test]
-    fn scan_succeeds() {
+    fn scan_should_fail() {
         let failure_test_path: String = "testing/THIS_DOES_NOT_EXIST".to_string();
 
         let failure_test_path = current_dir().unwrap().join(failure_test_path);
@@ -125,7 +125,7 @@ mod tests {
     }
 
     #[test]
-    fn scan_fails() {
+    fn scan_should_succeed() {
         let successful_test_path: String = "testing/scan_test".to_string();
 
         let full_successful_test_path = current_dir().unwrap().join(successful_test_path);

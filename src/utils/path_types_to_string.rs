@@ -4,7 +4,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum PathToStringError {
-    #[error("Error converting path to string")]
+    #[error("Error converting path type to string")]
     ToStrError,
 }
 
