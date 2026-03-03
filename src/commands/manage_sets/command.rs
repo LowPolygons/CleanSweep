@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::{
     commands::manage_sets::containers::{
-        AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, SetStyle,
+        AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, SetStyle, ZeroOrOne,
     },
     containers::{
         cleansweep_file_paths::CleansweepFilePaths, sets_read_write_type::SetsReadWriteType,
@@ -424,7 +424,7 @@ fn check_input_works_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
         SetStyle::FirstNandLastM(n_value, m_value) => {
             *n_value <= set.full_set.len() || *m_value <= set.full_set.len()
         }
-        SetStyle::EveryN(n_value) => *n_value <= set.full_set.len(),
+        SetStyle::EveryNIndexed(n_value, _) => *n_value <= set.full_set.len(),
         SetStyle::EvenlySpacedN(n_value) => *n_value <= set.full_set.len(),
         _ => true,
     }
@@ -438,7 +438,8 @@ fn choose_management_style() -> Result<SetStyle, ()> {
         SetStyle::FirstN(0),
         SetStyle::LastN(0),
         SetStyle::FirstNandLastM(0, 0),
-        SetStyle::EveryN(0),
+        SetStyle::EveryNIndexed(0, ZeroOrOne::Zero),
+        SetStyle::EveryNIndexed(0, ZeroOrOne::One),
         SetStyle::EvenlySpacedN(0),
     ];
 
@@ -480,14 +481,14 @@ fn choose_management_style() -> Result<SetStyle, ()> {
 
                 SetStyle::FirstNandLastM(n_value, m_value)
             }
-            SetStyle::EveryN(_) => {
+            SetStyle::EveryNIndexed(_, zero_or_one) => {
                 let n_value: usize = get_number_input(
                     "Enter the number of how often to save a file when interating over the set: ",
                     true,
                 )
                 .map_err(|_| ())?;
 
-                SetStyle::EveryN(n_value)
+                SetStyle::EveryNIndexed(n_value, zero_or_one)
             }
             SetStyle::EvenlySpacedN(_) => {
                 println!(
@@ -576,9 +577,15 @@ fn separate_files_based_on_style(
                     }
                 }
             }
-            SetStyle::EveryN(n_value) => {
+            SetStyle::EveryNIndexed(n_value, zero_or_one) => {
+                let index_addition: usize = match zero_or_one {
+                    ZeroOrOne::Zero => 0,
+                    ZeroOrOne::One => 1,
+                };
+
                 for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    if index == len_of_set_sub_one || (len_of_set_sub_one - index) % n_value == 0 {
+                    // TODO: Sort it out
+                    if index != 0 && (index + index_addition) % n_value == 0 {
                         keep_list.push(value.clone());
                     } else {
                         new_set_list.push(value.clone());

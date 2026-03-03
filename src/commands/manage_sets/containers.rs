@@ -1,6 +1,12 @@
 use core::fmt;
 
 #[derive(Debug, Clone)]
+pub enum ZeroOrOne {
+    Zero,
+    One,
+}
+
+#[derive(Debug, Clone)]
 pub enum SetStyle {
     First,
     Last,
@@ -8,7 +14,7 @@ pub enum SetStyle {
     FirstN(usize),
     LastN(usize),
     FirstNandLastM(usize, usize),
-    EveryN(usize),
+    EveryNIndexed(usize, ZeroOrOne),
     EvenlySpacedN(usize),
 }
 
@@ -33,7 +39,14 @@ impl fmt::Display for SetStyle {
             SetStyle::FirstN(_) => "First N",
             SetStyle::LastN(_) => "Last N",
             SetStyle::FirstNandLastM(_, _) => "First N and Last M",
-            SetStyle::EveryN(_) => "Every N",
+            SetStyle::EveryNIndexed(_, zero_or_one) => {
+                let addition: String = match zero_or_one {
+                    ZeroOrOne::Zero => String::from("0"),
+                    ZeroOrOne::One => String::from("1"),
+                };
+
+                &format!("Position in set is divisible by N ({addition} Indexed)")
+            }
             SetStyle::EvenlySpacedN(_) => "N Evenly Spaced",
         };
         write!(f, "{s}")
