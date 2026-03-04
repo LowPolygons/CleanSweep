@@ -2,8 +2,9 @@ use dialoguer::{Select, theme::ColorfulTheme};
 use thiserror::Error;
 
 use crate::{
-    commands::manage_sets::containers::{
-        AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, SetStyle, ZeroOrOne,
+    commands::manage_sets::{
+        containers::{AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, SetStyle, ZeroOrOne},
+        print_table::{Column, PrintableTable},
     },
     containers::{
         cleansweep_file_paths::CleansweepFilePaths, sets_read_write_type::SetsReadWriteType,
@@ -198,12 +199,13 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
                 delete_as_of_now
             };
 
-            println!("This is how the set will be handled if you exit now:");
-            println!("To be added to Keep list:");
-            print_keeps.iter().for_each(|item| println!("- {item}"));
-
-            println!("To Be added to Delete list:");
-            print_deletes.iter().for_each(|item| println!("- {item}"));
+            // println!("This is how the set will be handled if you exit now:");
+            // println!("To be added to Keep list:");
+            // print_keeps.iter().for_each(|item| println!("- {item}"));
+            // //
+            // println!("To Be added to Delete list:");
+            // print_deletes.iter().for_each(|item| println!("- {item}"));
+            print_set_status_as_table(&print_keeps, &print_deletes);
 
             continue;
         }
@@ -308,6 +310,48 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
     Ok(())
 }
 
+pub fn print_set_status_as_table(list_keep: &Vec<String>, list_delete: &Vec<String>) {
+    let mut table = PrintableTable::new(Vec::new());
+
+    table.new_column(Column {
+        width: 5,
+        lines: Vec::new(),
+        title: "Index".to_string(),
+    });
+    table.new_column(Column {
+        width: 8,
+        lines: Vec::new(),
+        title: "List".to_string(),
+    });
+    table.new_column(Column {
+        width: 35,
+        lines: Vec::new(),
+        title: "File Name".to_string(),
+    });
+
+    list_keep.iter().enumerate().for_each(|(index, file_name)| {
+        table.insert_row(vec![
+            index.to_string(),
+            "Keep".to_string(),
+            file_name.clone(),
+        ]);
+    });
+    list_delete
+        .iter()
+        .enumerate()
+        .for_each(|(index, file_name)| {
+            table.insert_row(vec![
+                index.to_string(),
+                "Delete".to_string(),
+                file_name.clone(),
+            ]);
+        });
+
+    let lines = table.get_printable_strings();
+
+    lines.into_iter().for_each(|line| println!("{line}"));
+}
+
 fn choose_which_style_to_affect(set_styles: &mut Vec<Vec<SetStyle>>) -> Result<usize, ()> {
     let mut list_items: Vec<String> =
         set_styles
@@ -343,12 +387,11 @@ fn apply_style_to_set(
 
     match how_style_was_made {
         ChoiceInGettingStyle::Append => {
-            let index_to_affect =
-                choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
-                    .map_err(|_| ())?;
-
             let passed_index = if choose_index {
-                Some(index_to_affect)
+                Some(
+                    choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
+                        .map_err(|_| ())?,
+                )
             } else {
                 None
             };
@@ -368,15 +411,15 @@ fn apply_style_to_set(
             }
         }
         ChoiceInGettingStyle::Set => {
-            let index_to_affect =
-                choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
-                    .map_err(|_| ())?;
-
             let passed_index = if choose_index {
-                Some(index_to_affect)
+                Some(
+                    choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
+                        .map_err(|_| ())?,
+                )
             } else {
                 None
             };
+
             for current_style in new_styles {
                 if apply_management_style_for_set(
                     mutable_ref_to_set,
