@@ -331,19 +331,35 @@ pub fn print_set_status_as_table(
             ]);
         }
     });
-    list_delete.iter().for_each(|file_name| {
-        if let Some(index_in_set) = chosen_set
-            .full_set
-            .iter()
-            .position(|file| file == file_name)
-        {
-            table.insert_row(vec![
-                index_in_set.to_string(),
-                "Delete".to_string(),
-                file_name.clone(),
-            ]);
-        }
-    });
+
+    let mut num_files_hidden: usize = 0;
+
+    list_delete
+        .iter()
+        .enumerate()
+        .for_each(|(index, file_name)| {
+            if index <= 6 || index >= list_delete.len() - 6 {
+                if let Some(index_in_set) = chosen_set
+                    .full_set
+                    .iter()
+                    .position(|file| file == file_name)
+                {
+                    table.insert_row(vec![
+                        index_in_set.to_string(),
+                        "Delete".to_string(),
+                        file_name.clone(),
+                    ]);
+                }
+            } else {
+                num_files_hidden = num_files_hidden + 1;
+            }
+        });
+
+    table.insert_row(vec![
+        "...".to_string(),
+        "Delete".to_string(),
+        format!("{} Files Hidden", num_files_hidden),
+    ]);
 
     let lines = table.get_printable_strings();
 
