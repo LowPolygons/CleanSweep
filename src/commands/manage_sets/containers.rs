@@ -62,9 +62,9 @@ pub struct ManageSetsType {
 
 impl ManageSetsType {
     pub fn vec_style_to_string(styles: &Vec<SetStyle>) -> String {
-        let mut per_set_list: String = String::from("( ");
+        let mut per_set_list: String = String::from("(");
         styles.iter().for_each(|item| {
-            per_set_list = format!("{} + {:?}", per_set_list, item);
+            per_set_list = format!("{} {:?} + ", per_set_list, item);
         });
 
         per_set_list = format!("{} )", per_set_list);
@@ -80,7 +80,7 @@ impl ManageSetsType {
                 ManageSetsType::vec_style_to_string(styles)
             )
         }
-        string = format!("{} ]", string);
+        string = format!("{}]", string);
 
         string
     }
