@@ -48,7 +48,7 @@ pub enum ManageSetsError {
     WriteJsonFileFromStructFailure,
 }
 
-pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
+pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
     let cleansweep_dir =
         get_cleansweep_dir().map_err(|_| ManageSetsError::GetCleansweepDirectoryFailure)?;
 
