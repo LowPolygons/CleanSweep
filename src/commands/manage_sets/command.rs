@@ -210,7 +210,6 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
         /*
          * Stage Three : choose the management style given the choice of sourcing it
          */
-
         // Type must be representitive of the final style list per set
         let new_styles: Vec<Vec<SetStyle>> = match &how_to_get_style {
             ChoiceInGettingStyle::Append => {
@@ -273,7 +272,6 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
             }
         }
     }
-
     /*
      * Stage Four : Apply the sets upon exit
      */
@@ -663,7 +661,7 @@ fn separate_files_based_on_style(
                     for (index, value) in chosen_set.full_set.iter().enumerate() {
                         match index {
                             0 => push_if_new(keep_list, value.clone()),
-                            _ => {} //push_if_new(&mut new_set_list, value.clone()),
+                            _ => {}
                         }
                     }
                 }
@@ -671,8 +669,6 @@ fn separate_files_based_on_style(
                     for (index, value) in chosen_set.full_set.iter().enumerate() {
                         if index == len_of_set_sub_one {
                             push_if_new(keep_list, value.clone());
-                        } else {
-                            // push_if_new(&mut new_set_list, value.clone())
                         }
                     }
                 }
@@ -686,7 +682,7 @@ fn separate_files_based_on_style(
                             } else {
                                 match index {
                                     0 => push_if_new(keep_list, value.clone()),
-                                    _ => {} //push_if_new(&mut new_set_list, value.clone()),
+                                    _ => {}
                                 }
                             }
                         }
@@ -696,8 +692,6 @@ fn separate_files_based_on_style(
                     for (index, value) in chosen_set.full_set.iter().enumerate() {
                         if index < *n_value {
                             push_if_new(keep_list, value.clone());
-                        } else {
-                            // push_if_new(&mut new_set_list, value.clone());
                         }
                     }
                 }
@@ -705,8 +699,6 @@ fn separate_files_based_on_style(
                     for (index, value) in chosen_set.full_set.iter().enumerate() {
                         if index > len_of_set_sub_one.saturating_sub(*n_value) {
                             push_if_new(keep_list, value.clone());
-                        } else {
-                            // push_if_new(&mut new_set_list, value.clone());
                         }
                     }
                 }
@@ -716,8 +708,6 @@ fn separate_files_based_on_style(
                             push_if_new(keep_list, value.clone());
                         } else if index > (len_of_set_sub_one - m_value) {
                             push_if_new(keep_list, value.clone());
-                        } else {
-                            // push_if_new(&mut new_set_list, value.clone());
                         }
                     }
                 }
@@ -730,8 +720,6 @@ fn separate_files_based_on_style(
                     for (index, value) in chosen_set.full_set.iter().enumerate() {
                         if index != 0 && (index + index_addition) % n_value == 0 {
                             push_if_new(keep_list, value.clone());
-                        } else {
-                            // push_if_new(&mut new_set_list, value.clone());
                         }
                     }
                 }
@@ -746,15 +734,13 @@ fn separate_files_based_on_style(
                             for (index, value) in chunk.iter().enumerate() {
                                 if index == len_chunk {
                                     push_if_new(keep_list, value.clone());
-                                } else {
-                                    // push_if_new(&mut new_set_list, value.clone());
                                 }
                             }
                         } else {
                             for (index, value) in chunk.iter().enumerate() {
                                 match index {
                                     0 => push_if_new(keep_list, value.clone()),
-                                    _ => {} //push_if_new(&mut new_set_list, value.clone()),
+                                    _ => {}
                                 }
                             }
                         }
