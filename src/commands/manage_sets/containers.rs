@@ -57,14 +57,28 @@ impl fmt::Display for SetStyle {
 pub struct ManageSetsType {
     pub full_set: Vec<String>,
     pub label: String,
-    pub chosen_styles: Vec<SetStyle>,
+    pub chosen_styles: Vec<Vec<SetStyle>>,
 }
 
 impl ManageSetsType {
+    pub fn vec_style_to_string(styles: &Vec<SetStyle>) -> String {
+        let mut per_set_list: String = String::from("( ");
+        styles.iter().for_each(|item| {
+            per_set_list = format!("{} + {:?}", per_set_list, item);
+        });
+
+        per_set_list = format!("{} )", per_set_list);
+
+        per_set_list
+    }
     pub fn styles_to_string(&self) -> String {
         let mut string = String::from("[");
-        for style in &self.chosen_styles {
-            string = format!("{} -> {:?}", string, style)
+        for styles in &self.chosen_styles {
+            string = format!(
+                "{} -> {:?}",
+                string,
+                ManageSetsType::vec_style_to_string(styles)
+            )
         }
         string = format!("{} ]", string);
 

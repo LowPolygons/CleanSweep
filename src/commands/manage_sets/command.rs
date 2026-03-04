@@ -32,6 +32,9 @@ pub enum ManageSetsError {
     #[error("Failed when deciding how to get the new set list")]
     GetChoiceOfHowToGetStyleFailure,
 
+    #[error("Failed when trying to apply a chosen set to the target list")]
+    ApplyingNewStyleToSetFailure,
+
     #[error(
         "Failed when trying to preview how a set will be separated based on its current styles"
     )]
@@ -111,6 +114,9 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
     );
 
     loop {
+        /*
+         * Stage One : The user chooses the set to manage
+         */
         first_in_sets = vec![
             "Exit Manage Sets".to_string(),
             "Select a default management style".to_string(),
@@ -147,6 +153,9 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
             );
         }
 
+        /*
+         * Stage Two: Choose Whether to preview the set, or choose how to get the new management style
+         */
         let is_default = selection == 1;
 
         let maybe_how_to_get_style = get_choice_of_how_to_get_style(is_default)
@@ -198,28 +207,45 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
 
             continue;
         }
+        /*
+         * Stage Three : choose the management style given the choice of sourcing it
+         */
 
-        // First match gets you the new Vec<>
-        let new_style = match &how_to_get_style {
-            ChoiceInGettingStyle::Append => vec![
-                choose_management_style()
-                    .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?,
-            ],
-            ChoiceInGettingStyle::Reset => Vec::new(),
-            ChoiceInGettingStyle::Set => vec![
-                choose_management_style()
-                    .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?,
-            ],
+        // Type must be representitive of the final style list per set
+        let new_styles: Vec<Vec<SetStyle>> = match &how_to_get_style {
+            ChoiceInGettingStyle::Append => {
+                vec![vec![choose_management_style().map_err(|_| {
+                    ManageSetsError::ChooseManagementStyleFailure
+                })?]]
+            }
+            ChoiceInGettingStyle::Set => {
+                vec![vec![choose_management_style().map_err(|_| {
+                    ManageSetsError::ChooseManagementStyleFailure
+                })?]]
+            }
+            ChoiceInGettingStyle::Reset => vec![Vec::new()],
             ChoiceInGettingStyle::Copy => {
                 copy_management_style_from_set(&managed_sets, len_to_strip_away)
                     .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?
             }
         };
 
+        let should_choose_index: bool = match &how_to_get_style {
+            ChoiceInGettingStyle::Append => true,
+            ChoiceInGettingStyle::Set => true,
+            _ => false,
+        };
+
         if selection == 1 {
             for mutable_ref_to_set in &mut managed_sets {
-                if apply_style_to_set(mutable_ref_to_set, &how_to_get_style, &new_style)
-                    .contains(&false)
+                if apply_style_to_set(
+                    mutable_ref_to_set,
+                    &how_to_get_style,
+                    &new_styles,
+                    selection != 1,
+                )
+                .map_err(|_| ManageSetsError::ApplyingNewStyleToSetFailure)?
+                .contains(&false)
                 {
                     println!(
                         "Some filters weren't applied due to 'N' values exceeding their length"
@@ -232,8 +258,14 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
                 .ok_or_else(|| ())
                 .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?;
 
-            if apply_style_to_set(mutable_ref_to_set, &how_to_get_style, &new_style)
-                .contains(&false)
+            if apply_style_to_set(
+                mutable_ref_to_set,
+                &how_to_get_style,
+                &new_styles,
+                should_choose_index,
+            )
+            .map_err(|_| ManageSetsError::ApplyingNewStyleToSetFailure)?
+            .contains(&false)
             {
                 println!(
                     "Some filters weren't applied to a set due to 'N' values exceeding their length"
@@ -242,6 +274,9 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
         }
     }
 
+    /*
+     * Stage Four : Apply the sets upon exit
+     */
     let mut files_for_keep: Vec<String> = Vec::new();
     let mut files_for_delete: Vec<String> = Vec::new();
 
@@ -275,52 +310,110 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
     Ok(())
 }
 
+fn choose_which_style_to_affect(set_styles: &mut Vec<Vec<SetStyle>>) -> Result<usize, ()> {
+    let mut list_items: Vec<String> =
+        set_styles
+            .iter()
+            .fold(Vec::<String>::new(), |mut list_items, curr_style_list| {
+                list_items.push(ManageSetsType::vec_style_to_string(curr_style_list));
+
+                list_items
+            });
+    list_items.push(String::from("Add new"));
+
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Choose which Management Style to affect, or add a new one")
+        .items(&list_items)
+        .default(&list_items.len() - 1)
+        .interact()
+        .map_err(|_| ())?;
+
+    if selection == &list_items.len() - 1 {
+        set_styles.push(Vec::new())
+    }
+
+    Ok(selection)
+}
+
 fn apply_style_to_set(
     mutable_ref_to_set: &mut ManageSetsType,
     how_style_was_made: &ChoiceInGettingStyle,
-    new_style: &Vec<SetStyle>,
-) -> Vec<bool> {
+    new_styles: &Vec<Vec<SetStyle>>,
+    choose_index: bool,
+) -> Result<Vec<bool>, ()> {
     let mut any_failed: Vec<bool> = Vec::new();
 
     match how_style_was_made {
         ChoiceInGettingStyle::Append => {
-            for current_style in new_style {
-                if !apply_management_style_for_set(
+            let index_to_affect =
+                choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
+                    .map_err(|_| ())?;
+
+            let passed_index = if choose_index {
+                Some(index_to_affect)
+            } else {
+                None
+            };
+
+            for current_style in new_styles {
+                if apply_management_style_for_set(
                     mutable_ref_to_set,
                     current_style,
                     AppendOrOverride::Append,
-                ) {
+                    passed_index,
+                )
+                .map_err(|_| ())?
+                .contains(&false)
+                {
                     any_failed.push(false);
                 }
             }
         }
-        ChoiceInGettingStyle::Reset => mutable_ref_to_set.chosen_styles = new_style.clone(),
         ChoiceInGettingStyle::Set => {
-            for current_style in new_style {
-                if !apply_management_style_for_set(
+            let index_to_affect =
+                choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
+                    .map_err(|_| ())?;
+
+            let passed_index = if choose_index {
+                Some(index_to_affect)
+            } else {
+                None
+            };
+            for current_style in new_styles {
+                if apply_management_style_for_set(
                     mutable_ref_to_set,
                     current_style,
                     AppendOrOverride::Override,
-                ) {
+                    passed_index,
+                )
+                .map_err(|_| ())?
+                .contains(&false)
+                {
                     any_failed.push(false);
                 }
             }
         }
+        // Not affected by the should_choose_index
         ChoiceInGettingStyle::Copy => {
             mutable_ref_to_set.chosen_styles = Vec::new();
 
-            for current_style in new_style {
-                if !apply_management_style_for_set(
+            for current_style in new_styles {
+                if apply_management_style_for_set(
                     mutable_ref_to_set,
                     current_style,
                     AppendOrOverride::Append,
-                ) {
+                    None,
+                )
+                .map_err(|_| ())?
+                .contains(&false)
+                {
                     any_failed.push(false);
                 }
             }
         }
+        ChoiceInGettingStyle::Reset => mutable_ref_to_set.chosen_styles = new_styles.clone(),
     }
-    any_failed
+    Ok(any_failed)
 }
 
 // Ok(Some) => THey have chosen a management style
@@ -357,7 +450,7 @@ fn get_choice_of_how_to_get_style(for_defaults: bool) -> Result<Option<ChoiceInG
 fn copy_management_style_from_set(
     set_list: &Vec<ManageSetsType>,
     len_to_strip: usize,
-) -> Result<Vec<SetStyle>, ()> {
+) -> Result<Vec<Vec<SetStyle>>, ()> {
     let first_in_sets: Vec<String> = set_list
         .iter()
         .try_fold(
@@ -403,18 +496,61 @@ fn copy_management_style_from_set(
 
 fn apply_management_style_for_set(
     set: &mut ManageSetsType,
-    style: &SetStyle,
+    styles: &Vec<SetStyle>,
     append_or_override: AppendOrOverride,
-) -> bool {
-    if !check_input_works_for_set(set, style) {
-        return false;
-    }
-    match append_or_override {
-        AppendOrOverride::Append => set.chosen_styles.push(style.clone()),
-        AppendOrOverride::Override => set.chosen_styles = vec![style.clone()],
+    maybe_index_of_set: Option<usize>,
+) -> Result<Vec<bool>, ()> {
+    let mut can_corresponding_style_apply: Vec<bool> = Vec::new();
+
+    // Check if any fail
+    styles.iter().for_each(|style| {
+        can_corresponding_style_apply.push(check_input_works_for_set(set, style));
+    });
+
+    if let Some(index_of_set) = maybe_index_of_set {
+        match append_or_override {
+            AppendOrOverride::Append => {}
+            AppendOrOverride::Override => {
+                *set.chosen_styles
+                    .get_mut(index_of_set)
+                    .ok_or_else(|| ())
+                    .map_err(|_| ())? = Vec::new();
+            }
+        }
+        for (index, style) in styles.iter().enumerate() {
+            // The length of can_corresponding_style_apply is by definition the same as
+            // index which is why there is no concern for an else branch
+            if let Some(is_valid) = can_corresponding_style_apply.get(index) {
+                if *is_valid {
+                    set.chosen_styles
+                        .get_mut(index_of_set)
+                        .ok_or_else(|| ())
+                        .map_err(|_| ())?
+                        .push(style.clone())
+                }
+            }
+        }
+    } else {
+        // They chose Copy
+        // the list will have been reset
+        let sorted_styles: Vec<SetStyle> = styles
+            .into_iter()
+            .enumerate()
+            .filter(
+                |(index, _)| match can_corresponding_style_apply.get(*index) {
+                    Some(is_valid) => *is_valid,
+                    _ => false,
+                },
+            )
+            .fold(Vec::<SetStyle>::new(), |mut list, (_, style)| {
+                list.push(style.clone());
+                list
+            });
+
+        set.chosen_styles.push(sorted_styles)
     }
 
-    true
+    Ok(can_corresponding_style_apply)
 }
 
 fn check_input_works_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
@@ -504,120 +640,137 @@ fn choose_management_style() -> Result<SetStyle, ()> {
     )
 }
 
+fn push_if_new(list: &mut Vec<String>, new_item: String) {
+    if !list.contains(&new_item) {
+        list.push(new_item)
+    }
+}
+
 fn separate_files_based_on_style(
     chosen_set: &mut ManageSetsType,
     keep_list: &mut Vec<String>,
     delete_list: &mut Vec<String>,
 ) -> Result<(), ()> {
-    for current_style in &chosen_set.chosen_styles {
+    for current_style_list in &chosen_set.chosen_styles {
         // Apply Sets in order
         let len_of_set_sub_one = chosen_set.full_set.len() - 1;
         let mut new_set_list: Vec<String> = Vec::new();
 
-        match current_style {
-            SetStyle::First => {
-                for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    match index {
-                        0 => keep_list.push(value.clone()),
-                        _ => new_set_list.push(value.clone()),
+        // These should apply simultaneously
+        for current_style in current_style_list {
+            match current_style {
+                SetStyle::First => {
+                    for (index, value) in chosen_set.full_set.iter().enumerate() {
+                        match index {
+                            0 => push_if_new(keep_list, value.clone()),
+                            _ => {} //push_if_new(&mut new_set_list, value.clone()),
+                        }
                     }
                 }
-            }
-            SetStyle::Last => {
-                for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    if index == len_of_set_sub_one {
-                        keep_list.push(value.clone());
-                    } else {
-                        new_set_list.push(value.clone());
-                    }
-                }
-            }
-            SetStyle::FirstAndLast => {
-                for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    if index == len_of_set_sub_one {
-                        keep_list.push(value.clone());
-                    } else {
-                        if index == 0 {
-                            keep_list.push(value.clone());
+                SetStyle::Last => {
+                    for (index, value) in chosen_set.full_set.iter().enumerate() {
+                        if index == len_of_set_sub_one {
+                            push_if_new(keep_list, value.clone());
                         } else {
-                            match index {
-                                0 => keep_list.push(value.clone()),
-                                _ => new_set_list.push(value.clone()),
-                            }
+                            // push_if_new(&mut new_set_list, value.clone())
                         }
                     }
                 }
-            }
-            SetStyle::FirstN(n_value) => {
-                for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    if index < *n_value {
-                        keep_list.push(value.clone());
-                    } else {
-                        new_set_list.push(value.clone());
-                    }
-                }
-            }
-            SetStyle::LastN(n_value) => {
-                for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    if index > len_of_set_sub_one.saturating_sub(*n_value) {
-                        keep_list.push(value.clone());
-                    } else {
-                        new_set_list.push(value.clone());
-                    }
-                }
-            }
-            SetStyle::FirstNandLastM(n_value, m_value) => {
-                for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    if index < *n_value {
-                        keep_list.push(value.clone());
-                    } else if index > (len_of_set_sub_one - m_value) {
-                        keep_list.push(value.clone());
-                    } else {
-                        new_set_list.push(value.clone());
-                    }
-                }
-            }
-            SetStyle::EveryNIndexed(n_value, zero_or_one) => {
-                let index_addition: usize = match zero_or_one {
-                    ZeroOrOne::Zero => 0,
-                    ZeroOrOne::One => 1,
-                };
-
-                for (index, value) in chosen_set.full_set.iter().enumerate() {
-                    // TODO: Sort it out
-                    if index != 0 && (index + index_addition) % n_value == 0 {
-                        keep_list.push(value.clone());
-                    } else {
-                        new_set_list.push(value.clone());
-                    }
-                }
-            }
-            SetStyle::EvenlySpacedN(n_value) => {
-                let chunk_size =
-                    (chosen_set.full_set.len() as f64 / *n_value as f64).round() as usize;
-
-                for (chunk_num, chunk) in chosen_set.full_set.chunks(chunk_size).enumerate() {
-                    if chunk_num == n_value - 1 {
-                        let len_chunk = chunk.len() - 1;
-
-                        for (index, value) in chunk.iter().enumerate() {
-                            if index == len_chunk {
-                                keep_list.push(value.clone());
+                SetStyle::FirstAndLast => {
+                    for (index, value) in chosen_set.full_set.iter().enumerate() {
+                        if index == len_of_set_sub_one {
+                            push_if_new(keep_list, value.clone());
+                        } else {
+                            if index == 0 {
+                                push_if_new(keep_list, value.clone());
                             } else {
-                                new_set_list.push(value.clone());
+                                match index {
+                                    0 => push_if_new(keep_list, value.clone()),
+                                    _ => {} //push_if_new(&mut new_set_list, value.clone()),
+                                }
                             }
                         }
-                    } else {
-                        for (index, value) in chunk.iter().enumerate() {
-                            match index {
-                                0 => keep_list.push(value.clone()),
-                                _ => new_set_list.push(value.clone()),
+                    }
+                }
+                SetStyle::FirstN(n_value) => {
+                    for (index, value) in chosen_set.full_set.iter().enumerate() {
+                        if index < *n_value {
+                            push_if_new(keep_list, value.clone());
+                        } else {
+                            // push_if_new(&mut new_set_list, value.clone());
+                        }
+                    }
+                }
+                SetStyle::LastN(n_value) => {
+                    for (index, value) in chosen_set.full_set.iter().enumerate() {
+                        if index > len_of_set_sub_one.saturating_sub(*n_value) {
+                            push_if_new(keep_list, value.clone());
+                        } else {
+                            // push_if_new(&mut new_set_list, value.clone());
+                        }
+                    }
+                }
+                SetStyle::FirstNandLastM(n_value, m_value) => {
+                    for (index, value) in chosen_set.full_set.iter().enumerate() {
+                        if index < *n_value {
+                            push_if_new(keep_list, value.clone());
+                        } else if index > (len_of_set_sub_one - m_value) {
+                            push_if_new(keep_list, value.clone());
+                        } else {
+                            // push_if_new(&mut new_set_list, value.clone());
+                        }
+                    }
+                }
+                SetStyle::EveryNIndexed(n_value, zero_or_one) => {
+                    let index_addition: usize = match zero_or_one {
+                        ZeroOrOne::Zero => 0,
+                        ZeroOrOne::One => 1,
+                    };
+
+                    for (index, value) in chosen_set.full_set.iter().enumerate() {
+                        if index != 0 && (index + index_addition) % n_value == 0 {
+                            push_if_new(keep_list, value.clone());
+                        } else {
+                            // push_if_new(&mut new_set_list, value.clone());
+                        }
+                    }
+                }
+                SetStyle::EvenlySpacedN(n_value) => {
+                    let chunk_size =
+                        (chosen_set.full_set.len() as f64 / *n_value as f64).round() as usize;
+
+                    for (chunk_num, chunk) in chosen_set.full_set.chunks(chunk_size).enumerate() {
+                        if chunk_num == n_value - 1 {
+                            let len_chunk = chunk.len() - 1;
+
+                            for (index, value) in chunk.iter().enumerate() {
+                                if index == len_chunk {
+                                    push_if_new(keep_list, value.clone());
+                                } else {
+                                    // push_if_new(&mut new_set_list, value.clone());
+                                }
+                            }
+                        } else {
+                            for (index, value) in chunk.iter().enumerate() {
+                                match index {
+                                    0 => push_if_new(keep_list, value.clone()),
+                                    _ => {} //push_if_new(&mut new_set_list, value.clone()),
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        new_set_list = chosen_set
+            .full_set
+            .iter()
+            .fold(new_set_list, |mut list, item| {
+                if !keep_list.contains(item) {
+                    list.push(item.clone())
+                }
+                list
+            });
         chosen_set.full_set = new_set_list;
     }
 
