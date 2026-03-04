@@ -19,15 +19,15 @@ impl PrintableTable {
             num_rows: 0,
         }
     }
-    pub fn get_titles(&self) -> Vec<String> {
-        self.columns
-            .iter()
-            .fold(Vec::<String>::new(), |mut titles, column| {
-                titles.push(column.title.clone());
-
-                titles
-            })
-    }
+    // pub fn get_titles(&self) -> Vec<String> {
+    //     self.columns
+    //         .iter()
+    //         .fold(Vec::<String>::new(), |mut titles, column| {
+    //             titles.push(column.title.clone());
+    //
+    //             titles
+    //         })
+    // }
     pub fn new_column(&mut self, column: Column) -> bool {
         if self.columns.len() != 0 {
             // Data has already been inserted and therfore the tale is in use

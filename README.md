@@ -1,6 +1,15 @@
 # CleanSweep
 A CLI to help remove old and large files on a system
 
+This CLI can filter and delete files based on any combination of:
+
+- Name
+- Directory
+- Size
+- Last Modified Date
+- Last Access Date
+- Whether it is in a set (E.G Simulation Snapshots)
+
 
 ## Installation
 
