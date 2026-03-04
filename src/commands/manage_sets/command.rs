@@ -186,26 +186,11 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
             )
             .map_err(|_| ManageSetsError::PreviewSeparatedFilesBasedOnStylesFailure)?;
 
-            // Iterate and excluding the first one, truncate if in short mode
-            let print_keeps = if *short_mode {
-                vec_paths_to_truncated(&keep_as_of_now)
-            } else {
-                keep_as_of_now
-            };
-
-            let print_deletes = if *short_mode {
-                vec_paths_to_truncated(&delete_as_of_now)
-            } else {
-                delete_as_of_now
-            };
-
-            // println!("This is how the set will be handled if you exit now:");
-            // println!("To be added to Keep list:");
-            // print_keeps.iter().for_each(|item| println!("- {item}"));
-            // //
-            // println!("To Be added to Delete list:");
-            // print_deletes.iter().for_each(|item| println!("- {item}"));
-            print_set_status_as_table(&print_keeps, &print_deletes);
+            print_set_status_as_table(
+                &managed_sets[selection - length_initial_first_in_sets],
+                &keep_as_of_now,
+                &delete_as_of_now,
+            );
 
             continue;
         }
@@ -310,13 +295,17 @@ pub fn manage_sets(short_mode: &bool) -> Result<(), ManageSetsError> {
     Ok(())
 }
 
-pub fn print_set_status_as_table(list_keep: &Vec<String>, list_delete: &Vec<String>) {
+pub fn print_set_status_as_table(
+    chosen_set: &ManageSetsType,
+    list_keep: &Vec<String>,
+    list_delete: &Vec<String>,
+) {
     let mut table = PrintableTable::new(Vec::new());
 
     table.new_column(Column {
-        width: 5,
+        width: 12,
         lines: Vec::new(),
-        title: "Index".to_string(),
+        title: "Pos in Set".to_string(),
     });
     table.new_column(Column {
         width: 8,
@@ -329,23 +318,32 @@ pub fn print_set_status_as_table(list_keep: &Vec<String>, list_delete: &Vec<Stri
         title: "File Name".to_string(),
     });
 
-    list_keep.iter().enumerate().for_each(|(index, file_name)| {
-        table.insert_row(vec![
-            index.to_string(),
-            "Keep".to_string(),
-            file_name.clone(),
-        ]);
-    });
-    list_delete
-        .iter()
-        .enumerate()
-        .for_each(|(index, file_name)| {
+    list_keep.iter().for_each(|file_name| {
+        if let Some(index_in_set) = chosen_set
+            .full_set
+            .iter()
+            .position(|file| file == file_name)
+        {
             table.insert_row(vec![
-                index.to_string(),
+                index_in_set.to_string(),
+                "Keep".to_string(),
+                file_name.clone(),
+            ]);
+        }
+    });
+    list_delete.iter().for_each(|file_name| {
+        if let Some(index_in_set) = chosen_set
+            .full_set
+            .iter()
+            .position(|file| file == file_name)
+        {
+            table.insert_row(vec![
+                index_in_set.to_string(),
                 "Delete".to_string(),
                 file_name.clone(),
             ]);
-        });
+        }
+    });
 
     let lines = table.get_printable_strings();
 
