@@ -113,9 +113,9 @@ cleansweep purge [stage, continue]
 
 Run this command to:
 
-- STAGE: Copy your lists to temporary files stored in your current directory to allow for last minute changes and sanity checks
+- `stage`: Copy your lists to temporary files stored in your current directory to allow for last minute changes and sanity checks
 
-- CONTINUE: Load the temporary list created from the stage command, make final confirmations, delete the files
+- `continue`: Load the temporary list created from the stage command, make final confirmations, delete the files
 
 ### Override 
 ```sh

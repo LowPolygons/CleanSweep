@@ -3,7 +3,10 @@ use thiserror::Error;
 
 use crate::{
     commands::manage_sets::{
-        containers::{AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, SetStyle, ZeroOrOne},
+        containers::{
+            AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, NewStyleBehaviour,
+            NotAffectingStyles, SetStyle, ZeroOrOne,
+        },
         print_table::{Column, PrintableTable},
     },
     containers::{
@@ -162,63 +165,74 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
         let maybe_how_to_get_style = get_choice_of_how_to_get_style(is_default)
             .map_err(|_| ManageSetsError::GetChoiceOfHowToGetStyleFailure)?;
 
-        let how_to_get_style: ChoiceInGettingStyle;
+        let how_to_get_style: NewStyleBehaviour;
 
-        // They chose to print the current set to the screen
-        if let Some(maybe_how_to_get_style) = maybe_how_to_get_style {
-            how_to_get_style = maybe_how_to_get_style;
-        } else {
-            // To have reached here, the function must NOT be in default
-            // In the event of misuse, the function still won't error, though
-            let mut keep_as_of_now: Vec<String> = Vec::new();
-            let mut delete_as_of_now: Vec<String> = Vec::new();
+        match maybe_how_to_get_style {
+            ChoiceInGettingStyle::NotAffectingStyles(behaviour) => {
+                match behaviour {
+                    NotAffectingStyles::Back => { /* Just continue immediately */ }
+                    NotAffectingStyles::Preview => {
+                        // They chose to print the current set to the screen
+                        // if let Some(maybe_how_to_get_style) = maybe_how_to_get_style {
+                        //     how_to_get_style = maybe_how_to_get_style;
+                        // } else {
+                        // To have reached here, the function must NOT be in default
+                        // In the event of misuse, the function still won't error, though
+                        let mut keep_as_of_now: Vec<String> = Vec::new();
+                        let mut delete_as_of_now: Vec<String> = Vec::new();
 
-            let mut ref_to_set = managed_sets
-                .get(selection - length_initial_first_in_sets)
-                .ok_or_else(|| ())
-                .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?
-                .clone();
+                        let mut ref_to_set = managed_sets
+                            .get(selection - length_initial_first_in_sets)
+                            .ok_or_else(|| ())
+                            .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?
+                            .clone();
 
-            separate_files_based_on_style(
-                &mut ref_to_set,
-                &mut keep_as_of_now,
-                &mut delete_as_of_now,
-            )
-            .map_err(|_| ManageSetsError::PreviewSeparatedFilesBasedOnStylesFailure)?;
+                        separate_files_based_on_style(
+                            &mut ref_to_set,
+                            &mut keep_as_of_now,
+                            &mut delete_as_of_now,
+                        )
+                        .map_err(|_| ManageSetsError::PreviewSeparatedFilesBasedOnStylesFailure)?;
 
-            print_set_status_as_table(
-                &managed_sets[selection - length_initial_first_in_sets],
-                &keep_as_of_now,
-                &delete_as_of_now,
-            );
-
-            continue;
+                        print_set_status_as_table(
+                            &managed_sets[selection - length_initial_first_in_sets],
+                            &keep_as_of_now,
+                            &delete_as_of_now,
+                        );
+                    }
+                }
+                continue;
+            }
+            ChoiceInGettingStyle::AffectStoredStyles(behaviour) => {
+                how_to_get_style = behaviour;
+            }
         }
+        // }
         /*
          * Stage Three : choose the management style given the choice of sourcing it
          */
         // Type must be representitive of the final style list per set
         let new_styles: Vec<Vec<SetStyle>> = match &how_to_get_style {
-            ChoiceInGettingStyle::Append => {
+            NewStyleBehaviour::Append => {
                 vec![vec![choose_management_style().map_err(|_| {
                     ManageSetsError::ChooseManagementStyleFailure
                 })?]]
             }
-            ChoiceInGettingStyle::Set => {
+            NewStyleBehaviour::Set => {
                 vec![vec![choose_management_style().map_err(|_| {
                     ManageSetsError::ChooseManagementStyleFailure
                 })?]]
             }
-            ChoiceInGettingStyle::Reset => vec![Vec::new()],
-            ChoiceInGettingStyle::Copy => {
+            NewStyleBehaviour::Reset => vec![Vec::new()],
+            NewStyleBehaviour::Copy => {
                 copy_management_style_from_set(&managed_sets, len_to_strip_away)
                     .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?
             }
         };
 
         let should_choose_index: bool = match &how_to_get_style {
-            ChoiceInGettingStyle::Append => true,
-            ChoiceInGettingStyle::Set => true,
+            NewStyleBehaviour::Append => true,
+            NewStyleBehaviour::Set => true,
             _ => false,
         };
 
@@ -393,14 +407,14 @@ fn choose_which_style_to_affect(set_styles: &mut Vec<Vec<SetStyle>>) -> Result<u
 
 fn apply_style_to_set(
     mutable_ref_to_set: &mut ManageSetsType,
-    how_style_was_made: &ChoiceInGettingStyle,
+    how_style_was_made: &NewStyleBehaviour,
     new_styles: &Vec<Vec<SetStyle>>,
     choose_index: bool,
 ) -> Result<Vec<bool>, ()> {
     let mut any_failed: Vec<bool> = Vec::new();
 
     match how_style_was_made {
-        ChoiceInGettingStyle::Append => {
+        NewStyleBehaviour::Append => {
             let passed_index = if choose_index {
                 Some(
                     choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
@@ -424,7 +438,7 @@ fn apply_style_to_set(
                 }
             }
         }
-        ChoiceInGettingStyle::Set => {
+        NewStyleBehaviour::Set => {
             let passed_index = if choose_index {
                 Some(
                     choose_which_style_to_affect(&mut mutable_ref_to_set.chosen_styles)
@@ -449,7 +463,7 @@ fn apply_style_to_set(
             }
         }
         // Not affected by the should_choose_index
-        ChoiceInGettingStyle::Copy => {
+        NewStyleBehaviour::Copy => {
             mutable_ref_to_set.chosen_styles = Vec::new();
 
             for current_style in new_styles {
@@ -466,7 +480,7 @@ fn apply_style_to_set(
                 }
             }
         }
-        ChoiceInGettingStyle::Reset => mutable_ref_to_set.chosen_styles = new_styles.clone(),
+        NewStyleBehaviour::Reset => mutable_ref_to_set.chosen_styles = new_styles.clone(),
     }
     Ok(any_failed)
 }
@@ -474,8 +488,9 @@ fn apply_style_to_set(
 // Ok(Some) => THey have chosen a management style
 // Ok(None) => They wish to just preview what the current style would do
 // Err => Error
-fn get_choice_of_how_to_get_style(for_defaults: bool) -> Result<Option<ChoiceInGettingStyle>, ()> {
+fn get_choice_of_how_to_get_style(for_defaults: bool) -> Result<ChoiceInGettingStyle, ()> {
     let mut options = vec![
+        "Back",
         "Append To List",
         "Reset Style List",
         "Override Set List",
@@ -493,11 +508,24 @@ fn get_choice_of_how_to_get_style(for_defaults: bool) -> Result<Option<ChoiceInG
         .map_err(|_| ())?;
 
     match selection {
-        0 => Ok(Some(ChoiceInGettingStyle::Append)),
-        1 => Ok(Some(ChoiceInGettingStyle::Reset)),
-        2 => Ok(Some(ChoiceInGettingStyle::Set)),
-        3 => Ok(Some(ChoiceInGettingStyle::Copy)),
-        4 => Ok(None),
+        0 => Ok(ChoiceInGettingStyle::NotAffectingStyles(
+            NotAffectingStyles::Back,
+        )),
+        1 => Ok(ChoiceInGettingStyle::AffectStoredStyles(
+            NewStyleBehaviour::Append,
+        )),
+        2 => Ok(ChoiceInGettingStyle::AffectStoredStyles(
+            NewStyleBehaviour::Reset,
+        )),
+        3 => Ok(ChoiceInGettingStyle::AffectStoredStyles(
+            NewStyleBehaviour::Set,
+        )),
+        4 => Ok(ChoiceInGettingStyle::AffectStoredStyles(
+            NewStyleBehaviour::Copy,
+        )),
+        5 => Ok(ChoiceInGettingStyle::NotAffectingStyles(
+            NotAffectingStyles::Preview,
+        )),
         _ => Err(()),
     }
 }

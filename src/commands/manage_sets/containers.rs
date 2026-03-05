@@ -24,6 +24,15 @@ pub enum AppendOrOverride {
 }
 
 pub enum ChoiceInGettingStyle {
+    AffectStoredStyles(NewStyleBehaviour),
+    NotAffectingStyles(NotAffectingStyles),
+}
+
+pub enum NotAffectingStyles {
+    Back,
+    Preview,
+}
+pub enum NewStyleBehaviour {
     Append,
     Reset,
     Copy,
