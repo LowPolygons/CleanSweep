@@ -62,6 +62,9 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
 
     let mut dir_set_scan_was_run_from = String::new();
 
+    /*
+     * Map the SetsReadWriteType to a ManageSetsType, and determine the [PATH] variable in code
+     */
     let mut managed_sets: Vec<ManageSetsType> = scanned_sets.iter().try_fold(
         Vec::<ManageSetsType>::new(),
         |mut acc, set| -> Result<Vec<ManageSetsType>, ManageSetsError> {
@@ -93,7 +96,9 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
         },
     )?;
 
-    // If the last char was a /, dont store in the $PATH var
+    /*
+     * If the last char was a / dont store in the $PATH var
+     */
     let maybe_last_char = dir_set_scan_was_run_from.chars().last();
 
     if let Some(last_char) = maybe_last_char {
@@ -118,6 +123,13 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
         dir_set_scan_was_run_from
     );
 
+    /*
+     * Each loop represents a full cycle of
+     * - Picking a set
+     * - Choosing a source of management style or previewing
+     * - Choose a management style
+     * (cycle)
+     */
     loop {
         /*
          * Stage One : The user chooses the set to manage
@@ -150,9 +162,9 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
             .map_err(|_| ManageSetsError::ListSetsToManageFailure)?;
 
         if selection == 0 {
+            // Chose to exit
             break;
         }
-
         if selection == 1 {
             println!(
                 "Any sets where a provided 'N-Value' exceeds its length will not have a default applied"
@@ -164,7 +176,7 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
          */
         let is_default = selection == 1;
 
-        let maybe_how_to_get_style = get_choice_of_how_to_get_style(is_default)
+        let maybe_how_to_get_style = get_source_of_new_style(is_default)
             .map_err(|_| ManageSetsError::GetChoiceOfHowToGetStyleFailure)?;
 
         let how_to_get_style: NewStyleBehaviour;
@@ -172,14 +184,7 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
         match maybe_how_to_get_style {
             ChoiceInGettingStyle::NotAffectingStyles(behaviour) => {
                 match behaviour {
-                    NotAffectingStyles::Back => { /* Just continue immediately */ }
                     NotAffectingStyles::Preview => {
-                        // They chose to print the current set to the screen
-                        // if let Some(maybe_how_to_get_style) = maybe_how_to_get_style {
-                        //     how_to_get_style = maybe_how_to_get_style;
-                        // } else {
-                        // To have reached here, the function must NOT be in default
-                        // In the event of misuse, the function still won't error, though
                         let mut keep_as_of_now: Vec<String> = Vec::new();
                         let mut delete_as_of_now: Vec<String> = Vec::new();
 
@@ -189,7 +194,7 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
                             .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?
                             .clone();
 
-                        separate_files_based_on_style(
+                        filter_files_from_styles(
                             &mut ref_to_set,
                             &mut keep_as_of_now,
                             &mut delete_as_of_now,
@@ -202,6 +207,7 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
                             &delete_as_of_now,
                         );
                     }
+                    NotAffectingStyles::Back => { /* Just continue immediately */ }
                 }
                 continue;
             }
@@ -209,25 +215,24 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
                 how_to_get_style = behaviour;
             }
         }
-        // }
         /*
          * Stage Three : choose the management style given the choice of sourcing it
          */
         // Type must be representitive of the final style list per set
         let new_styles: Vec<Vec<SetStyle>> = match &how_to_get_style {
             NewStyleBehaviour::Append => {
-                vec![vec![choose_management_style().map_err(|_| {
+                vec![vec![choose_style_and_m_n_values().map_err(|_| {
                     ManageSetsError::ChooseManagementStyleFailure
                 })?]]
             }
             NewStyleBehaviour::Set => {
-                vec![vec![choose_management_style().map_err(|_| {
+                vec![vec![choose_style_and_m_n_values().map_err(|_| {
                     ManageSetsError::ChooseManagementStyleFailure
                 })?]]
             }
             NewStyleBehaviour::Reset => vec![Vec::new()],
             NewStyleBehaviour::Copy => {
-                copy_management_style_from_set(&managed_sets, len_to_strip_away)
+                copy_management_styles_from_set(&managed_sets, len_to_strip_away)
                     .map_err(|_| ManageSetsError::ChooseManagementStyleFailure)?
             }
         };
@@ -282,7 +287,7 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
     let mut files_for_delete: Vec<String> = Vec::new();
 
     for set in &mut managed_sets {
-        match separate_files_based_on_style(set, &mut files_for_keep, &mut files_for_delete) {
+        match filter_files_from_styles(set, &mut files_for_keep, &mut files_for_delete) {
             Ok(_) => {}
             Err(_) => println!("A set didn't have a method specified, skipping.."),
         }
@@ -429,7 +434,7 @@ fn apply_style_to_set(
             };
 
             for current_style in new_styles {
-                if apply_management_style_for_set(
+                if try_apply_style_to_set(
                     mutable_ref_to_set,
                     current_style,
                     AppendOrOverride::Append,
@@ -453,7 +458,7 @@ fn apply_style_to_set(
             };
 
             for current_style in new_styles {
-                if apply_management_style_for_set(
+                if try_apply_style_to_set(
                     mutable_ref_to_set,
                     current_style,
                     AppendOrOverride::Override,
@@ -471,7 +476,7 @@ fn apply_style_to_set(
             mutable_ref_to_set.chosen_styles = Vec::new();
 
             for current_style in new_styles {
-                if apply_management_style_for_set(
+                if try_apply_style_to_set(
                     mutable_ref_to_set,
                     current_style,
                     AppendOrOverride::Append,
@@ -489,10 +494,7 @@ fn apply_style_to_set(
     Ok(any_failed)
 }
 
-// Ok(Some) => THey have chosen a management style
-// Ok(None) => They wish to just preview what the current style would do
-// Err => Error
-fn get_choice_of_how_to_get_style(for_defaults: bool) -> Result<ChoiceInGettingStyle, ()> {
+fn get_source_of_new_style(for_defaults: bool) -> Result<ChoiceInGettingStyle, ()> {
     let mut options = vec![
         "Back",
         "Append To List",
@@ -534,7 +536,7 @@ fn get_choice_of_how_to_get_style(for_defaults: bool) -> Result<ChoiceInGettingS
     }
 }
 
-fn copy_management_style_from_set(
+fn copy_management_styles_from_set(
     set_list: &Vec<ManageSetsType>,
     len_to_strip: usize,
 ) -> Result<Vec<Vec<SetStyle>>, ()> {
@@ -581,7 +583,7 @@ fn copy_management_style_from_set(
         .clone())
 }
 
-fn apply_management_style_for_set(
+fn try_apply_style_to_set(
     set: &mut ManageSetsType,
     styles: &Vec<SetStyle>,
     append_or_override: AppendOrOverride,
@@ -591,7 +593,7 @@ fn apply_management_style_for_set(
 
     // Check if any fail
     styles.iter().for_each(|style| {
-        can_corresponding_style_apply.push(check_input_works_for_set(set, style));
+        can_corresponding_style_apply.push(n_m_values_work_for_set(set, style));
     });
 
     if let Some(index_of_set) = maybe_index_of_set {
@@ -640,7 +642,7 @@ fn apply_management_style_for_set(
     Ok(can_corresponding_style_apply)
 }
 
-fn check_input_works_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
+fn n_m_values_work_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
     match &style {
         SetStyle::FirstN(n_value) => *n_value <= set.full_set.len(),
         SetStyle::LastN(n_value) => *n_value <= set.full_set.len(),
@@ -653,7 +655,7 @@ fn check_input_works_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
     }
 }
 
-fn choose_management_style() -> Result<SetStyle, ()> {
+fn choose_style_and_m_n_values() -> Result<SetStyle, ()> {
     let sub_options: Vec<SetStyle> = vec![
         SetStyle::First,
         SetStyle::Last,
@@ -733,7 +735,7 @@ fn push_if_new(list: &mut Vec<String>, new_item: String) {
     }
 }
 
-fn separate_files_based_on_style(
+fn filter_files_from_styles(
     chosen_set: &mut ManageSetsType,
     keep_list: &mut Vec<String>,
     delete_list: &mut Vec<String>,
@@ -859,26 +861,26 @@ fn separate_files_based_on_style(
     Ok(())
 }
 
-fn vec_paths_to_truncated(original_list: &Vec<String>) -> Vec<String> {
-    original_list.iter().enumerate().fold(
-        Vec::<String>::new(),
-        |mut print_deletes, (index, string)| {
-            if index != 0 {
-                let length_string = string.len();
-                let twenty_percent: usize = 2 * length_string / 10;
-                let new_string = string
-                    .clone()
-                    .drain(string.len() - twenty_percent..string.len())
-                    .fold(String::new(), |mut new_str, char| {
-                        new_str = format!("{}{}", new_str, char);
-                        new_str
-                    });
-
-                print_deletes.push(format!("..{}", new_string));
-            } else {
-                print_deletes.push(string.clone());
-            }
-            print_deletes
-        },
-    )
-}
+// fn vec_paths_to_truncated(original_list: &Vec<String>) -> Vec<String> {
+//     original_list.iter().enumerate().fold(
+//         Vec::<String>::new(),
+//         |mut print_deletes, (index, string)| {
+//             if index != 0 {
+//                 let length_string = string.len();
+//                 let twenty_percent: usize = 2 * length_string / 10;
+//                 let new_string = string
+//                     .clone()
+//                     .drain(string.len() - twenty_percent..string.len())
+//                     .fold(String::new(), |mut new_str, char| {
+//                         new_str = format!("{}{}", new_str, char);
+//                         new_str
+//                     });
+//
+//                 print_deletes.push(format!("..{}", new_string));
+//             } else {
+//                 print_deletes.push(string.clone());
+//             }
+//             print_deletes
+//         },
+//     )
+// }
