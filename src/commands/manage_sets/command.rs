@@ -132,9 +132,10 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
                 .iter()
                 .map(|item| {
                     format!(
-                        "{} : [PATH]{}",
+                        "{} : [PATH]{} - {} Files",
                         item.styles_to_string(),
-                        item.label_truncated(len_to_strip_away)
+                        item.label_truncated(len_to_strip_away),
+                        item.full_set.len()
                     )
                 })
                 .collect(),
