@@ -51,9 +51,12 @@ fn main() -> ExitCode {
             ignore_dirs,
         } => scan::scan(&path, use_custom_filters, no_filter, ignore_dirs)
             .map_err(|e| CleanSweepErrors::ScanFailure(e)),
-        Commands::SetScan { path, ignore_dirs } => {
-            set_scan::set_scan(&path, ignore_dirs).map_err(|e| CleanSweepErrors::SetScanFailure(e))
-        }
+        Commands::SetScan {
+            path,
+            ignore_dirs,
+            num_files_atleast,
+        } => set_scan::set_scan(&path, ignore_dirs, num_files_atleast)
+            .map_err(|e| CleanSweepErrors::SetScanFailure(e)),
         Commands::Settings { choice } => {
             settings::settings(&choice).map_err(|e| CleanSweepErrors::SettingsFailure(e))
         }

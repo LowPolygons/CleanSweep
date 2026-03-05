@@ -100,6 +100,9 @@ pub enum Commands {
 
         #[arg(long, num_args = 0..)]
         ignore_dirs: Vec<String>,
+
+        #[arg(long, default_value_t = 3)]
+        num_files_atleast: usize,
     },
 
     #[command(
