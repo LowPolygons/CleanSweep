@@ -45,6 +45,8 @@ pub enum SetScanError {
     WriteJsonFileToStruct,
 }
 
+const NUM_FILES_TO_COUNT_AS_SET: usize = 4;
+
 pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<(), SetScanError> {
     // Initial path validation
     let mut path = current_dir().map_err(|_| SetScanError::GetCurrentDirectoryFailure)?;
@@ -76,7 +78,10 @@ pub fn set_scan(optional_subpath: &String, ignore_dirs: &Vec<String>) -> Result<
     // Load the SetDetector object
     let found_sets: Vec<SetsReadWriteType> =
         SetScannerSystem::get_found_sets(&scanned_files, &filters)
-            .map_err(|e| SetScanError::CovertFileListToFoundSetsFailure(e))?;
+            .map_err(|e| SetScanError::CovertFileListToFoundSetsFailure(e))?
+            .into_iter()
+            .filter(|item| item.files.len() > NUM_FILES_TO_COUNT_AS_SET)
+            .collect();
 
     println!("Found {} sets..", found_sets.len());
     for set in &found_sets {
