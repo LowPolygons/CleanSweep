@@ -1,12 +1,6 @@
 use core::fmt;
 
 #[derive(Debug, Clone)]
-pub enum ZeroOrOne {
-    Zero,
-    One,
-}
-
-#[derive(Debug, Clone)]
 pub enum SetStyle {
     First,
     Last,
@@ -17,26 +11,10 @@ pub enum SetStyle {
     EveryNIndexed(usize, ZeroOrOne),
     EvenlySpacedN(usize),
 }
-
-pub enum AppendOrOverride {
-    Append,
-    Override,
-}
-
-pub enum ChoiceInGettingStyle {
-    AffectStoredStyles(NewStyleBehaviour),
-    NotAffectingStyles(NotAffectingStyles),
-}
-
-pub enum NotAffectingStyles {
-    Back,
-    Preview,
-}
-pub enum NewStyleBehaviour {
-    Append,
-    Reset,
-    Copy,
-    Set,
+#[derive(Debug, Clone)]
+pub enum ZeroOrOne {
+    Zero,
+    One,
 }
 
 impl fmt::Display for SetStyle {
@@ -100,4 +78,25 @@ impl ManageSetsType {
 
         clone_of_label.drain(length_to_strip..length).collect()
     }
+}
+
+// INFO:
+// These enums are here to make return types of the helper methods more clear
+pub enum AppendOrOverride {
+    Append,
+    Override,
+}
+pub enum ChoiceInGettingStyle {
+    AffectStoredStyles(NewStyleBehaviour),
+    NotAffectingStyles(NotAffectingStyles),
+}
+pub enum NotAffectingStyles {
+    Back,
+    Preview,
+}
+pub enum NewStyleBehaviour {
+    Append,
+    Reset,
+    Copy,
+    Set,
 }

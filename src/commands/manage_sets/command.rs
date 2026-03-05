@@ -51,6 +51,7 @@ pub enum ManageSetsError {
     WriteJsonFileFromStructFailure,
 }
 
+// Thew new table mode made the short-mode possibly unecessary
 pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
     let cleansweep_dir =
         get_cleansweep_dir().map_err(|_| ManageSetsError::GetCleansweepDirectoryFailure)?;
@@ -315,6 +316,8 @@ pub fn print_set_status_as_table(
     list_keep: &Vec<String>,
     list_delete: &Vec<String>,
 ) {
+    let summed_widths: usize = chosen_set.full_set.iter().map(|file| file.len()).sum();
+
     let mut table = PrintableTable::new(Vec::new());
 
     table.new_column(Column {
@@ -328,7 +331,7 @@ pub fn print_set_status_as_table(
         title: "List".to_string(),
     });
     table.new_column(Column {
-        width: 35,
+        width: summed_widths / chosen_set.full_set.len(),
         lines: Vec::new(),
         title: "File Name".to_string(),
     });
