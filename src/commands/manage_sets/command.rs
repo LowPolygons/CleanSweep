@@ -1,4 +1,5 @@
 use dialoguer::{Select, theme::ColorfulTheme};
+use regex::Regex;
 use thiserror::Error;
 
 use crate::{
@@ -51,7 +52,57 @@ pub enum ManageSetsError {
     WriteJsonFileFromStructFailure,
 }
 
-// Thew new table mode made the short-mode possibly unecessary
+// TODO: Perhaps there has been a coupling? Split the logic of multiplying by the decimal portion
+// off if necessary
+pub fn extract_number_from_string(file: &str) -> Option<i64> {
+    // First need to remove an extension if there is one
+    let full_number = match Regex::new(r"(\d+(\.\d+)?)\.[^\.]*$") {
+        Ok(new) => new,
+        Err(_) => return None,
+    };
+    let after_decimal = match Regex::new(r"\.(\d+?)\.[^\.]*$") {
+        Ok(new) => new,
+        Err(_) => return None,
+    };
+
+    if !full_number.is_match(&file) {
+        return Some(-1);
+    }
+
+    // Capture the full number
+    let captures = match full_number.captures(file).ok_or_else(|| ()) {
+        Ok(new) => new,
+        Err(_) => return Some(-2),
+    };
+    let number_portion = match captures.get(1).ok_or_else(|| ()) {
+        Ok(new) => new.as_str(),
+        Err(_) => return Some(-3),
+    };
+    let actual_number = match number_portion.parse::<f64>() {
+        Ok(result) => result,
+        Err(_) => return Some(-4),
+    };
+
+    // Capture the after-decimal portion
+    // If it doesnt find a decimal then the number is just returnable as it is
+    let decimal_captures = match after_decimal.captures(file).ok_or_else(|| ()) {
+        Ok(new) => new,
+        Err(_) => return Some(actual_number as i64),
+    };
+    let decimal_portion = match decimal_captures.get(1).ok_or_else(|| ()) {
+        Ok(new) => new,
+        Err(_) => return Some(actual_number as i64),
+    };
+
+    println!("{number_portion}, {}", decimal_portion.as_str());
+    let multiplier: u32 = decimal_portion.as_str().chars().count() as u32;
+
+    let ten: i64 = 10;
+
+    Some((actual_number * (ten.pow(multiplier) as f64)) as i64)
+}
+
+// WARN: The new table mode made the short-mode possibly unecessary
 pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
     let cleansweep_dir =
         get_cleansweep_dir().map_err(|_| ManageSetsError::GetCleansweepDirectoryFailure)?;
@@ -219,6 +270,7 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
          * Stage Three : choose the management style given the choice of sourcing it
          */
         // Type must be representitive of the final style list per set
+        // This allows the code for appending/resetting/overriding to be automatically compatible
         let new_styles: Vec<Vec<SetStyle>> = match &how_to_get_style {
             NewStyleBehaviour::Append => {
                 vec![vec![choose_style_and_m_n_values().map_err(|_| {
@@ -322,6 +374,18 @@ pub fn print_set_status_as_table(
     list_delete: &Vec<String>,
 ) {
     let summed_widths: usize = chosen_set.full_set.iter().map(|file| file.len()).sum();
+    let max_id_width: usize = chosen_set
+        .full_set
+        .iter()
+        .map(|file| {
+            let id = extract_number_from_string(file)
+                .map_or(0, |v| v)
+                .to_string();
+
+            file.chars().count() - id.chars().count()
+        })
+        .max()
+        .map_or(3, |v| v);
 
     let mut table = PrintableTable::new(Vec::new());
 
@@ -340,6 +404,11 @@ pub fn print_set_status_as_table(
         lines: Vec::new(),
         title: "File Name".to_string(),
     });
+    table.new_column(Column {
+        width: max_id_width,
+        lines: Vec::new(),
+        title: "File ID".to_string(),
+    });
 
     list_keep.iter().for_each(|file_name| {
         if let Some(index_in_set) = chosen_set
@@ -351,6 +420,9 @@ pub fn print_set_status_as_table(
                 index_in_set.to_string(),
                 "Keep".to_string(),
                 file_name.clone(),
+                extract_number_from_string(file_name)
+                    .map_or(0, |v| v)
+                    .to_string(),
             ]);
         }
     });
@@ -382,6 +454,7 @@ pub fn print_set_status_as_table(
         "...".to_string(),
         "Delete".to_string(),
         format!("{} Files Hidden", num_files_hidden),
+        "N/A".to_string(),
     ]);
 
     let lines = table.get_printable_strings();
@@ -666,6 +739,7 @@ fn choose_style_and_m_n_values() -> Result<SetStyle, ()> {
         SetStyle::EveryNIndexed(0, ZeroOrOne::Zero),
         SetStyle::EveryNIndexed(0, ZeroOrOne::One),
         SetStyle::EvenlySpacedN(0),
+        SetStyle::IDisDivisibleByN(0),
     ];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -723,6 +797,17 @@ fn choose_style_and_m_n_values() -> Result<SetStyle, ()> {
                     get_number_input("Enter how many files do you want to save: ", true)
                         .map_err(|_| ())?;
                 SetStyle::EvenlySpacedN(n_value)
+            }
+            SetStyle::IDisDivisibleByN(_) => {
+                println!(
+                    "The ID is calculated by removing the decimal place if it is present and tacking the decimal number portion onto the end (123.456 -> 123456)"
+                );
+                let n_value: usize = get_number_input(
+                    "Enter the number a files ID should be divisible by to keep: ",
+                    true,
+                )
+                .map_err(|_| ())?;
+                SetStyle::IDisDivisibleByN(n_value)
             }
             other => other,
         },
@@ -834,6 +919,17 @@ fn filter_files_from_styles(
                                     _ => {}
                                 }
                             }
+                        }
+                    }
+                }
+                SetStyle::IDisDivisibleByN(n_value) => {
+                    for value in chosen_set.full_set.iter() {
+                        // By default, if it fails to get an ID it will be set to zero so it
+                        // always gets flagged as keep
+                        let set_id = extract_number_from_string(value).map_or(0, |v| v);
+
+                        if set_id % (*n_value as i64) == 0 {
+                            push_if_new(keep_list, value.clone());
                         }
                     }
                 }

@@ -10,6 +10,7 @@ pub enum SetStyle {
     FirstNandLastM(usize, usize),
     EveryNIndexed(usize, ZeroOrOne),
     EvenlySpacedN(usize),
+    IDisDivisibleByN(usize),
 }
 #[derive(Debug, Clone)]
 pub enum ZeroOrOne {
@@ -35,6 +36,7 @@ impl fmt::Display for SetStyle {
                 &format!("Position in set is divisible by N ({addition} Indexed)")
             }
             SetStyle::EvenlySpacedN(_) => "N Evenly Spaced",
+            SetStyle::IDisDivisibleByN(_) => "ID is divisible by N",
         };
         write!(f, "{s}")
     }
