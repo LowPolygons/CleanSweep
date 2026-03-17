@@ -94,7 +94,6 @@ pub fn extract_number_from_string(file: &str) -> Option<i64> {
         Err(_) => return Some(actual_number as i64),
     };
 
-    println!("{number_portion}, {}", decimal_portion.as_str());
     let multiplier: u32 = decimal_portion.as_str().chars().count() as u32;
 
     let ten: i64 = 10;
@@ -259,6 +258,15 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
                         );
                     }
                     NotAffectingStyles::Back => { /* Just continue immediately */ }
+                    NotAffectingStyles::FullTable => {
+                        let ref_to_set = managed_sets
+                            .get(selection - length_initial_first_in_sets)
+                            .ok_or_else(|| ())
+                            .map_err(|_| ManageSetsError::GetMutRefToChosenSetFailure)?
+                            .clone();
+
+                        print_full_set_as_table(&ref_to_set);
+                    }
                 }
                 continue;
             }
@@ -366,6 +374,60 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
     .map_err(|_| ManageSetsError::WriteJsonFileFromStructFailure)?;
 
     Ok(())
+}
+
+pub fn print_full_set_as_table(chosen_set: &ManageSetsType) {
+    let summed_widths: usize = chosen_set.full_set.iter().map(|file| file.len()).sum();
+    let max_id_width: usize = chosen_set
+        .full_set
+        .iter()
+        .map(|file| {
+            let id = extract_number_from_string(file)
+                .map_or(0, |v| v)
+                .to_string();
+
+            id.chars().count()
+        })
+        .max()
+        .map_or(3, |v| v)
+        + 3;
+
+    let mut table = PrintableTable::new(Vec::new());
+
+    table.new_column(Column {
+        width: 12,
+        lines: Vec::new(),
+        title: "Pos in Set".to_string(),
+    });
+    table.new_column(Column {
+        width: summed_widths / chosen_set.full_set.len(),
+        lines: Vec::new(),
+        title: "File Name".to_string(),
+    });
+    table.new_column(Column {
+        width: max_id_width,
+        lines: Vec::new(),
+        title: "File ID".to_string(),
+    });
+
+    chosen_set.full_set.iter().for_each(|file_name| {
+        if let Some(index_in_set) = chosen_set
+            .full_set
+            .iter()
+            .position(|file| file == file_name)
+        {
+            table.insert_row(vec![
+                index_in_set.to_string(),
+                file_name.clone(),
+                extract_number_from_string(file_name)
+                    .map_or(0, |v| v)
+                    .to_string(),
+            ]);
+        }
+    });
+    let lines = table.get_printable_strings();
+
+    lines.into_iter().for_each(|line| println!("{line}"));
 }
 
 pub fn print_set_status_as_table(
@@ -576,7 +638,8 @@ fn get_source_of_new_style(for_defaults: bool) -> Result<ChoiceInGettingStyle, (
         "Copy Other Set List",
     ];
     if !for_defaults {
-        options.push("Preview Current Style Effects")
+        options.push("Preview Current Style Effects");
+        options.push("View full set");
     }
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -604,6 +667,9 @@ fn get_source_of_new_style(for_defaults: bool) -> Result<ChoiceInGettingStyle, (
         )),
         5 => Ok(ChoiceInGettingStyle::NotAffectingStyles(
             NotAffectingStyles::Preview,
+        )),
+        6 => Ok(ChoiceInGettingStyle::NotAffectingStyles(
+            NotAffectingStyles::FullTable,
         )),
         _ => Err(()),
     }

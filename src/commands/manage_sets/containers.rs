@@ -94,6 +94,7 @@ pub enum ChoiceInGettingStyle {
 }
 pub enum NotAffectingStyles {
     Back,
+    FullTable,
     Preview,
 }
 pub enum NewStyleBehaviour {
