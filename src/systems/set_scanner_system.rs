@@ -107,14 +107,14 @@ impl SetScannerSystem {
 
                 // Step 2:
                 //  // - Some directories can contain multiple sets
-                //  // - This will separate them out based on the 'stem' portion
+                //  // - This will separate them out based on the 'stem' portion, also ensuring they have the same extension
                 //  // - This string portion is referred to as the Unique Stem Portion
                 //  // - Creates a new map for this directory which maps usps to the list of files
                 let usps = split_file_names.into_iter().fold(
-                    HashMap::<String, Vec<(String, String, f64, String)>>::new(),
+                    HashMap::<(String, String), Vec<(String, String, f64, String)>>::new(),
                     |mut usps, (stem, suffix, number, full_stem)| {
                         // println!("{} {} {}", stem, suffix, number);
-                        usps.entry(stem.clone())
+                        usps.entry((stem.clone(), suffix.clone()))
                             .and_modify(|vec| {
                                 vec.push((stem.clone(), suffix.clone(), number, full_stem.clone()));
                                 vec.sort_by(|tup_a, tup_b| tup_a.2.total_cmp(&tup_b.2));
