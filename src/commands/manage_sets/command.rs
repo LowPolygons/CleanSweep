@@ -54,7 +54,7 @@ pub enum ManageSetsError {
 
 // TODO: Perhaps there has been a coupling? Split the logic of multiplying by the decimal portion
 // off if necessary
-pub fn extract_number_from_string(file: &str) -> Option<i64> {
+pub fn extract_number_from_string(file: &str) -> Option<(i64, i64)> {
     // First need to remove an extension if there is one
     let full_number = match Regex::new(r"(\d+(\.\d+)?)\.[^\.]*$") {
         Ok(new) => new,
@@ -66,39 +66,42 @@ pub fn extract_number_from_string(file: &str) -> Option<i64> {
     };
 
     if !full_number.is_match(&file) {
-        return Some(-1);
+        return None;
     }
 
     // Capture the full number
     let captures = match full_number.captures(file).ok_or_else(|| ()) {
         Ok(new) => new,
-        Err(_) => return Some(-2),
+        Err(_) => return None,
     };
     let number_portion = match captures.get(1).ok_or_else(|| ()) {
         Ok(new) => new.as_str(),
-        Err(_) => return Some(-3),
+        Err(_) => return None,
     };
     let actual_number = match number_portion.parse::<f64>() {
         Ok(result) => result,
-        Err(_) => return Some(-4),
+        Err(_) => return None,
     };
 
     // Capture the after-decimal portion
     // If it doesnt find a decimal then the number is just returnable as it is
     let decimal_captures = match after_decimal.captures(file).ok_or_else(|| ()) {
         Ok(new) => new,
-        Err(_) => return Some(actual_number as i64),
+        Err(_) => return Some((actual_number as i64, 1)),
     };
     let decimal_portion = match decimal_captures.get(1).ok_or_else(|| ()) {
         Ok(new) => new,
-        Err(_) => return Some(actual_number as i64),
+        Err(_) => return Some((actual_number as i64, 1)),
     };
 
     let multiplier: u32 = decimal_portion.as_str().chars().count() as u32;
 
     let ten: i64 = 10;
 
-    Some((actual_number * (ten.pow(multiplier) as f64)) as i64)
+    Some((
+        (actual_number * (ten.pow(multiplier) as f64)) as i64,
+        (ten.pow(multiplier) as i64),
+    ))
 }
 
 // WARN: The new table mode made the short-mode possibly unecessary
@@ -382,11 +385,9 @@ pub fn print_full_set_as_table(chosen_set: &ManageSetsType) {
         .full_set
         .iter()
         .map(|file| {
-            let id = extract_number_from_string(file)
-                .map_or(0, |v| v)
-                .to_string();
+            let (id, _): (i64, i64) = extract_number_from_string(file).map_or((0, 1), |v| v);
 
-            id.chars().count()
+            id.to_string().chars().count()
         })
         .max()
         .map_or(3, |v| v)
@@ -416,12 +417,11 @@ pub fn print_full_set_as_table(chosen_set: &ManageSetsType) {
             .iter()
             .position(|file| file == file_name)
         {
+            let (id, _): (i64, i64) = extract_number_from_string(file_name).map_or((0, 1), |v| v);
             table.insert_row(vec![
                 index_in_set.to_string(),
                 file_name.clone(),
-                extract_number_from_string(file_name)
-                    .map_or(0, |v| v)
-                    .to_string(),
+                id.to_string(),
             ]);
         }
     });
@@ -440,11 +440,9 @@ pub fn print_set_status_as_table(
         .full_set
         .iter()
         .map(|file| {
-            let id = extract_number_from_string(file)
-                .map_or(0, |v| v)
-                .to_string();
+            let (id, _): (i64, i64) = extract_number_from_string(file).map_or((0, 1), |v| v);
 
-            file.chars().count() - id.chars().count()
+            file.chars().count() - id.to_string().chars().count()
         })
         .max()
         .map_or(3, |v| v);
@@ -478,13 +476,12 @@ pub fn print_set_status_as_table(
             .iter()
             .position(|file| file == file_name)
         {
+            let (id, _): (i64, i64) = extract_number_from_string(file_name).map_or((0, 1), |v| v);
             table.insert_row(vec![
                 index_in_set.to_string(),
                 "Keep".to_string(),
                 file_name.clone(),
-                extract_number_from_string(file_name)
-                    .map_or(0, |v| v)
-                    .to_string(),
+                id.to_string(),
             ]);
         }
     });
@@ -806,6 +803,7 @@ fn choose_style_and_m_n_values() -> Result<SetStyle, ()> {
         SetStyle::EveryNIndexed(0, ZeroOrOne::One),
         SetStyle::EvenlySpacedN(0),
         SetStyle::IDisDivisibleByN(0),
+        SetStyle::NumberDivisibleByN(0.0),
     ];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -874,6 +872,17 @@ fn choose_style_and_m_n_values() -> Result<SetStyle, ()> {
                 )
                 .map_err(|_| ())?;
                 SetStyle::IDisDivisibleByN(n_value)
+            }
+            SetStyle::NumberDivisibleByN(_) => {
+                println!(
+                    "The number is calculated by removing the decimal place if it is present and tacking the decimal number portion onto the end (123.456 -> 123456)"
+                );
+                let n_value: f64 = get_number_input(
+                    "Enter the number a files ID should be divisible by to keep: ",
+                    true,
+                )
+                .map_err(|_| ())?;
+                SetStyle::NumberDivisibleByN(n_value)
             }
             other => other,
         },
@@ -992,9 +1001,22 @@ fn filter_files_from_styles(
                     for value in chosen_set.full_set.iter() {
                         // By default, if it fails to get an ID it will be set to zero so it
                         // always gets flagged as keep
-                        let set_id = extract_number_from_string(value).map_or(0, |v| v);
+                        let (set_id, _): (i64, i64) =
+                            extract_number_from_string(value).map_or((0, 1), |v| v);
 
                         if set_id % (*n_value as i64) == 0 {
+                            push_if_new(keep_list, value.clone());
+                        }
+                    }
+                }
+                SetStyle::NumberDivisibleByN(n_value) => {
+                    for value in chosen_set.full_set.iter() {
+                        // By default, if it fails to get an ID it will be set to zero so it
+                        // always gets flagged as keep
+                        let (set_id, multiplier): (i64, i64) =
+                            extract_number_from_string(value).map_or((0, 1), |v| v);
+
+                        if set_id % (*n_value as f64 * multiplier as f64) as i64 == 0 {
                             push_if_new(keep_list, value.clone());
                         }
                     }
@@ -1022,27 +1044,3 @@ fn filter_files_from_styles(
 
     Ok(())
 }
-
-// fn vec_paths_to_truncated(original_list: &Vec<String>) -> Vec<String> {
-//     original_list.iter().enumerate().fold(
-//         Vec::<String>::new(),
-//         |mut print_deletes, (index, string)| {
-//             if index != 0 {
-//                 let length_string = string.len();
-//                 let twenty_percent: usize = 2 * length_string / 10;
-//                 let new_string = string
-//                     .clone()
-//                     .drain(string.len() - twenty_percent..string.len())
-//                     .fold(String::new(), |mut new_str, char| {
-//                         new_str = format!("{}{}", new_str, char);
-//                         new_str
-//                     });
-//
-//                 print_deletes.push(format!("..{}", new_string));
-//             } else {
-//                 print_deletes.push(string.clone());
-//             }
-//             print_deletes
-//         },
-//     )
-// }

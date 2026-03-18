@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use dialoguer::{Input, theme::ColorfulTheme};
 use thiserror::Error;
 
@@ -13,7 +15,10 @@ pub enum RunTimeInputError {
     GetTextInputFailure,
 }
 
-pub fn get_number_input(label: &str, first_time_calling: bool) -> Result<usize, RunTimeInputError> {
+pub fn get_number_input<T: FromStr>(
+    label: &str,
+    first_time_calling: bool,
+) -> Result<T, RunTimeInputError> {
     let colour = ColorfulTheme::default();
 
     let theme = if first_time_calling {
@@ -22,10 +27,10 @@ pub fn get_number_input(label: &str, first_time_calling: bool) -> Result<usize, 
         Input::with_theme(&colour)
     };
 
-    let number: usize = theme
+    let number: T = theme
         .validate_with(|input: &String| -> Result<(), &str> {
             input
-                .parse::<usize>()
+                .parse::<T>()
                 .map(|_| ()) // validate_with needs to return nothing
                 .map_err(|_| "Please enter a valid number")
         })

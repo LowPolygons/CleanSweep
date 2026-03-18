@@ -11,6 +11,7 @@ pub enum SetStyle {
     EveryNIndexed(usize, ZeroOrOne),
     EvenlySpacedN(usize),
     IDisDivisibleByN(usize),
+    NumberDivisibleByN(f64),
 }
 #[derive(Debug, Clone)]
 pub enum ZeroOrOne {
@@ -37,6 +38,7 @@ impl fmt::Display for SetStyle {
             }
             SetStyle::EvenlySpacedN(_) => "N Evenly Spaced",
             SetStyle::IDisDivisibleByN(_) => "ID is divisible by N",
+            SetStyle::NumberDivisibleByN(_) => "Number is divisible by N",
         };
         write!(f, "{s}")
     }
