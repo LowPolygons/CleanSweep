@@ -24,7 +24,10 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
 
     let success: Result<(), CleanSweepErrors> = match &cli.command {
-        Commands::ManageSets { short_mode } => manage_sets::command::manage_sets(short_mode)
+        Commands::ManageSets {
+            precise_mode,
+            build_config,
+        } => manage_sets::command::manage_sets(precise_mode, build_config)
             .map_err(|e| CleanSweepErrors::ManageSetsFailure(e)),
         Commands::List { choice, summarise } => {
             list::list(&choice, summarise).map_err(|e| CleanSweepErrors::ListFailure(e))

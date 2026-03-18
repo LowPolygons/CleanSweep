@@ -6,15 +6,16 @@ use crate::{
     commands::manage_sets::{
         containers::{
             AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, NewStyleBehaviour,
-            NotAffectingStyles, SetStyle, ZeroOrOne,
+            NotAffectingStyles, SetStyle, ZeroOrOne, choose_style_and_m_n_values,
         },
+        precise_mode::build_management_config,
         print_table::{Column, PrintableTable},
     },
     containers::{
         cleansweep_file_paths::CleansweepFilePaths, sets_read_write_type::SetsReadWriteType,
     },
     systems::json_io::{read_file_to_struct, write_json_file_from_struct},
-    utils::{get_common_dirs::get_cleansweep_dir, run_time_user_input::get_number_input},
+    utils::get_common_dirs::get_cleansweep_dir,
 };
 
 #[derive(Debug, Error)]
@@ -50,6 +51,9 @@ pub enum ManageSetsError {
 
     #[error("Failed to save struct of files to the corresponding json file")]
     WriteJsonFileFromStructFailure,
+
+    #[error("Failed to build a management config")]
+    BuildManagementConfigFailure,
 }
 
 // TODO: Perhaps there has been a coupling? Split the logic of multiplying by the decimal portion
@@ -104,8 +108,7 @@ pub fn extract_number_from_string(file: &str) -> Option<(i64, i64)> {
     ))
 }
 
-// WARN: The new table mode made the short-mode possibly unecessary
-pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
+pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageSetsError> {
     let cleansweep_dir =
         get_cleansweep_dir().map_err(|_| ManageSetsError::GetCleansweepDirectoryFailure)?;
 
@@ -115,6 +118,12 @@ pub fn manage_sets(_: &bool) -> Result<(), ManageSetsError> {
 
     let mut dir_set_scan_was_run_from = String::new();
 
+    if !build_config.is_empty() {
+        build_management_config(build_config)
+            .map_err(|_| ManageSetsError::BuildManagementConfigFailure)?;
+
+        return Ok(());
+    }
     /*
      * Map the SetsReadWriteType to a ManageSetsType, and determine the [PATH] variable in code
      */
@@ -791,104 +800,6 @@ fn n_m_values_work_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
     }
 }
 
-fn choose_style_and_m_n_values() -> Result<SetStyle, ()> {
-    let sub_options: Vec<SetStyle> = vec![
-        SetStyle::First,
-        SetStyle::Last,
-        SetStyle::FirstAndLast,
-        SetStyle::FirstN(0),
-        SetStyle::LastN(0),
-        SetStyle::FirstNandLastM(0, 0),
-        SetStyle::EveryNIndexed(0, ZeroOrOne::Zero),
-        SetStyle::EveryNIndexed(0, ZeroOrOne::One),
-        SetStyle::EvenlySpacedN(0),
-        SetStyle::IDisDivisibleByN(0),
-        SetStyle::NumberDivisibleByN(0.0),
-    ];
-
-    let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Choose a management style:")
-        .items(&sub_options)
-        .interact()
-        .map_err(|_| ())?;
-
-    Ok(
-        match sub_options
-            .get(selection)
-            .ok_or_else(|| ())
-            .map_err(|_| ())?
-            .clone()
-        {
-            SetStyle::FirstN(_) => {
-                let n_value: usize =
-                    get_number_input("Enter how many of the first files you wish to keep:", true)
-                        .map_err(|_| ())?;
-
-                SetStyle::FirstN(n_value)
-            }
-            SetStyle::LastN(_) => {
-                let n_value: usize =
-                    get_number_input("Enter how many of the last files you wish to keep:", true)
-                        .map_err(|_| ())?;
-
-                SetStyle::LastN(n_value)
-            }
-            SetStyle::FirstNandLastM(_, _) => {
-                let n_value: usize =
-                    get_number_input("Enter how many of the first files you wish to keep:", true)
-                        .map_err(|_| ())?;
-
-                let m_value: usize =
-                    get_number_input("Enter how many of the last files you wish to keep:", true)
-                        .map_err(|_| ())?;
-
-                SetStyle::FirstNandLastM(n_value, m_value)
-            }
-            SetStyle::EveryNIndexed(_, zero_or_one) => {
-                let n_value: usize = get_number_input(
-                    "Enter the number of how often to save a file when interating over the set: ",
-                    true,
-                )
-                .map_err(|_| ())?;
-
-                SetStyle::EveryNIndexed(n_value, zero_or_one)
-            }
-            SetStyle::EvenlySpacedN(_) => {
-                println!(
-                    "This will, on average save exactly N files. There will be a margin of error if N > len / 2"
-                );
-                let n_value: usize =
-                    get_number_input("Enter how many files do you want to save: ", true)
-                        .map_err(|_| ())?;
-                SetStyle::EvenlySpacedN(n_value)
-            }
-            SetStyle::IDisDivisibleByN(_) => {
-                println!(
-                    "The ID is calculated by removing the decimal place if it is present and tacking the decimal number portion onto the end (123.456 -> 123456)"
-                );
-                let n_value: usize = get_number_input(
-                    "Enter the number a files ID should be divisible by to keep: ",
-                    true,
-                )
-                .map_err(|_| ())?;
-                SetStyle::IDisDivisibleByN(n_value)
-            }
-            SetStyle::NumberDivisibleByN(_) => {
-                println!(
-                    "The number is calculated by removing the decimal place if it is present and tacking the decimal number portion onto the end (123.456 -> 123456)"
-                );
-                let n_value: f64 = get_number_input(
-                    "Enter the number a files ID should be divisible by to keep: ",
-                    true,
-                )
-                .map_err(|_| ())?;
-                SetStyle::NumberDivisibleByN(n_value)
-            }
-            other => other,
-        },
-    )
-}
-
 fn push_if_new(list: &mut Vec<String>, new_item: String) {
     if !list.contains(&new_item) {
         list.push(new_item)
@@ -1043,4 +954,41 @@ fn filter_files_from_styles(
     }
 
     Ok(())
+}
+
+fn turn_set_into_precise_list(
+    percentages: &Vec<u8>,
+    list: &mut Vec<String>,
+) -> Result<Vec<Vec<String>>, String> {
+    let percentages_sum: u8 = percentages.iter().sum();
+    if percentages_sum != 100 {
+        return Err("Percentages don't sum to 100".to_string());
+    }
+
+    let original_list_length = list.len();
+
+    // Allows the usage of pop
+    // Treat the list as a stack
+    list.reverse();
+
+    let precise_list: Vec<Vec<String>> =
+        percentages
+            .into_iter()
+            .fold(Vec::<Vec<String>>::new(), |mut precise, curr_percentage| {
+                let num_files_to_extract: usize =
+                    original_list_length * (*curr_percentage as usize);
+
+                let mut new_list: Vec<String> = vec![];
+
+                for _ in 0..=num_files_to_extract {
+                    if let Some(item) = list.pop() {
+                        new_list.push(item);
+                    }
+                }
+                precise.push(new_list);
+
+                precise
+            });
+
+    Ok(precise_list)
 }

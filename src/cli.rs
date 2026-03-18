@@ -58,8 +58,11 @@ pub enum Commands {
         about = "Used to decide how CleanSweep should determine what files from each set should be kept or deleted"
     )]
     ManageSets {
-        #[arg(long)]
-        short_mode: bool,
+        #[arg(long, default_value_t = String::from(""))]
+        precise_mode: String,
+
+        #[arg(long, default_value_t = String::from(""))]
+        build_config: String,
     },
 
     #[command(

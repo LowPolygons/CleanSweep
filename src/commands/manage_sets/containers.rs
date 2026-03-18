@@ -1,6 +1,11 @@
 use core::fmt;
 
-#[derive(Debug, Clone)]
+use dialoguer::{Select, theme::ColorfulTheme};
+use serde::{Deserialize, Serialize};
+
+use crate::utils::run_time_user_input::get_number_input;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SetStyle {
     First,
     Last,
@@ -13,7 +18,7 @@ pub enum SetStyle {
     IDisDivisibleByN(usize),
     NumberDivisibleByN(f64),
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ZeroOrOne {
     Zero,
     One,
@@ -104,4 +109,102 @@ pub enum NewStyleBehaviour {
     Reset,
     Copy,
     Set,
+}
+
+pub fn choose_style_and_m_n_values() -> Result<SetStyle, ()> {
+    let sub_options: Vec<SetStyle> = vec![
+        SetStyle::First,
+        SetStyle::Last,
+        SetStyle::FirstAndLast,
+        SetStyle::FirstN(0),
+        SetStyle::LastN(0),
+        SetStyle::FirstNandLastM(0, 0),
+        SetStyle::EveryNIndexed(0, ZeroOrOne::Zero),
+        SetStyle::EveryNIndexed(0, ZeroOrOne::One),
+        SetStyle::EvenlySpacedN(0),
+        SetStyle::IDisDivisibleByN(0),
+        SetStyle::NumberDivisibleByN(0.0),
+    ];
+
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Choose a management style:")
+        .items(&sub_options)
+        .interact()
+        .map_err(|_| ())?;
+
+    Ok(
+        match sub_options
+            .get(selection)
+            .ok_or_else(|| ())
+            .map_err(|_| ())?
+            .clone()
+        {
+            SetStyle::FirstN(_) => {
+                let n_value: usize =
+                    get_number_input("Enter how many of the first files you wish to keep:", true)
+                        .map_err(|_| ())?;
+
+                SetStyle::FirstN(n_value)
+            }
+            SetStyle::LastN(_) => {
+                let n_value: usize =
+                    get_number_input("Enter how many of the last files you wish to keep:", true)
+                        .map_err(|_| ())?;
+
+                SetStyle::LastN(n_value)
+            }
+            SetStyle::FirstNandLastM(_, _) => {
+                let n_value: usize =
+                    get_number_input("Enter how many of the first files you wish to keep:", true)
+                        .map_err(|_| ())?;
+
+                let m_value: usize =
+                    get_number_input("Enter how many of the last files you wish to keep:", true)
+                        .map_err(|_| ())?;
+
+                SetStyle::FirstNandLastM(n_value, m_value)
+            }
+            SetStyle::EveryNIndexed(_, zero_or_one) => {
+                let n_value: usize = get_number_input(
+                    "Enter the number of how often to save a file when interating over the set: ",
+                    true,
+                )
+                .map_err(|_| ())?;
+
+                SetStyle::EveryNIndexed(n_value, zero_or_one)
+            }
+            SetStyle::EvenlySpacedN(_) => {
+                println!(
+                    "This will, on average save exactly N files. There will be a margin of error if N > len / 2"
+                );
+                let n_value: usize =
+                    get_number_input("Enter how many files do you want to save: ", true)
+                        .map_err(|_| ())?;
+                SetStyle::EvenlySpacedN(n_value)
+            }
+            SetStyle::IDisDivisibleByN(_) => {
+                println!(
+                    "The ID is calculated by removing the decimal place if it is present and tacking the decimal number portion onto the end (123.456 -> 123456)"
+                );
+                let n_value: usize = get_number_input(
+                    "Enter the number a files ID should be divisible by to keep: ",
+                    true,
+                )
+                .map_err(|_| ())?;
+                SetStyle::IDisDivisibleByN(n_value)
+            }
+            SetStyle::NumberDivisibleByN(_) => {
+                println!(
+                    "The number is calculated by removing the decimal place if it is present and tacking the decimal number portion onto the end (123.456 -> 123456)"
+                );
+                let n_value: f64 = get_number_input(
+                    "Enter the number a files ID should be divisible by to keep: ",
+                    true,
+                )
+                .map_err(|_| ())?;
+                SetStyle::NumberDivisibleByN(n_value)
+            }
+            other => other,
+        },
+    )
 }
