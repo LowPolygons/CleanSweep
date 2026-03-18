@@ -264,3 +264,40 @@ pub enum ReplaceOrNew {
     Replace,
     New,
 }
+
+fn turn_set_into_precise_list(
+    percentages: &Vec<u8>,
+    list: &mut Vec<String>,
+) -> Result<Vec<Vec<String>>, String> {
+    let percentages_sum: u8 = percentages.iter().sum();
+    if percentages_sum != 100 {
+        return Err("Percentages don't sum to 100".to_string());
+    }
+
+    let original_list_length = list.len();
+
+    // Allows the usage of pop
+    // Treat the list as a stack
+    list.reverse();
+
+    let precise_list: Vec<Vec<String>> =
+        percentages
+            .into_iter()
+            .fold(Vec::<Vec<String>>::new(), |mut precise, curr_percentage| {
+                let num_files_to_extract: usize =
+                    original_list_length * (*curr_percentage as usize);
+
+                let mut new_list: Vec<String> = vec![];
+
+                for _ in 0..=num_files_to_extract {
+                    if let Some(item) = list.pop() {
+                        new_list.push(item);
+                    }
+                }
+                precise.push(new_list);
+
+                precise
+            });
+
+    Ok(precise_list)
+}

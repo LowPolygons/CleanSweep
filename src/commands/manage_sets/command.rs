@@ -7,6 +7,7 @@ use crate::{
         containers::{
             AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, NewStyleBehaviour,
             NotAffectingStyles, SetStyle, ZeroOrOne, choose_style_and_m_n_values,
+            filter_files_from_styles,
         },
         precise_mode::build_management_config,
         print_table::{Column, PrintableTable},
@@ -257,7 +258,8 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
                             .clone();
 
                         filter_files_from_styles(
-                            &mut ref_to_set,
+                            &mut ref_to_set.full_set,
+                            &mut ref_to_set.chosen_styles,
                             &mut keep_as_of_now,
                             &mut delete_as_of_now,
                         )
@@ -359,7 +361,12 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
     let mut files_for_delete: Vec<String> = Vec::new();
 
     for set in &mut managed_sets {
-        match filter_files_from_styles(set, &mut files_for_keep, &mut files_for_delete) {
+        match filter_files_from_styles(
+            &mut set.full_set,
+            &mut set.chosen_styles,
+            &mut files_for_keep,
+            &mut files_for_delete,
+        ) {
             Ok(_) => {}
             Err(_) => println!("A set didn't have a method specified, skipping.."),
         }
@@ -798,197 +805,4 @@ fn n_m_values_work_for_set(set: &ManageSetsType, style: &SetStyle) -> bool {
         SetStyle::EvenlySpacedN(n_value) => *n_value <= set.full_set.len(),
         _ => true,
     }
-}
-
-fn push_if_new(list: &mut Vec<String>, new_item: String) {
-    if !list.contains(&new_item) {
-        list.push(new_item)
-    }
-}
-
-fn filter_files_from_styles(
-    chosen_set: &mut ManageSetsType,
-    keep_list: &mut Vec<String>,
-    delete_list: &mut Vec<String>,
-) -> Result<(), ()> {
-    for current_style_list in &chosen_set.chosen_styles {
-        // Apply Sets in order
-        let len_of_set_sub_one = chosen_set.full_set.len() - 1;
-        let mut new_set_list: Vec<String> = Vec::new();
-
-        // These should apply simultaneously
-        for current_style in current_style_list {
-            match current_style {
-                SetStyle::First => {
-                    for (index, value) in chosen_set.full_set.iter().enumerate() {
-                        match index {
-                            0 => push_if_new(keep_list, value.clone()),
-                            _ => {}
-                        }
-                    }
-                }
-                SetStyle::Last => {
-                    for (index, value) in chosen_set.full_set.iter().enumerate() {
-                        if index == len_of_set_sub_one {
-                            push_if_new(keep_list, value.clone());
-                        }
-                    }
-                }
-                SetStyle::FirstAndLast => {
-                    for (index, value) in chosen_set.full_set.iter().enumerate() {
-                        if index == len_of_set_sub_one {
-                            push_if_new(keep_list, value.clone());
-                        } else {
-                            if index == 0 {
-                                push_if_new(keep_list, value.clone());
-                            } else {
-                                match index {
-                                    0 => push_if_new(keep_list, value.clone()),
-                                    _ => {}
-                                }
-                            }
-                        }
-                    }
-                }
-                SetStyle::FirstN(n_value) => {
-                    for (index, value) in chosen_set.full_set.iter().enumerate() {
-                        if index < *n_value {
-                            push_if_new(keep_list, value.clone());
-                        }
-                    }
-                }
-                SetStyle::LastN(n_value) => {
-                    for (index, value) in chosen_set.full_set.iter().enumerate() {
-                        if index > len_of_set_sub_one.saturating_sub(*n_value) {
-                            push_if_new(keep_list, value.clone());
-                        }
-                    }
-                }
-                SetStyle::FirstNandLastM(n_value, m_value) => {
-                    for (index, value) in chosen_set.full_set.iter().enumerate() {
-                        if index < *n_value {
-                            push_if_new(keep_list, value.clone());
-                        } else if index > (len_of_set_sub_one - m_value) {
-                            push_if_new(keep_list, value.clone());
-                        }
-                    }
-                }
-                SetStyle::EveryNIndexed(n_value, zero_or_one) => {
-                    let index_addition: usize = match zero_or_one {
-                        ZeroOrOne::Zero => 0,
-                        ZeroOrOne::One => 1,
-                    };
-
-                    for (index, value) in chosen_set.full_set.iter().enumerate() {
-                        if index != 0 && (index + index_addition) % n_value == 0 {
-                            push_if_new(keep_list, value.clone());
-                        }
-                    }
-                }
-                SetStyle::EvenlySpacedN(n_value) => {
-                    let chunk_size =
-                        (chosen_set.full_set.len() as f64 / *n_value as f64).round() as usize;
-
-                    for (chunk_num, chunk) in chosen_set.full_set.chunks(chunk_size).enumerate() {
-                        if chunk_num == n_value - 1 {
-                            let len_chunk = chunk.len() - 1;
-
-                            for (index, value) in chunk.iter().enumerate() {
-                                if index == len_chunk {
-                                    push_if_new(keep_list, value.clone());
-                                }
-                            }
-                        } else {
-                            for (index, value) in chunk.iter().enumerate() {
-                                match index {
-                                    0 => push_if_new(keep_list, value.clone()),
-                                    _ => {}
-                                }
-                            }
-                        }
-                    }
-                }
-                SetStyle::IDisDivisibleByN(n_value) => {
-                    for value in chosen_set.full_set.iter() {
-                        // By default, if it fails to get an ID it will be set to zero so it
-                        // always gets flagged as keep
-                        let (set_id, _): (i64, i64) =
-                            extract_number_from_string(value).map_or((0, 1), |v| v);
-
-                        if set_id % (*n_value as i64) == 0 {
-                            push_if_new(keep_list, value.clone());
-                        }
-                    }
-                }
-                SetStyle::NumberDivisibleByN(n_value) => {
-                    for value in chosen_set.full_set.iter() {
-                        // By default, if it fails to get an ID it will be set to zero so it
-                        // always gets flagged as keep
-                        let (set_id, multiplier): (i64, i64) =
-                            extract_number_from_string(value).map_or((0, 1), |v| v);
-
-                        if set_id % (*n_value as f64 * multiplier as f64) as i64 == 0 {
-                            push_if_new(keep_list, value.clone());
-                        }
-                    }
-                }
-            }
-        }
-        new_set_list = chosen_set
-            .full_set
-            .iter()
-            .fold(new_set_list, |mut list, item| {
-                if !keep_list.contains(item) {
-                    list.push(item.clone())
-                }
-                list
-            });
-        chosen_set.full_set = new_set_list;
-    }
-
-    // Lastly, if there were styles applied, move all the remaining to delete list
-    if chosen_set.chosen_styles.len() != 0 {
-        for file in &chosen_set.full_set {
-            delete_list.push(file.clone());
-        }
-    }
-
-    Ok(())
-}
-
-fn turn_set_into_precise_list(
-    percentages: &Vec<u8>,
-    list: &mut Vec<String>,
-) -> Result<Vec<Vec<String>>, String> {
-    let percentages_sum: u8 = percentages.iter().sum();
-    if percentages_sum != 100 {
-        return Err("Percentages don't sum to 100".to_string());
-    }
-
-    let original_list_length = list.len();
-
-    // Allows the usage of pop
-    // Treat the list as a stack
-    list.reverse();
-
-    let precise_list: Vec<Vec<String>> =
-        percentages
-            .into_iter()
-            .fold(Vec::<Vec<String>>::new(), |mut precise, curr_percentage| {
-                let num_files_to_extract: usize =
-                    original_list_length * (*curr_percentage as usize);
-
-                let mut new_list: Vec<String> = vec![];
-
-                for _ in 0..=num_files_to_extract {
-                    if let Some(item) = list.pop() {
-                        new_list.push(item);
-                    }
-                }
-                precise.push(new_list);
-
-                precise
-            });
-
-    Ok(precise_list)
 }
