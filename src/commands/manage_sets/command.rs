@@ -9,7 +9,9 @@ use crate::{
             NotAffectingStyles, SetStyle, ZeroOrOne, choose_style_and_m_n_values,
             filter_files_from_styles,
         },
-        precise_mode::build_management_config,
+        precise_mode::{
+            ManageSetsPrecisionModeError, apply_precision_mode, build_management_config,
+        },
         print_table::{Column, PrintableTable},
     },
     containers::{
@@ -55,6 +57,9 @@ pub enum ManageSetsError {
 
     #[error("Failed to build a management config")]
     BuildManagementConfigFailure,
+
+    #[error("Failed trying to run in precision mode - {0}")]
+    ApplyPrecisionModeFailure(ManageSetsPrecisionModeError),
 }
 
 // TODO: Perhaps there has been a coupling? Split the logic of multiplying by the decimal portion
@@ -158,6 +163,13 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
             Ok(acc)
         },
     )?;
+
+    if !precise_mode.is_empty() {
+        apply_precision_mode(&cleansweep_dir, &mut managed_sets, precise_mode)
+            .map_err(|e| ManageSetsError::ApplyPrecisionModeFailure(e))?;
+
+        return Ok(());
+    }
 
     /*
      * If the last char was a / dont store in the $PATH var

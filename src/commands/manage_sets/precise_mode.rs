@@ -1,19 +1,25 @@
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use dialoguer::{Input, Select, theme::ColorfulTheme};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{
-    commands::manage_sets::containers::{ManageSetsType, SetStyle, choose_style_and_m_n_values},
+    commands::manage_sets::containers::{
+        ManageSetsType, SetStyle, choose_style_and_m_n_values, filter_files_from_styles,
+    },
+    containers::cleansweep_file_paths::CleansweepFilePaths,
     systems::json_io::{JsonReadError, read_file_to_struct, write_json_file_from_struct},
     utils::run_time_user_input::get_number_input,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PreciseManagement {
-    percentages: Vec<u8>,
-    managements: Vec<Vec<Vec<SetStyle>>>,
+    pub percentages: Vec<u8>,
+    pub managements: Vec<Vec<Vec<SetStyle>>>,
 }
 
 impl PreciseManagement {
@@ -33,15 +39,123 @@ impl PreciseManagement {
 pub enum ManageSetsPrecisionModeError {
     #[error("Failed to read the provided precise management file into the expected type - {0}")]
     ReadFileToStructError(JsonReadError),
+
+    #[error("Failed to index the first item in a set")]
+    GetFirstItemInSetFailure,
+
+    #[error(
+        "Error trying to turn the full list of files in a set into its split ones based on the percentages"
+    )]
+    TurnSetIntoPreciseListFailure,
+
+    #[error("Error trying to filter the files of a set based on the provided styles")]
+    FilterFilesFromStylesFailure,
+
+    #[error("Error trying to write a json file from a struct")]
+    WriteJsonFileFromStructFailure,
 }
 
 pub fn apply_precision_mode(
-    managed_sets: Vec<ManageSetsType>,
+    cleansweep_dir: &PathBuf,
+    managed_sets: &mut Vec<ManageSetsType>,
     file_name: &str,
 ) -> Result<(), ManageSetsPrecisionModeError> {
     let config_file: HashMap<String, PreciseManagement> = read_file_to_struct(Path::new(file_name))
         .map_err(|e| ManageSetsPrecisionModeError::ReadFileToStructError(e))?;
 
+    let mut keep_list: Vec<String> = Vec::new();
+    let mut delete_list: Vec<String> = Vec::new();
+
+    while let Some(mut set) = managed_sets.pop() {
+        let first_in_set = set
+            .full_set
+            .get(0)
+            .ok_or_else(|| ())
+            .map_err(|_| ManageSetsPrecisionModeError::GetFirstItemInSetFailure)?
+            .clone();
+
+        let mut filtered = false;
+        // INFO: Served on a first come first serve basis to encourage high precision when naming
+        // keys
+        // TODO: Document that
+        for key in config_file.keys() {
+            // default is applied as a last resort at the end
+            if key != "default" {
+                if let Some((key, value)) = config_file.get_key_value(key) {
+                    if !first_in_set.contains(key) {
+                        continue;
+                    }
+
+                    let percentages: &Vec<u8> = &value.percentages;
+                    let managements: &Vec<Vec<Vec<SetStyle>>> = &value.managements;
+
+                    let mut separated_lists =
+                        turn_set_into_precise_list(percentages, &mut set.full_set).map_err(
+                            |_| ManageSetsPrecisionModeError::TurnSetIntoPreciseListFailure,
+                        )?;
+
+                    for (index, mut list) in separated_lists.iter_mut().enumerate() {
+                        let empty = &vec![];
+                        let management_style: &Vec<Vec<SetStyle>> =
+                            managements.get(index).map_or(empty, |v| v);
+
+                        filter_files_from_styles(
+                            &mut list,
+                            management_style,
+                            &mut keep_list,
+                            &mut delete_list,
+                        )
+                        .map_err(|_| ManageSetsPrecisionModeError::FilterFilesFromStylesFailure)?;
+                    }
+                    filtered = true;
+                    break;
+                }
+            }
+        }
+
+        if let Some(default) = config_file.get("default")
+            && !filtered
+        {
+            let percentages: &Vec<u8> = &default.percentages;
+            let managements: &Vec<Vec<Vec<SetStyle>>> = &default.managements;
+
+            // This function erors if len(percentages) != len(managements)
+            let mut separated_lists = turn_set_into_precise_list(percentages, &mut set.full_set)
+                .map_err(|_| ManageSetsPrecisionModeError::TurnSetIntoPreciseListFailure)?;
+
+            for (index, mut list) in separated_lists.iter_mut().enumerate() {
+                let empty = &vec![];
+                let management_style: &Vec<Vec<SetStyle>> =
+                    managements.get(index).map_or(empty, |v| v);
+
+                filter_files_from_styles(
+                    &mut list,
+                    management_style,
+                    &mut keep_list,
+                    &mut delete_list,
+                )
+                .map_err(|_| ManageSetsPrecisionModeError::FilterFilesFromStylesFailure)?;
+            }
+        }
+    }
+
+    println!("Overriding Keep list with:");
+    keep_list.iter().for_each(|item| println!("- {item}"));
+
+    println!("Overriding Delete list with:");
+    delete_list.iter().for_each(|item| println!("- {item}"));
+
+    write_json_file_from_struct(
+        &keep_list,
+        cleansweep_dir.join(CleansweepFilePaths::ToKeep.name()),
+    )
+    .map_err(|_| ManageSetsPrecisionModeError::WriteJsonFileFromStructFailure)?;
+
+    write_json_file_from_struct(
+        &delete_list,
+        cleansweep_dir.join(CleansweepFilePaths::ToDelete.name()),
+    )
+    .map_err(|_| ManageSetsPrecisionModeError::WriteJsonFileFromStructFailure)?;
     Ok(())
 }
 
@@ -285,7 +399,7 @@ fn turn_set_into_precise_list(
             .into_iter()
             .fold(Vec::<Vec<String>>::new(), |mut precise, curr_percentage| {
                 let num_files_to_extract: usize =
-                    original_list_length * (*curr_percentage as usize);
+                    ((original_list_length as f32) * (*curr_percentage as f32 / 100.0)) as usize;
 
                 let mut new_list: Vec<String> = vec![];
 
