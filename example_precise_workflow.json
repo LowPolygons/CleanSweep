@@ -1,0 +1,36 @@
+{
+  "default": {
+    "percentages": [
+      50,
+      25,
+      25
+    ],
+    "managements": [
+      [
+        [
+          {
+            "FirstNandLastM": [
+              10,
+              10
+            ]
+          }
+        ],
+        [
+          "Last"
+        ]
+      ],
+      [
+        [
+          "First"
+        ]
+      ],
+      [
+        [
+          {
+            "LastN": 5
+          }
+        ]
+      ]
+    ]
+  }
+}
