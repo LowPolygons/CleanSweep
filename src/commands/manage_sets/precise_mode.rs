@@ -159,11 +159,19 @@ pub fn apply_precision_mode(
     Ok(())
 }
 
+#[derive(Debug, Error)]
 pub enum BuildManagementConfigError {
+    #[error(
+        "Failed trying to create the outer-most selection menu when building a management config"
+    )]
     SelectionFailure,
+    #[error("Failure trying to create a new PreciseManagement object")]
     InsertNewPreciseManagementFailure,
+    #[error("Failure attempting to get user input")]
     GetUserInputFailure,
+    #[error("Failure attempting to replace an existing PreciseManagement object")]
     ReplaceExistingPreciseManagementFailure,
+    #[error("Failure trying to write a json file from a structure")]
     WriteJsonFileFromStructFailure,
 }
 

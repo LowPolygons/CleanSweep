@@ -6,11 +6,11 @@ use crate::{
     commands::manage_sets::{
         containers::{
             AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, NewStyleBehaviour,
-            NotAffectingStyles, SetStyle, ZeroOrOne, choose_style_and_m_n_values,
-            filter_files_from_styles,
+            NotAffectingStyles, SetStyle, choose_style_and_m_n_values, filter_files_from_styles,
         },
         precise_mode::{
-            ManageSetsPrecisionModeError, apply_precision_mode, build_management_config,
+            BuildManagementConfigError, ManageSetsPrecisionModeError, apply_precision_mode,
+            build_management_config,
         },
         print_table::{Column, PrintableTable},
     },
@@ -55,8 +55,8 @@ pub enum ManageSetsError {
     #[error("Failed to save struct of files to the corresponding json file")]
     WriteJsonFileFromStructFailure,
 
-    #[error("Failed to build a management config")]
-    BuildManagementConfigFailure,
+    #[error("Failed to build a management config - {0}")]
+    BuildManagementConfigFailure(BuildManagementConfigError),
 
     #[error("Failed trying to run in precision mode - {0}")]
     ApplyPrecisionModeFailure(ManageSetsPrecisionModeError),
@@ -126,7 +126,7 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
 
     if !build_config.is_empty() {
         build_management_config(build_config)
-            .map_err(|_| ManageSetsError::BuildManagementConfigFailure)?;
+            .map_err(|e| ManageSetsError::BuildManagementConfigFailure(e))?;
 
         return Ok(());
     }
