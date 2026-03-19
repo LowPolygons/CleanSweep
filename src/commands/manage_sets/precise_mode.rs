@@ -226,7 +226,43 @@ pub fn build_management_config(file_name: &str) -> Result<(), BuildManagementCon
                     management_config.remove(&existing_key);
                 }
             }
-            5 => {}
+            5 => {
+                println!("Printing the currently stored management config:");
+
+                management_config.iter_mut().for_each(|(key, value)| {
+                    let perc_string: String = value
+                        .percentages
+                        .iter()
+                        .enumerate()
+                        .map(|(index, num)| {
+                            let maybe_comma = if index == value.percentages.len() - 1 {
+                                ""
+                            } else {
+                                ","
+                            };
+                            format!("{}{}", num, maybe_comma)
+                        })
+                        .fold(String::new(), |mut string, str| {
+                            string = format!("{string}{str}");
+
+                            string
+                        });
+                    let managements: Vec<String> = value
+                        .managements
+                        .iter()
+                        .map(|rule_set| format!("{}", ManageSetsType::styles_to_string(rule_set)))
+                        .collect();
+
+                    println!("{} : {{", key);
+                    println!("  Percentages : {}", perc_string);
+                    println!("  Managements : {{");
+                    managements
+                        .iter()
+                        .for_each(|string| println!("    {}", string));
+                    println!("  }}");
+                    println!("}}");
+                });
+            }
             _ => {}
         }
     }
