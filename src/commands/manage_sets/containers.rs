@@ -70,9 +70,9 @@ impl ManageSetsType {
 
         per_set_list
     }
-    pub fn styles_to_string(&self) -> String {
+    pub fn styles_to_string(chosen_styles: &Vec<Vec<SetStyle>>) -> String {
         let mut string = String::from("[");
-        for styles in &self.chosen_styles {
+        for styles in chosen_styles {
             string = format!(
                 "{} -> {:?}",
                 string,

@@ -221,7 +221,7 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
                 .map(|item| {
                     format!(
                         "{} : [PATH]{} - {} Files",
-                        item.styles_to_string(),
+                        ManageSetsType::styles_to_string(&item.chosen_styles),
                         item.label_truncated(len_to_strip_away),
                         item.full_set.len()
                     )
@@ -717,7 +717,7 @@ fn copy_management_styles_from_set(
 
                 first_in_sets.push(format!(
                     "{} - [PATH]{}",
-                    chosen_set.styles_to_string(),
+                    ManageSetsType::styles_to_string(&chosen_set.chosen_styles),
                     first_item
                         .clone()
                         .drain(len_to_strip..first_item.len())
