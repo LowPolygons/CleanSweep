@@ -6,13 +6,17 @@ use crate::{
     commands::manage_sets::{
         containers::{
             AppendOrOverride, ChoiceInGettingStyle, ManageSetsType, NewStyleBehaviour,
-            NotAffectingStyles, SetStyle, choose_style_and_m_n_values, filter_files_from_styles,
+            NotAffectingStyles, SetStyle,
         },
         precise_mode::{
             BuildManagementConfigError, ManageSetsPrecisionModeError, apply_precision_mode,
             build_management_config,
         },
         print_table::{Column, PrintableTable},
+        utils::{
+            choose_style_and_m_n_values, filter_files_from_styles, styles_to_string,
+            vec_style_to_string,
+        },
     },
     containers::{
         cleansweep_file_paths::CleansweepFilePaths, sets_read_write_type::SetsReadWriteType,
@@ -221,7 +225,7 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
                 .map(|item| {
                     format!(
                         "{} : [PATH]{} - {} Files",
-                        ManageSetsType::styles_to_string(&item.chosen_styles),
+                        styles_to_string(&item.chosen_styles),
                         item.label_truncated(len_to_strip_away),
                         item.full_set.len()
                     )
@@ -554,7 +558,7 @@ fn choose_which_style_to_affect(set_styles: &mut Vec<Vec<SetStyle>>) -> Result<u
         set_styles
             .iter()
             .fold(Vec::<String>::new(), |mut list_items, curr_style_list| {
-                list_items.push(ManageSetsType::vec_style_to_string(curr_style_list));
+                list_items.push(vec_style_to_string(curr_style_list));
 
                 list_items
             });
@@ -717,7 +721,7 @@ fn copy_management_styles_from_set(
 
                 first_in_sets.push(format!(
                     "{} - [PATH]{}",
-                    ManageSetsType::styles_to_string(&chosen_set.chosen_styles),
+                    styles_to_string(&chosen_set.chosen_styles),
                     first_item
                         .clone()
                         .drain(len_to_strip..first_item.len())
