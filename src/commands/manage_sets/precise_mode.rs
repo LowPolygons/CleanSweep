@@ -1,9 +1,11 @@
 use std::{
     collections::HashMap,
+    fmt::Display,
     path::{Path, PathBuf},
 };
 
 use dialoguer::{Input, Select, theme::ColorfulTheme};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -20,38 +22,74 @@ use crate::{
     utils::run_time_user_input::get_number_input,
 };
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PreciseManagementStyle {
-    // Percentages must sum to 100
+    // Percentages must sum to 100. Its length must be exactly equal to the length of rulesets
     Percentage(Vec<u8>),
     // Each number should be bigger than the previous
+    // length must be exactly one less than the length of the ruleset (ruleset must account for
+    // 'other')
     UpUntil(Vec<f32>),
+    // length must be exactly one less than the length of the ruleset
     NumFiles(Vec<u32>),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum PreciseManagementStyle {
-    // Percentages must sum to 100
-    Percentage(Vec<u8>),
-    // Each number should be bigger than the previous
-    UpUntil(Vec<f32>),
-    NumFiles(Vec<u32>),
+pub fn vec_to_string<T: Display>(vec: &Vec<T>) -> String {
+    vec.iter()
+        .enumerate()
+        .map(|(index, num)| {
+            let maybe_comma = if index == vec.len() - 1 { "" } else { "," };
+            format!("{}{}", num, maybe_comma)
+        })
+        .fold(String::new(), |mut string, str| {
+            string = format!("{string}{str}");
+
+            string
+        })
+}
+impl PreciseManagementStyle {
+    pub fn len(&self) -> usize {
+        match self {
+            PreciseManagementStyle::Percentage(v) => v.len(),
+            PreciseManagementStyle::UpUntil(v) => v.len(),
+            PreciseManagementStyle::NumFiles(v) => v.len(),
+        }
+    }
+    pub fn as_string(&self) -> String {
+        match self {
+            PreciseManagementStyle::Percentage(v) => vec_to_string(v),
+            PreciseManagementStyle::NumFiles(v) => vec_to_string(v),
+            PreciseManagementStyle::UpUntil(v) => vec_to_string(v),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PreciseManagement {
-    pub percentages: Vec<u8>,
+    pub style: PreciseManagementStyle,
     pub managements: Vec<Vec<Vec<SetStyle>>>,
 }
 
 impl PreciseManagement {
-    pub fn new(percentages: Vec<u8>, managements: Vec<Vec<Vec<SetStyle>>>) -> Option<Self> {
-        if percentages.len() == managements.len() {
-            Some(Self {
-                percentages,
-                managements,
-            })
-        } else {
-            None
+    pub fn new(
+        style: PreciseManagementStyle,
+        managements: Vec<Vec<Vec<SetStyle>>>,
+    ) -> Option<Self> {
+        match &style {
+            PreciseManagementStyle::Percentage(_) => {
+                if style.len() == managements.len() {
+                    Some(Self { style, managements })
+                } else {
+                    None
+                }
+            }
+            _ => {
+                if style.len() + 1 == managements.len() {
+                    Some(Self { style, managements })
+                } else {
+                    None
+                }
+            }
         }
     }
 }
@@ -107,13 +145,11 @@ pub fn apply_precision_mode(
                         continue;
                     }
 
-                    let percentages: &Vec<u8> = &value.percentages;
+                    let style: &PreciseManagementStyle = &value.style;
                     let managements: &Vec<Vec<Vec<SetStyle>>> = &value.managements;
 
-                    let mut separated_lists =
-                        turn_set_into_precise_list(percentages, &mut set.full_set).map_err(
-                            |_| ManageSetsPrecisionModeError::TurnSetIntoPreciseListFailure,
-                        )?;
+                    let mut separated_lists = turn_set_into_precise_list(style, &mut set.full_set)
+                        .map_err(|_| ManageSetsPrecisionModeError::TurnSetIntoPreciseListFailure)?;
 
                     for (index, mut list) in separated_lists.iter_mut().enumerate() {
                         let empty = &vec![];
@@ -137,11 +173,10 @@ pub fn apply_precision_mode(
         if let Some(default) = config_file.get("default")
             && !filtered
         {
-            let percentages: &Vec<u8> = &default.percentages;
+            let style: &PreciseManagementStyle = &default.style;
             let managements: &Vec<Vec<Vec<SetStyle>>> = &default.managements;
 
-            // This function erors if len(percentages) != len(managements)
-            let mut separated_lists = turn_set_into_precise_list(percentages, &mut set.full_set)
+            let mut separated_lists = turn_set_into_precise_list(style, &mut set.full_set)
                 .map_err(|_| ManageSetsPrecisionModeError::TurnSetIntoPreciseListFailure)?;
 
             for (index, mut list) in separated_lists.iter_mut().enumerate() {
@@ -251,23 +286,7 @@ pub fn build_management_config(file_name: &str) -> Result<(), BuildManagementCon
                 println!("Printing the currently stored management config:");
 
                 management_config.iter_mut().for_each(|(key, value)| {
-                    let perc_string: String = value
-                        .percentages
-                        .iter()
-                        .enumerate()
-                        .map(|(index, num)| {
-                            let maybe_comma = if index == value.percentages.len() - 1 {
-                                ""
-                            } else {
-                                ","
-                            };
-                            format!("{}{}", num, maybe_comma)
-                        })
-                        .fold(String::new(), |mut string, str| {
-                            string = format!("{string}{str}");
-
-                            string
-                        });
+                    let perc_string: String = value.style.as_string();
                     let managements: Vec<String> = value
                         .managements
                         .iter()
@@ -299,19 +318,76 @@ pub fn insert_new_precise_management(
     how_to_insert: ReplaceOrNew,
 ) -> Result<(), ()> {
     let mut managements: Vec<Vec<Vec<SetStyle>>> = Vec::new();
-    let percentages: Vec<u8> = get_percentages().map_err(|_| ())?;
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Choose what style of precise management you would like for this key:")
+        .items(vec![
+            "Percentages",
+            "Number Of Files",
+            "File IDs Up Until N",
+        ])
+        .default(0)
+        .interact()
+        .map_err(|_| ())?;
 
-    while managements.len() != percentages.len() {
-        if let Some(value) = percentages.get(managements.len()) {
-            println!(
-                "Entering a session to define the rules for {}% of relevant sets",
-                value
-            );
+    let chosen_style = match selection {
+        0 => Ok(PreciseManagementStyle::Percentage(vec![])),
+        1 => Ok(PreciseManagementStyle::NumFiles(vec![])),
+        2 => Ok(PreciseManagementStyle::UpUntil(vec![])),
+        _ => Err(()),
+    }
+    .map_err(|_| ())?;
+
+    let style: PreciseManagementStyle = match chosen_style {
+        PreciseManagementStyle::Percentage(_) => {
+            PreciseManagementStyle::Percentage(get_percentages().map_err(|_| ())?)
         }
-        managements.push(get_management_style_for_percentage().map_err(|_| ())?);
+        PreciseManagementStyle::NumFiles(_) => {
+            PreciseManagementStyle::NumFiles(get_num_files_vector().map_err(|_| ())?)
+        }
+        PreciseManagementStyle::UpUntil(_) => {
+            PreciseManagementStyle::UpUntil(get_up_until_vector().map_err(|_| ())?)
+        }
+    };
+
+    let num_to_match = match chosen_style {
+        PreciseManagementStyle::Percentage(_) => 0,
+        _ => 1,
+    };
+
+    while managements.len() != style.len() + num_to_match {
+        match &style {
+            PreciseManagementStyle::Percentage(percentages) => {
+                if let Some(value) = percentages.get(managements.len()) {
+                    println!(
+                        "Entering a session to define the rules for {}% of relevant sets",
+                        value
+                    );
+                }
+            }
+            PreciseManagementStyle::UpUntil(values) => {
+                if let Some(val) = values.get(managements.len()) {
+                    println!(
+                        "Entering a session to define the rules for files with an ID up to {}",
+                        val
+                    );
+                }
+            }
+            PreciseManagementStyle::NumFiles(values) => {
+                let keyword = if managements.len() == 0 {
+                    "first"
+                } else {
+                    "next"
+                };
+
+                if let Some(val) = values.get(managements.len()) {
+                    println!("Entering a session to define the {} {} files", keyword, val);
+                }
+            }
+        }
+        managements.push(get_management_ruleset_for_key().map_err(|_| ())?);
     }
 
-    let new_management = PreciseManagement::new(percentages, managements)
+    let new_management = PreciseManagement::new(style, managements)
         .ok_or_else(|| ())
         .map_err(|_| ())?;
 
@@ -339,7 +415,7 @@ pub fn get_user_input(label: &str) -> Result<String, ()> {
 
     Ok(input)
 }
-pub fn get_management_style_for_percentage() -> Result<Vec<Vec<SetStyle>>, ()> {
+pub fn get_management_ruleset_for_key() -> Result<Vec<Vec<SetStyle>>, ()> {
     let mut styles: Vec<Vec<SetStyle>> = Vec::new();
 
     let choices = vec![
@@ -411,6 +487,50 @@ pub fn pick_which_existing_style_to_modify(
     styles.get_mut(selection).ok_or_else(|| ())
 }
 
+pub fn get_num_files_vector() -> Result<Vec<u32>, ()> {
+    println!(
+        "You will now choose the vector of file numbers on which the different styles will apply. Note that you will also specify a ruleset for any leftover files at the end"
+    );
+
+    let mut nums: Vec<u32> = Vec::new();
+
+    let number_of_fields: usize =
+        get_number_input("Input how many rulesets you want: ", true).map_err(|_| ())?;
+
+    while nums.len() != number_of_fields {
+        let new_number: u32 = get_number_input("Insert new value: ", true).map_err(|_| ())?;
+
+        nums.push(new_number);
+    }
+    Ok(nums)
+}
+
+pub fn get_up_until_vector() -> Result<Vec<f32>, ()> {
+    println!(
+        "You will now choose the vector of maximum IDs on which the different styles will apply. Ensure they are ascending order and are unique. You will also specify a ruleset for any leftover files"
+    );
+
+    let mut nums: Vec<f32> = Vec::new();
+
+    let number_of_fields: usize =
+        get_number_input("Input how many rulesets you want: ", true).map_err(|_| ())?;
+
+    while nums.len() != number_of_fields {
+        let new_number: f32 = get_number_input("Insert new value: ", true).map_err(|_| ())?;
+
+        if let Some(last) = nums.last() {
+            if new_number <= *last {
+                println!("Please ensure that every value is unique and is bigger than the last",);
+            } else {
+                nums.push(new_number);
+            }
+        } else {
+            nums.push(new_number);
+        }
+    }
+    Ok(nums)
+}
+
 pub fn get_percentages() -> Result<Vec<u8>, ()> {
     println!(
         "You will now choose the percentages on which the different styles will apply. Once your percentages sum to exactly 100, the session will automatically finish"
@@ -444,14 +564,39 @@ pub enum ReplaceOrNew {
     New,
 }
 
-// TODO: take in a PreciseManagementStyle
 fn turn_set_into_precise_list(
-    percentages: &Vec<u8>,
+    style: &PreciseManagementStyle,
     list: &mut Vec<String>,
 ) -> Result<Vec<Vec<String>>, String> {
-    let percentages_sum: u8 = percentages.iter().sum();
-    if percentages_sum != 100 {
-        return Err("Percentages don't sum to 100".to_string());
+    // confirm if the style is valid
+    match style {
+        PreciseManagementStyle::Percentage(percentages) => {
+            let percentages_sum: u8 = percentages.iter().sum();
+            if percentages_sum != 100 {
+                return Err("Percentages don't sum to 100".to_string());
+            }
+        }
+        PreciseManagementStyle::UpUntil(values) => {
+            let _: Option<&f32> = values
+                .iter()
+                .try_fold(
+                    None,
+                    |mut _prev_value, curr_val| -> Result<Option<&f32>, ()> {
+                        if let Some(val) = _prev_value {
+                            if val >= curr_val {
+                                return Err(());
+                            } else {
+                                _prev_value = Some(curr_val);
+                            }
+                        } else {
+                            _prev_value = Some(curr_val);
+                        }
+                        Ok(Some(curr_val))
+                    },
+                )
+                .map_err(|_| "Values are not unique and/or in ascending order".to_string())?;
+        }
+        PreciseManagementStyle::NumFiles(_) => {}
     }
 
     let original_list_length = list.len();
@@ -460,24 +605,113 @@ fn turn_set_into_precise_list(
     // Treat the list as a stack
     list.reverse();
 
-    let precise_list: Vec<Vec<String>> =
-        percentages
-            .into_iter()
-            .fold(Vec::<Vec<String>>::new(), |mut precise, curr_percentage| {
-                let num_files_to_extract: usize =
-                    ((original_list_length as f32) * (*curr_percentage as f32 / 100.0)) as usize;
+    match style {
+        PreciseManagementStyle::Percentage(percentages) => {
+            let precise_list: Vec<Vec<String>> = percentages.into_iter().fold(
+                Vec::<Vec<String>>::new(),
+                |mut precise, curr_percentage| {
+                    let num_files_to_extract: usize = ((original_list_length as f32)
+                        * (*curr_percentage as f32 / 100.0))
+                        as usize;
 
-                let mut new_list: Vec<String> = vec![];
+                    let mut new_list: Vec<String> = vec![];
 
-                for _ in 0..=num_files_to_extract {
-                    if let Some(item) = list.pop() {
-                        new_list.push(item);
+                    for _ in 0..=num_files_to_extract {
+                        if let Some(item) = list.pop() {
+                            new_list.push(item);
+                        }
                     }
-                }
-                precise.push(new_list);
+                    precise.push(new_list);
 
-                precise
-            });
+                    precise
+                },
+            );
 
-    Ok(precise_list)
+            Ok(precise_list)
+        }
+        PreciseManagementStyle::UpUntil(values) => {
+            // First need to remove an extension if there is one
+            let full_number_regex = match Regex::new(r"(\d+(\.\d+)?)\.[^\.]*$") {
+                Ok(new) => new,
+                Err(_) => return Err("Failed to create regex".to_string()),
+            };
+
+            let mut list_clone = list.clone();
+
+            let mut precise_list: Vec<Vec<String>> = values
+                .into_iter()
+                .try_fold(
+                    Vec::<Vec<String>>::new(),
+                    |mut precise, curr_value| -> Result<Vec<Vec<String>>, ()> {
+                        let mut curr: Vec<String> = Vec::new();
+                        let mut leftovers: Vec<String> = Vec::new();
+                        while list_clone.len() != 0 {
+                            if let Some(extracted) = list_clone.pop() {
+                                if !full_number_regex.is_match(&extracted) {
+                                    return Err(());
+                                }
+                                let capture = match full_number_regex
+                                    .captures(&extracted)
+                                    .ok_or_else(|| ())
+                                {
+                                    Ok(new) => new,
+                                    Err(_) => return Err(()),
+                                };
+                                let number_portion = match capture.get(1).ok_or_else(|| ()) {
+                                    Ok(new) => new.as_str(),
+                                    Err(_) => return Err(()),
+                                };
+                                let extracted_number = match number_portion.parse::<f32>() {
+                                    Ok(result) => result,
+                                    Err(_) => return Err(()),
+                                };
+
+                                if extracted_number <= *curr_value {
+                                    curr.push(extracted);
+                                } else {
+                                    leftovers.push(extracted);
+                                }
+                            }
+                        }
+                        leftovers.reverse();
+                        list_clone = leftovers.clone();
+                        precise.push(curr);
+
+                        Ok(precise)
+                    },
+                )
+                .map_err(|_| "")?;
+            // Undo the last reverse
+            list_clone.reverse();
+            precise_list.push(list_clone);
+
+            Ok(precise_list)
+        }
+        PreciseManagementStyle::NumFiles(nums) => {
+            let mut precise_list: Vec<Vec<String>> =
+                nums.into_iter()
+                    .fold(Vec::<Vec<String>>::new(), |mut precise, curr_value| {
+                        let mut curr: Vec<String> = Vec::new();
+                        let mut leftovers: Vec<String> = Vec::new();
+                        let mut index = 0;
+                        while list.len() != 0 {
+                            if let Some(extracted) = list.pop() {
+                                if index < *curr_value {
+                                    curr.push(extracted);
+                                } else {
+                                    list.push(extracted);
+                                    break;
+                                }
+                            }
+                            index = index + 1;
+                        }
+                        leftovers.reverse();
+                        precise.push(curr);
+                        precise
+                    });
+            precise_list.push(list.clone());
+
+            Ok(precise_list)
+        }
+    }
 }
