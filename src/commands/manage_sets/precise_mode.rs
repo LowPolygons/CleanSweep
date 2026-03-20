@@ -20,6 +20,14 @@ use crate::{
     utils::run_time_user_input::get_number_input,
 };
 
+pub enum PreciseManagementStyle {
+    // Percentages must sum to 100
+    Percentage(Vec<u8>),
+    // Each number should be bigger than the previous
+    UpUntil(Vec<f32>),
+    NumFiles(Vec<u32>),
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PreciseManagementStyle {
     // Percentages must sum to 100
