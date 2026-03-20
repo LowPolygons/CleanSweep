@@ -8,13 +8,26 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{
-    commands::manage_sets::containers::{
-        ManageSetsType, SetStyle, choose_style_and_m_n_values, filter_files_from_styles,
+    commands::manage_sets::{
+        containers::{ManageSetsType, SetStyle},
+        utils::{
+            choose_style_and_m_n_values, filter_files_from_styles, styles_to_string,
+            vec_style_to_string,
+        },
     },
     containers::cleansweep_file_paths::CleansweepFilePaths,
     systems::json_io::{JsonReadError, read_file_to_struct, write_json_file_from_struct},
     utils::run_time_user_input::get_number_input,
 };
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum PreciseManagementStyle {
+    // Percentages must sum to 100
+    Percentage(Vec<u8>),
+    // Each number should be bigger than the previous
+    UpUntil(Vec<f32>),
+    NumFiles(Vec<u32>),
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PreciseManagement {
@@ -250,7 +263,7 @@ pub fn build_management_config(file_name: &str) -> Result<(), BuildManagementCon
                     let managements: Vec<String> = value
                         .managements
                         .iter()
-                        .map(|rule_set| format!("{}", ManageSetsType::styles_to_string(rule_set)))
+                        .map(|rule_set| format!("{}", styles_to_string(rule_set)))
                         .collect();
 
                     println!("{} : {{", key);
@@ -377,7 +390,7 @@ pub fn pick_which_existing_style_to_modify(
 ) -> Result<&mut Vec<SetStyle>, ()> {
     let options: Vec<String> = styles
         .iter()
-        .map(|element| ManageSetsType::vec_style_to_string(element))
+        .map(|element| vec_style_to_string(element))
         .collect();
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -423,6 +436,7 @@ pub enum ReplaceOrNew {
     New,
 }
 
+// TODO: take in a PreciseManagementStyle
 fn turn_set_into_precise_list(
     percentages: &Vec<u8>,
     list: &mut Vec<String>,
