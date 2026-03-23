@@ -245,7 +245,7 @@ pub fn build_management_config(file_name: &str) -> Result<(), BuildManagementCon
 
     loop {
         let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Choose an option")
+            .with_prompt("Choose whether to add/modify a precise management style")
             .items(&outermost_options)
             .default(0)
             .interact()
@@ -428,7 +428,7 @@ pub fn get_management_ruleset_for_key() -> Result<Vec<Vec<SetStyle>>, ()> {
 
     loop {
         let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Choose an option:")
+            .with_prompt("Choose how to implement the new ruleset:")
             .items(&choices)
             .default(0)
             .interact()
@@ -489,7 +489,7 @@ pub fn pick_which_existing_style_to_modify(
 
 pub fn get_num_files_vector() -> Result<Vec<u32>, ()> {
     println!(
-        "You will now choose the vector of file numbers on which the different styles will apply. Note that you will also specify a ruleset for any leftover files at the end"
+        "You will now choose the vector of file numbers on which the different styles will apply. \n\nNote that you will also specify a ruleset for any leftover files at the end"
     );
 
     let mut nums: Vec<u32> = Vec::new();
@@ -507,7 +507,7 @@ pub fn get_num_files_vector() -> Result<Vec<u32>, ()> {
 
 pub fn get_up_until_vector() -> Result<Vec<f32>, ()> {
     println!(
-        "You will now choose the vector of maximum IDs on which the different styles will apply. Ensure they are ascending order and are unique. You will also specify a ruleset for any leftover files"
+        "You will now choose the vector of maximum IDs on which the different styles will apply. \n\nEnsure they are ascending order and are unique. You will also specify a ruleset for any leftover files"
     );
 
     let mut nums: Vec<f32> = Vec::new();
@@ -533,7 +533,7 @@ pub fn get_up_until_vector() -> Result<Vec<f32>, ()> {
 
 pub fn get_percentages() -> Result<Vec<u8>, ()> {
     println!(
-        "You will now choose the percentages on which the different styles will apply. Once your percentages sum to exactly 100, the session will automatically finish"
+        "You will now choose the percentages on which the different styles will apply. \n\nOnce your percentages sum to exactly 100, the session will automatically finish"
     );
 
     let mut percentages: Vec<u8> = Vec::new();
