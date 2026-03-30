@@ -187,7 +187,7 @@ pub fn filter_files_from_styles(
                     };
 
                     for (index, value) in chosen_set.iter().enumerate() {
-                        if index != 0 && (index + index_addition) % n_value == 0 {
+                        if (index + index_addition) % n_value == 0 {
                             push_if_new(keep_list, value.clone());
                         }
                     }
