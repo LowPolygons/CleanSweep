@@ -530,10 +530,13 @@ pub fn print_set_status_as_table(
                     .iter()
                     .position(|file| file == file_name)
                 {
+                    let (id, _): (i64, i64) =
+                        extract_number_from_string(file_name).map_or((0, 1), |v| v);
                     table.insert_row(vec![
                         index_in_set.to_string(),
                         "Delete".to_string(),
                         file_name.clone(),
+                        id.to_string(),
                     ]);
                 }
             } else {
