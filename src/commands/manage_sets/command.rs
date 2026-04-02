@@ -137,6 +137,7 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
     /*
      * Map the SetsReadWriteType to a ManageSetsType, and determine the [PATH] variable in code
      */
+    let mut index_of_last_slash: usize = 0;
     let mut managed_sets: Vec<ManageSetsType> = scanned_sets.iter().try_fold(
         Vec::<ManageSetsType>::new(),
         |mut acc, set| -> Result<Vec<ManageSetsType>, ManageSetsError> {
@@ -149,11 +150,12 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
 
             if dir_set_scan_was_run_from.is_empty() && scanned_sets.len() != 1 {
                 dir_set_scan_was_run_from = label.clone();
+                index_of_last_slash = label.chars().count();
             }
 
             while label.find(&dir_set_scan_was_run_from).is_none() && scanned_sets.len() != 1 {
                 dir_set_scan_was_run_from =
-                    dir_set_scan_was_run_from[0..dir_set_scan_was_run_from.len() - 1].to_string()
+                    dir_set_scan_was_run_from[0..dir_set_scan_was_run_from.len() - 1].to_string();
             }
 
             let new_set = ManageSetsType {
@@ -175,6 +177,20 @@ pub fn manage_sets(precise_mode: &str, build_config: &str) -> Result<(), ManageS
         return Ok(());
     }
 
+    // Further reduce the dir_set_scan_was_run_from var until it reaches a slash
+    let mut sanitised = false;
+    while !sanitised {
+        if let Some(last_char) = dir_set_scan_was_run_from.chars().last() {
+            if last_char != '/' {
+                dir_set_scan_was_run_from =
+                    dir_set_scan_was_run_from[0..dir_set_scan_was_run_from.len() - 1].to_string();
+            } else {
+                sanitised = true;
+            }
+        } else {
+            sanitised = true;
+        }
+    }
     /*
      * If the last char was a / dont store in the $PATH var
      */
