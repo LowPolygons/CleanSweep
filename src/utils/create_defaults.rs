@@ -36,7 +36,6 @@ pub fn get_default_filter_category_list() -> Vec<String> {
         "name_contains".to_string(),
         "extension".to_string(),
         "size".to_string(),
-        "modify".to_string(),
         "directory_contains".to_string(),
     ];
 }

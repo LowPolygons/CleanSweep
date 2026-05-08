@@ -178,25 +178,28 @@ fn stringy_filters_to_filter_objects(
                 FilterCategory::NameContains(_) => {
                     filter = Box::new(NameContainsFilter::new());
                     keep_filter_item = FilterCategory::NameContains(
-                        user_settings
-                            .get_to_keep_list()
-                            .get_name_starts_with()
-                            .clone(),
+                        user_settings.get_to_keep_list().get_name_contains().clone(),
                     );
                     delete_filter_item = FilterCategory::NameContains(
                         user_settings
                             .get_to_delete_list()
-                            .get_name_starts_with()
+                            .get_name_contains()
                             .clone(),
                     );
                 }
                 FilterCategory::NameStartsWith(_) => {
                     filter = Box::new(NameStartsWithFilter::new());
                     keep_filter_item = FilterCategory::NameStartsWith(
-                        user_settings.get_to_keep_list().get_name().clone(),
+                        user_settings
+                            .get_to_keep_list()
+                            .get_name_starts_with()
+                            .clone(),
                     );
                     delete_filter_item = FilterCategory::NameStartsWith(
-                        user_settings.get_to_delete_list().get_name().clone(),
+                        user_settings
+                            .get_to_delete_list()
+                            .get_name_starts_with()
+                            .clone(),
                     );
                 }
                 FilterCategory::DirectoryContains(_) => {

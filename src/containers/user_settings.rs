@@ -88,6 +88,7 @@ impl PerFilterOptions {
     pub fn get_extensions(&self) -> &Vec<String> {
         &self.with_extension
     }
+    // TODO: Remove
     pub fn get_name(&self) -> &Vec<String> {
         &self.name_contains
     }
@@ -96,6 +97,9 @@ impl PerFilterOptions {
     }
     pub fn get_name_starts_with(&self) -> &Vec<String> {
         &self.name_starts_with
+    }
+    pub fn get_name_contains(&self) -> &Vec<String> {
+        &self.name_contains
     }
     pub fn get_larger_than_size(&self) -> &u64 {
         &self.larger_than

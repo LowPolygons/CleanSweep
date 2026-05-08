@@ -104,7 +104,10 @@ pub fn get_list_file_containers_from_strings(
         .try_fold(
             Vec::<FileContainer>::new(),
             |mut scanned_files, path_as_str| -> Result<Vec<FileContainer>, ()> {
-                scanned_files.push(FileContainer::new(Path::new(path_as_str)).map_err(|_| ())?);
+                scanned_files.push(FileContainer::new(Path::new(path_as_str)).map_err(|_| {
+                    println!("Failed on file {}. Consider a rescan, ignoring the directory containing this", path_as_str);
+                    return ();
+                })?);
                 Ok(scanned_files)
             },
         )
