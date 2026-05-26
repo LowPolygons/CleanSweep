@@ -1,3 +1,0 @@
-LOGGING
-There is quite a bit of repetition with the matching in scan and override command
-Moving this to the filter category file and preventing repetition makes adding new filters significantly easier
